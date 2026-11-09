@@ -1,0 +1,31 @@
+// Single place for HTTP access to the server. Every call checks res.ok and throws a readable error.
+async function request(path, options) {
+  const res = await fetch(`/api${path}`, options);
+  if (!res.ok) {
+    let message = `Request failed (${res.status})`;
+    try {
+      const body = await res.json();
+      message = body.error ?? message;
+    } catch {
+      // The body was not JSON; keep the generic message.
+    }
+    throw new Error(message);
+  }
+  return res.json();
+}
+
+const jsonBody = (method, body) => ({
+  method,
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify(body),
+});
+
+export const api = {
+  getProject: () => request('/project'),
+  saveProject: (project) => request('/project', jsonBody('PUT', project)),
+  getFixtureLibrary: () => request('/fixtures/library'),
+  importOpenFixture: (fixture, manufacturer) =>
+    request('/fixtures/import-ofl', jsonBody('POST', { fixture, manufacturer })),
+  importQlcFixture: (xml) => request('/fixtures/import-qlc', jsonBody('POST', { xml })),
+  getOutput: () => request('/output'),
+};

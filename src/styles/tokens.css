@@ -1,0 +1,101 @@
+/* Design tokens. Light is the default; dark applies via data-theme="dark" (set before paint by theme-init.js).
+   Palette idea: warm paper and soft shadows by day, a deep violet "stage" by night, one amber-to-coral brand glow. */
+:root {
+  color-scheme: light;
+
+  --bg: #f6f1e9;
+  --bg-glow-1: #ffe3cc;
+  --bg-glow-2: #efe0ff;
+  --surface: #ffffff;
+  --surface-2: #fbf7f1;
+  --surface-3: #f1e9de;
+  --border: #e8dfd2;
+  --border-strong: #d4c8b6;
+
+  --text: #211a13;
+  --text-dim: #655a4d;
+  --text-faint: #75695b;
+
+  --primary-bg: linear-gradient(135deg, #c2410c, #be185d);
+  --primary-ink: #ffffff;
+  --accent: #c2410c;
+  --accent-soft: rgba(194, 65, 12, 0.1);
+  --on-accent-soft: #9a3412;
+
+  --ok: #15803d;
+  --warn: #a16207;
+  --danger: #be123c;
+  --danger-soft: rgba(190, 18, 60, 0.1);
+
+  --ch-red: #e11d48;
+  --ch-green: #16a34a;
+  --ch-blue: #2563eb;
+  --ch-white: #8a8174;
+  --ch-amber: #d97706;
+  --ch-uv: #7c3aed;
+  --ch-position: #0891b2;
+  --ch-other: #8a8174;
+
+  --shadow-sm: 0 1px 2px rgba(70, 45, 10, 0.06), 0 2px 10px rgba(70, 45, 10, 0.05);
+  --shadow: 0 12px 34px rgba(70, 45, 10, 0.14);
+  --glass: rgba(255, 255, 255, 0.72);
+
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 22px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --font: 'Manrope Variable', 'Manrope', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --ring: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent);
+  --rail-width: 232px;
+  --topbar-height: 76px;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0d0c12;
+  --bg-glow-1: #2a1a2e;
+  --bg-glow-2: #16213f;
+  --surface: #17151f;
+  --surface-2: #1e1b28;
+  --surface-3: #282435;
+  --border: #2c2839;
+  --border-strong: #433d56;
+
+  --text: #f5f2fa;
+  --text-dim: #b4adc4;
+  --text-faint: #8c859e;
+
+  --primary-bg: linear-gradient(135deg, #ffb020, #ff6b6b);
+  --primary-ink: #1c1000;
+  --accent: #ffb347;
+  --accent-soft: rgba(255, 179, 71, 0.14);
+  --on-accent-soft: #ffc874;
+
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --danger: #ff6b81;
+  --danger-soft: rgba(255, 107, 129, 0.14);
+
+  --ch-red: #ff5d73;
+  --ch-green: #3ddc97;
+  --ch-blue: #5b9cff;
+  --ch-white: #e9ecf2;
+  --ch-amber: #ffb547;
+  --ch-uv: #a78bfa;
+  --ch-position: #4fd1d9;
+  --ch-other: #8a94a8;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(0, 0, 0, 0.25);
+  --shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+  --glass: rgba(23, 21, 31, 0.72);
+}
