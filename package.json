@@ -16,7 +16,8 @@
     "start": "node server/index.js",
     "test": "node --test tests/",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "dmx:ramp": "node scripts/dmx-ramp.js"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.3.0",

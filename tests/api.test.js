@@ -9,6 +9,7 @@ import { after, before, describe, it } from 'node:test';
 import { createApp } from '../server/app.js';
 import { MockDriver } from '../server/clients/mockDriver.js';
 import { DmxEngine } from '../server/services/dmxEngine.js';
+import { OutputManager } from '../server/services/outputManager.js';
 import { ProjectService } from '../server/services/projectService.js';
 
 let server;
@@ -21,7 +22,13 @@ before(async () => {
   const projectService = new ProjectService({ dataDir });
   await projectService.load();
   const engine = new DmxEngine({ driver: new MockDriver() });
-  server = createServer(createApp({ config, engine, projectService }));
+  const outputManager = new OutputManager({
+    engine,
+    dataDir,
+    defaults: { driver: 'mock' },
+    listPorts: async () => [{ path: '/dev/test-cable', vendorId: '0403' }],
+  });
+  server = createServer(createApp({ config, engine, projectService, outputManager }));
   await new Promise((resolve) => server.listen(0, resolve));
   baseUrl = `http://localhost:${server.address().port}/api`;
 });
@@ -86,5 +93,21 @@ describe('API', () => {
     assert.equal(response.status, 200, 'a valid OFL fixture is converted');
     const type = await response.json();
     assert.equal(type.modes[0].channels[0].type, 'intensity', 'the dimmer maps to intensity');
+  });
+
+  it('switches output settings, and rejects unknown serial ports with a clear error', async () => {
+    const put = (body) =>
+      fetch(`${baseUrl}/output/settings`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    const ok = await put({ driver: 'mock' });
+    assert.equal(ok.status, 200, 'the simulator can always be selected');
+    const bad = await put({ driver: 'open-dmx', serialPath: '/dev/missing' });
+    assert.equal(bad.status, 400, 'an unknown serial port is refused');
+    assert.match((await bad.json()).error, /not found/, 'the error tells the user what to do');
+    const status = await (await fetch(`${baseUrl}/output`)).json();
+    assert.equal(status.settings.driver, 'mock', 'the working output is unchanged after a refused switch');
   });
 });

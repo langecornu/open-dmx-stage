@@ -99,6 +99,15 @@ and for confirming that something is really being sent.
 
 ![Output screen](images/08-output-dark.jpg)
 
+### Connecting your lights
+
+The **Connection** card at the top of **Output** chooses how DMX leaves the app: the simulator, a USB-DMX cable, an
+ENTTEC DMX USB Pro, Art-Net or sACN. Pick one, choose the serial port (or enter a network address and universe), and
+press **Connect**. The status pill shows whether it is active, and any problem is explained in plain words.
+
+Press **How to connect** in that card for a step-by-step guide with diagrams, including how to tell a passive USB cable
+from an active adapter. The same guide is in [Connecting your lights](CONNECTION.md).
+
 ## 7. Master, Blackout, themes and devices
 
 - **Master** scales the brightness of everything (dimmer and colour channels only; pan and tilt are unaffected).
@@ -116,4 +125,5 @@ _Unsaved_, _Saving…_ or _Saved_. The data lives in `server/data/project.json` 
 
 - One DMX universe (512 channels).
 - Export to Engine DJ / SoundSwitch is not available yet.
-- Only the ENTTEC DMX USB Pro driver and the built-in simulator are included.
+- USB output has not been tested on real hardware yet. Network output (Art-Net and sACN) is the most predictable path.
+- SoundSwitch dongles are not supported.

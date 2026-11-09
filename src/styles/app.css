@@ -998,6 +998,291 @@ input[type='range'] {
   }
 }
 
+/* ---------- Connection ---------- */
+.connection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.conn-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.iface-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.iface {
+  padding: 9px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.iface:hover {
+  border-color: var(--text-faint);
+}
+
+.iface[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--primary-bg);
+  color: var(--primary-ink);
+}
+
+/* ---------- Connection guide modal ---------- */
+.help-dialog {
+  width: min(880px, calc(100vw - 24px));
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.help-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.help-dialog::backdrop {
+  background: rgba(12, 10, 18, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.help-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.help-tabs {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  overflow-x: auto;
+}
+
+.help-tab {
+  flex: none;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.help-tab:hover {
+  color: var(--text);
+}
+
+.help-tab[aria-selected='true'] {
+  background: var(--primary-bg);
+  color: var(--primary-ink);
+}
+
+.help-body {
+  flex: 1;
+  padding: var(--space-5);
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.help-body h3 {
+  margin: var(--space-5) 0 var(--space-2);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.help-body h3:first-child {
+  margin-top: 0;
+}
+
+.help-body p {
+  margin: var(--space-2) 0;
+  color: var(--text-dim);
+}
+
+.help-body strong {
+  color: var(--text);
+}
+
+.help-body code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.help-steps {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.help-steps li {
+  position: relative;
+  padding-left: 40px;
+  counter-increment: step;
+}
+
+.help-steps li::before {
+  content: counter(step);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--on-accent-soft);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.help-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+  padding-left: 20px;
+}
+
+.help-note {
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+}
+
+.help-table {
+  width: 100%;
+  margin: var(--space-3) 0;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.help-table th,
+.help-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.help-table thead th {
+  color: var(--text-faint);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.help-table tbody th {
+  width: 22%;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.diagram {
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.diagram {
+  overflow-x: auto;
+}
+
+.diagram svg {
+  display: block;
+  width: 100%;
+  min-width: 620px;
+  height: auto;
+}
+
+.diagram figcaption {
+  margin-top: var(--space-2);
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.dg-box {
+  fill: var(--surface);
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+}
+
+.dg-accent {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+}
+
+.dg-text {
+  fill: var(--text);
+  font: 700 14px var(--font);
+}
+
+.dg-sub {
+  fill: var(--text-dim);
+  font: 500 12px var(--font);
+}
+
+.dg-note {
+  fill: var(--accent);
+  font: 700 12px var(--font);
+}
+
+.dg-line {
+  stroke: var(--text-faint);
+  stroke-width: 2;
+}
+
+.dg-head {
+  fill: var(--text-faint);
+}
+
+@media (max-width: 640px) {
+  .help-dialog {
+    width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .help-body {
+    padding: var(--space-4);
+  }
+
+  .help-table tbody th {
+    width: auto;
+  }
+}
+
 /* ---------- Welcome ---------- */
 .welcome {
   position: fixed;

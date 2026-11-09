@@ -10,7 +10,7 @@ import helmet from 'helmet';
 import { errorHandler } from './middleware/errorHandler.js';
 import { createApiRouter } from './routes/apiRoutes.js';
 
-export function createApp({ config, engine, projectService }) {
+export function createApp({ config, engine, projectService, outputManager }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(
@@ -29,7 +29,7 @@ export function createApp({ config, engine, projectService }) {
   app.use(cors({ origin: config.allowedOrigins }));
   app.use(express.json({ limit: '1mb' }));
   app.use('/api', rateLimit({ windowMs: 60_000, limit: 600, standardHeaders: true, legacyHeaders: false }));
-  app.use('/api', createApiRouter({ engine, projectService }));
+  app.use('/api', createApiRouter({ engine, projectService, outputManager }));
 
   if (existsSync(config.distDir)) {
     app.use(express.static(config.distDir));

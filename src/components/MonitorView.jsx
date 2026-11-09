@@ -1,4 +1,5 @@
 // Monitor: a live view of all 512 DMX slots, with patched slots outlined.
+import { ConnectionPanel } from './ConnectionPanel.jsx';
 import { Icon } from './Icon.jsx';
 
 export function MonitorView({ patch, live }) {
@@ -29,6 +30,7 @@ export function MonitorView({ patch, live }) {
           Universe 1 · 512 channels
         </span>
       </div>
+      <ConnectionPanel output={live.output} />
       <div className="card card-pad">
         <div className="universe" role="img" aria-label="Live view of all 512 DMX channel values">
           {cells}

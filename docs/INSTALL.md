@@ -26,12 +26,21 @@ folder and it picks up `.nvmrc`.
 
 ### Hardware (optional, for real lights)
 
-| Item                     | Notes                                                                                                                                                  |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| USB to DMX interface     | An **ENTTEC DMX USB Pro** or a compatible interface that speaks the same protocol. The cheaper "Open DMX USB" style dongles are **not** supported yet. |
-| DMX cable                | 3-pin or 5-pin XLR, matching your interface and fixtures.                                                                                              |
-| At least one DMX fixture | Set its DMX address and mode on the fixture itself (the studio assigns addresses in the app; they must match).                                         |
-| DMX terminator           | A 120 Ω terminator on the last fixture in the chain is good practice on long runs.                                                                     |
+You need a way to get DMX out of the computer. Pick **one** of these:
+
+| Interface                                   | Examples                                                             | Status                                                                                                                                      |
+| ------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **USB-DMX cable (passive FTDI "Open DMX")** | DSD TECH SH-RS09B, ENTTEC Open DMX USB, most cheap USB-to-DMX cables | Supported, **experimental**. The computer generates the DMX timing, so it needs a quiet, unloaded machine. Not yet tested on real hardware. |
+| **ENTTEC DMX USB Pro and compatibles**      | ENTTEC DMX USB Pro, DMXKing ultraDMX Micro/Pro                       | Supported (these have a built-in processor, so timing is reliable). Not yet tested on real hardware.                                        |
+| **Art-Net** (network)                       | Art-Net nodes and gateways, many lighting apps and visualizers       | Supported.                                                                                                                                  |
+| **sACN / E1.31** (network)                  | sACN nodes and gateways, many lighting apps and visualizers          | Supported.                                                                                                                                  |
+| **Simulator**                               | none                                                                 | Always available.                                                                                                                           |
+
+You will also need a DMX cable (3-pin or 5-pin XLR to match your fixtures) and at least one DMX fixture. Set the
+fixture's DMX address and mode on the fixture itself so they match the **Setup** screen. A 120 Ω terminator on the last
+fixture in the chain is good practice on long runs.
+
+> SoundSwitch's own dongles (Micro DMX, Control One) use a proprietary protocol and are not supported.
 
 ### Native package
 
@@ -63,42 +72,75 @@ Then open **http://localhost:5173**.
 
 ## 4. Connect real DMX lights
 
-1. Plug in the DMX interface and connect the DMX cable to your first fixture.
-2. Find the interface's serial port:
-   - **macOS:** `ls /dev/tty.usbserial-*` (an ENTTEC Pro typically looks like `/dev/tty.usbserial-EN123456`).
-   - **Linux:** `ls /dev/ttyUSB*`. Add yourself to the serial group once, then log out and in:
-     `sudo usermod -aG dialout $USER`.
-   - **Windows:** open Device Manager, expand _Ports (COM & LPT)_, and note the COM number (for example `COM3`).
-   - If the port does not appear, install the interface vendor's FTDI driver and re-plug the device.
-3. Start the server with the driver and port set:
+> New to DMX? The [connection guide](CONNECTION.md) explains adapters (including passive vs active), wiring and addresses
+> from scratch, with diagrams. The same guide opens inside the app from **Output, How to connect**.
 
-   ```bash
-   # macOS / Linux
-   DMX_DRIVER=enttec-pro DMX_SERIAL_PATH=/dev/tty.usbserial-EN123456 npm run dev
-   ```
+### In the app (recommended)
 
-   ```powershell
-   # Windows PowerShell
-   $env:DMX_DRIVER = "enttec-pro"; $env:DMX_SERIAL_PATH = "COM3"; npm run dev
-   ```
+1. Plug in the interface and connect the DMX cable to your first fixture.
+2. Open the **Output** screen and find the **Connection** card.
+3. Choose your interface type:
+   - **USB-DMX cable** for the DSD TECH SH-RS09B and other passive FTDI cables.
+   - **ENTTEC DMX USB Pro** for ENTTEC Pro and DMXKing interfaces.
+   - **Art-Net** or **sACN** for network interfaces (optionally enter the device's IP address and a universe).
+4. For USB interfaces, pick the **Serial port** (FTDI cables are labelled) and press **Connect**. Press **Refresh** if the
+   port is missing.
+5. The top bar should show **DMX ready**. Move a colour in **Lights** and the fixture should react.
 
-4. The top bar should now show **DMX ready**. Move a colour in the **Lights** screen and the fixture should react.
+Your choice is remembered. If the saved cable is unplugged when the app starts, it falls back to the simulator and tells
+you why.
 
-You can also list candidate ports from the running server: open http://localhost:4000/api/output/ports.
+If the port does not appear:
+
+- **macOS:** the cable appears as `/dev/tty.usbserial-XXXX`. If not, check _System Settings, Privacy & Security_ for a
+  blocked driver prompt, then unplug and re-plug.
+- **Linux:** add yourself to the serial group once, then log out and in: `sudo usermod -aG dialout $USER`.
+- **Windows:** check Device Manager, _Ports (COM & LPT)_, for a `COM` port, and install the FTDI driver if none shows up.
+- Only one program can use the cable at a time, so close other lighting software first.
+
+### With environment variables
+
+You can also preselect the output at start-up (the in-app choice, once saved, takes precedence):
+
+```bash
+# USB-DMX cable (Open DMX style), macOS / Linux
+DMX_DRIVER=open-dmx DMX_SERIAL_PATH=/dev/tty.usbserial-XXXX npm run dev
+
+# ENTTEC DMX USB Pro
+DMX_DRIVER=enttec-pro DMX_SERIAL_PATH=/dev/tty.usbserial-EN123456 npm run dev
+
+# Art-Net to one node (omit DMX_NET_HOST to broadcast), universe 0
+DMX_DRIVER=artnet DMX_NET_HOST=192.168.1.50 DMX_UNIVERSE=0 npm run dev
+```
+
+```powershell
+# Windows PowerShell
+$env:DMX_DRIVER = "open-dmx"; $env:DMX_SERIAL_PATH = "COM3"; npm run dev
+```
+
+### A note on cheap USB-DMX cables
+
+Passive cables such as the SH-RS09B have no processor, so this app generates the DMX break and timing in software.
+That is within the DMX specification (it uses a long break), but it makes the output more sensitive to a busy computer
+than an ENTTEC Pro. If lights flicker or ignore the cable, close other programs, try a different USB port (avoid hubs),
+or use an Art-Net/sACN node or an ENTTEC Pro or DMXKing interface instead. Reviews of these cables are mixed, so make
+sure yours works in another program first.
 
 ## 5. Configuration
 
 Settings are environment variables. Copy `.env.example` for reference; the app reads the real environment (export the
 variables, or set them in your process manager). Nothing is required.
 
-| Variable          | Default                 | Meaning                                                              |
-| ----------------- | ----------------------- | -------------------------------------------------------------------- |
-| `PORT`            | `4000`                  | API and WebSocket port.                                              |
-| `ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated browser origins allowed to talk to the API.          |
-| `DMX_DRIVER`      | `mock`                  | `mock` (simulator) or `enttec-pro`.                                  |
-| `DMX_SERIAL_PATH` | _(empty)_               | Serial path of the interface. Required when `DMX_DRIVER=enttec-pro`. |
-| `DMX_FRAME_RATE`  | `30`                    | DMX frames per second, 1 to 44.                                      |
-| `DATA_DIR`        | `server/data`           | Where `project.json` (your show) is stored.                          |
+| Variable          | Default                 | Meaning                                                                                                                                                                                                       |
+| ----------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`            | `4000`                  | API and WebSocket port.                                                                                                                                                                                       |
+| `ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated browser origins allowed to talk to the API.                                                                                                                                                   |
+| `DMX_DRIVER`      | `mock`                  | `mock` (simulator), `open-dmx`, `enttec-pro`, `artnet` or `sacn`. You can also choose this in the app, on the Output screen.                                                                                  |
+| `DMX_SERIAL_PATH` | _(empty)_               | Serial port for `open-dmx` and `enttec-pro`.                                                                                                                                                                  |
+| `DMX_NET_HOST`    | _(empty)_               | Art-Net or sACN destination IP on your own network (private, loopback, link-local, multicast or broadcast). Hostnames and public addresses are rejected. Empty means broadcast (Art-Net) or multicast (sACN). |
+| `DMX_UNIVERSE`    | `0` Art-Net, `1` sACN   | Universe to send on: Art-Net 0 to 32767, sACN 1 to 63999.                                                                                                                                                     |
+| `DMX_FRAME_RATE`  | `30`                    | DMX frames per second, 1 to 44.                                                                                                                                                                               |
+| `DATA_DIR`        | `server/data`           | Where `project.json` (your show) is stored.                                                                                                                                                                   |
 
 ## 6. Production build (single port)
 
@@ -124,7 +166,7 @@ npm run lint    # code style
 | `EBADENGINE` warning on `npm install`               | You are on Node older than 24. It still runs on Node 20; install Node 24 to remove the warning.                                                                     |
 | Port 5173 is already in use                         | Run the web app on another port and allow it: `ALLOWED_ORIGINS=http://localhost:5180 npm run dev:api` in one terminal, `npm run dev:web -- --port 5180` in another. |
 | Top bar says **Server offline**                     | The API is not running or the browser origin is not in `ALLOWED_ORIGINS`. Check the terminal for errors.                                                            |
-| Top bar says **DMX not connected**                  | Wrong `DMX_SERIAL_PATH`, the device was unplugged, or the port is in use by another program. Close other DMX software and re-plug.                                  |
+| Top bar says **DMX not connected**                  | The device was unplugged, the wrong port was chosen, or another program is using it. Close other DMX software, re-plug, then reconnect on the **Output** screen.    |
 | `Permission denied` opening the serial port (Linux) | Add your user to the `dialout` group (see step 4) and log back in.                                                                                                  |
 | Lights do not respond but the app shows output      | Check the fixture's DMX address and mode match the studio's **Setup** screen, the cable is firmly connected, and Master is above 0 and Blackout is off.             |
 | Want to start over                                  | Stop the server and delete `server/data/project.json`.                                                                                                              |

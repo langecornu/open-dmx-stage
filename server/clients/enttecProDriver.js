@@ -1,6 +1,7 @@
 // Driver for the ENTTEC DMX USB Pro (and compatible) using the documented "Send DMX Packet" label.
 // Wire format: 0x7E, label 6, length LSB, length MSB, start code 0, 512 data bytes, 0xE7.
 // Serial access uses the MIT-licensed `serialport` package (https://serialport.io).
+import { openSerialPort } from './serial.js';
 
 const START_OF_MESSAGE = 0x7e;
 const END_OF_MESSAGE = 0xe7;
@@ -20,40 +21,23 @@ export function buildEnttecProPacket(frame) {
   return packet;
 }
 
-export async function listSerialPorts() {
-  try {
-    const { SerialPort } = await import('serialport');
-    const ports = await SerialPort.list();
-    return ports.map((port) => ({
-      path: port.path,
-      manufacturer: port.manufacturer ?? '',
-      serialNumber: port.serialNumber ?? '',
-    }));
-  } catch (error) {
-    console.error('[dmx] Could not list serial ports:', error.message);
-    return [];
-  }
-}
+const asPromise = (call) =>
+  new Promise((resolve, reject) => {
+    call((error) => (error ? reject(error) : resolve()));
+  });
 
 export class EnttecProDriver {
-  constructor({ path }) {
+  constructor({ path, createPort = openSerialPort }) {
     this.name = 'enttec-pro';
     this.path = path;
+    this.createPort = createPort;
     this.port = null;
     this.error = null;
+    this.lastFrame = new Uint8Array(512);
   }
 
   async open() {
-    const { SerialPort } = await import('serialport');
-    await new Promise((resolve, reject) => {
-      this.port = new SerialPort({ path: this.path, baudRate: 57600 }, (error) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve();
-        }
-      });
-    });
+    this.port = await this.createPort({ path: this.path, baudRate: 57600 });
     this.port.on('error', (error) => {
       this.error = error.message;
       console.error('[dmx] Serial error:', error.message);
@@ -64,6 +48,8 @@ export class EnttecProDriver {
   }
 
   send(frame) {
+    // Remember the newest frame even when the write is skipped, so close() can still flush the final state.
+    this.lastFrame.set(frame.subarray(0, 512));
     if (!this.port?.isOpen || this.port.writableNeedDrain) {
       return;
     }
@@ -74,7 +60,17 @@ export class EnttecProDriver {
     if (!this.port?.isOpen) {
       return;
     }
-    await new Promise((resolve) => this.port.close(() => resolve()));
+    try {
+      await asPromise((done) => this.port.write(Buffer.from(buildEnttecProPacket(this.lastFrame)), done));
+      await asPromise((done) => this.port.drain(done));
+    } catch (error) {
+      console.error('[dmx] Could not send the final frame:', error.message);
+    }
+    try {
+      await asPromise((done) => this.port.close(done));
+    } catch (error) {
+      console.error('[dmx] Could not close the serial port cleanly:', error.message);
+    }
   }
 
   getStatus() {
