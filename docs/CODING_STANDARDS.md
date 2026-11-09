@@ -148,7 +148,7 @@ RULES:
 - Handle `unhandledRejection` and `uncaughtException` at process level: log and exit non-zero. Handle `SIGTERM` and
   `SIGINT` by stopping output cleanly before exit. (met)
 - Log lines are tagged `[module]`. Never log secrets or raw personal data at info level.
-- Use one shared logger instead of raw `console.*`. (gap, see 4.1)
+- Use one shared logger (`server/logger.js`) instead of raw `console.*`; ESLint enforces it for `server/`. (met, see 4.1)
 ```
 
 ## 1.6 Security
@@ -185,7 +185,8 @@ RULES:
 - Inject time (a `now` function or an explicit `tick(at)`) so timing logic is deterministic. (met)
 - Cover positive, negative, bulk and invalid-input cases. Every bug fix lands with a regression test. (met)
 - Assertion messages say what should be true.
-- Target at least 80% line coverage on `server/services/` and `shared/`. (gap: coverage is not measured yet, see 4.4)
+- Target at least 80% line coverage on `server/services/` and `shared/`. (met: `npm run test:coverage` enforces thresholds, measured at 93% lines for the server; raise them as tests are
+  added, see 4.4)
 ```
 
 ## 1.8 Documentation and dependencies
@@ -193,7 +194,7 @@ RULES:
 ```
 RULES:
 - Each module opens with a short header comment: what it is and why. (met)
-- JSDoc on exported functions with non-obvious contracts (`@param`, `@returns`, `@throws`). (gap, see 4.7)
+- JSDoc on exported functions with non-obvious contracts (`@param`, `@returns`, `@throws`). (met for `server/`, `shared/` and `scripts/`; browser code is not annotated yet, see 4.7)
 - Every dependency is justified and documented in ATTRIBUTIONS.md with its licence. (met)
 - Licences must be compatible with MIT. Do not bundle third-party data (for example fixture libraries) without a
   licence that allows it.
@@ -222,13 +223,15 @@ Stack: React 18 and Vite 6, function components, hooks only, ESM, plain CSS with
 
 ```
 RULES:
-- Function components and hooks only. No class components. (met)
+- Function components and hooks only. No class components. (met; the one exception is `ErrorBoundary`, because React
+  supports error boundaries only as classes)
 - One component per file. Filename equals the component name (PascalCase.jsx). Non-component helpers and hooks live
   in `.js` files with named exports (`api.js`, `useLive.js`). (met)
 - Destructure props in the signature. Keep props small and explicit; past about six props, group or compose. (met)
 - Keep components under about 250 lines. Split presentational pieces from container logic. (met for components;
   see known gaps for content files)
-- Type props and data shapes with JSDoc types checked by `tsc`, or TypeScript. Do not add PropTypes. (gap, see 4.2)
+- Type props and data shapes with JSDoc types checked by `tsc`, or TypeScript. Do not add PropTypes. (gap: `server/`,
+  `shared/` and `scripts/` are checked by `npm run typecheck`; browser code and tests are not yet, see 4.2)
 ```
 
 ## 2.2 Naming
@@ -273,8 +276,8 @@ RULES:
 
 ```
 RULES:
-- Use stable, unique `key`s from data identity. Never the array index for lists that reorder, filter or change. (gap:
-  sequence steps use the index)
+- Use stable, unique `key`s from data identity. Never the array index for lists that reorder, filter or change. (met: chase
+  steps have stable ids)
 - Never use `dangerouslySetInnerHTML` with unsanitized content. (met: not used)
 - Treat imported fixture names and all file contents as untrusted text.
 - Use semantic elements (`button`, `nav`, `table`, `dialog`) rather than clickable `div`s. (met)
@@ -293,7 +296,8 @@ RULES:
 - Form controls have a `<label>`. Images and SVGs have a text alternative or are `aria-hidden`. (met)
 - Colour is never the only signal; pair it with text or an icon. Contrast meets WCAG AA in BOTH themes. (met)
 - Respect `prefers-reduced-motion`. (met)
-- Add `eslint-plugin-jsx-a11y` and automated accessibility checks. (gap, see 4.3)
+- Add `eslint-plugin-jsx-a11y` and automated accessibility checks. (met: `eslint-plugin-jsx-a11y` runs in lint and axe runs in the component tests;
+  the manual pass before a release is still a human step, see 4.3)
 ```
 
 ## 2.7 CSS and theming
@@ -307,7 +311,7 @@ RULES:
 - The theme is applied before first paint by an external script (`public/theme-init.js`); inline scripts are not
   allowed by the content security policy. (met)
 - No inline `style` for anything reusable. Inline style is for values computed at runtime (a live colour, a width
-  percentage). (gap: a few static inline styles remain)
+  percentage). (met)
 - No `!important` except to override a third party rule, with a comment. (met)
 - Layouts work from 375px wide up, with no horizontal page scroll. Test phone, tablet and desktop widths. (met)
 - Kebab-case classes with a short component-ish prefix to avoid collisions (`conn-`, `help-`, `dg-`).
@@ -326,7 +330,7 @@ RULES:
 - Only values prefixed `VITE_` reach client code through `import.meta.env`, and they are never secrets. (met: unused)
 - `npm run build` must pass before merging. `dist/` is never committed. (met)
 - Code-split large or rarely used screens with `React.lazy` once they are measurably heavy (for example the guide
-  modal). (gap, see 4.6)
+  modal). (met for the guide, which loads on demand, see 4.6)
 ```
 
 ## 2.9 Performance
@@ -343,8 +347,9 @@ RULES:
 
 ```
 RULES:
-- Vitest with React Testing Library: test behaviour by role, label and text, not class names or internals. (gap: no
-  component tests yet, see 4.3)
+- Vitest with React Testing Library: test behaviour by role, label and text, not class names or internals. (partly met:
+  the connection panel, guide, sequence editor, welcome, show file card, error boundary and theme are tested; the
+  other screens are not yet, see 4.3)
 - Unit-test pure browser logic first: colour mapping, patch tools, scene colours. (met)
 - Mock `api.js`, not `fetch`. Cover loading, success, error and cancel paths.
 - Add `vitest-axe` checks on the key screens.
@@ -877,49 +882,36 @@ RULES:
 
 # Status and known gaps
 
-Checked against the code on the day this file was written. The last column points to the section that says how to close
-each gap.
+Checked against the code on the day the standards were applied to the whole codebase. Each row says what is still open
+and where Part 4 explains how to close it.
 
-| Area                  | Gap                                                                                                                                         | Where                                                                          | Fix                                                                                                     | Guidance |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | -------- |
-| React keys            | Array index used as `key` in a list that reorders                                                                                           | `src/components/ChasesView.jsx` (steps), `src/components/SequenceTimeline.jsx` | Give each chase step a stable `id` in the schema and use it as the key                                  | 2.5      |
-| Logging               | 11 raw `console.*` calls, no shared logger, no request ids                                                                                  | `server/`                                                                      | One logger module, request ids, `no-console` lint rule                                                  | 4.1      |
-| Types                 | No TypeScript, PropTypes or type checking                                                                                                   | `src/`, `server/`, `shared/`                                                   | JSDoc types and `tsc --checkJs` in CI                                                                   | 4.2      |
-| Component tests       | No Vitest or Testing Library tests                                                                                                          | `src/`                                                                         | Add them, starting with the connection panel and guide modal                                            | 4.3      |
-| Accessibility tooling | No `eslint-plugin-jsx-a11y`, no automated axe checks, no manual release pass                                                                | tooling                                                                        | Add the plugin, axe checks and a release checklist                                                      | 4.3      |
-| End-to-end tests      | None                                                                                                                                        | repo                                                                           | Small Playwright suite on the simulator                                                                 | 4.3      |
-| Coverage              | Not measured                                                                                                                                | tooling                                                                        | Threshold flags on `node --test`, Vitest `v8` coverage                                                  | 4.4      |
-| CI                    | No pipeline, no branch protection, no Dependabot                                                                                            | repo                                                                           | Workflow, protected branches, Dependabot, secret and code scanning                                      | 4.5      |
-| Performance           | Guide modal bundled eagerly; frame updates re-render screens; no bundle budget                                                              | `ConnectionPanel.jsx`, `useLive.js`                                            | `React.lazy`, `useSyncExternalStore`, budget in CI                                                      | 4.6      |
-| JSDoc                 | Exported functions lack JSDoc                                                                                                               | `server/`, `shared/`                                                           | Add on non-obvious contracts                                                                            | 4.7      |
-| Node version          | Developed on Node 20 while `engines` requires 24                                                                                            | environment                                                                    | `engine-strict`, CI on `.nvmrc`                                                                         | 4.8      |
-| Dependencies          | No automated updates, licence check or unused-dependency check                                                                              | tooling                                                                        | Dependabot, licence check, `knip`                                                                       | 4.9      |
-| Releases              | No changelog, tags, release notes or PR template                                                                                            | repo                                                                           | Keep a Changelog, SemVer, templates                                                                     | 4.10     |
-| Community files       | No `SECURITY.md`, `CONTRIBUTING.md`, issue templates                                                                                        | repo                                                                           | Add them                                                                                                | 4.11     |
-| Decisions             | No ADRs                                                                                                                                     | `docs/`                                                                        | Start `docs/adr/`                                                                                       | 4.12     |
-| Reliability           | No schema version or migrations, no backup or export of a show, fixed reconnect interval, no heartbeat, no auto-recovery of a failed driver | `server/`, `src/hooks/useLive.js`                                              | Schema version and migrations, rolling backup and export, backoff with jitter, heartbeats, driver retry | 4.13     |
-| API                   | Unversioned routes                                                                                                                          | `server/routes/apiRoutes.js`                                                   | Move to `/api/v1`                                                                                       | 4.14     |
-| Resilience            | No React error boundaries                                                                                                                   | `src/App.jsx`                                                                  | Boundaries per screen and around the guide                                                              | 4.15     |
-| Security              | No access control; listens on all interfaces by default; no secret scanning                                                                 | `server/index.js`                                                              | Loopback by default, optional token, secret scanning                                                    | 4.16     |
-| Inline styles         | A few static inline `style` props                                                                                                           | `ChasesView.jsx`, `ControlView.jsx`                                            | Move to CSS classes                                                                                     | 2.7      |
-| File size             | Guide content file is 274 lines                                                                                                             | `src/components/helpContentBasics.jsx`                                         | Split by tab                                                                                            | 2.1      |
+| Area                      | Open gap                                                                                     | Why it is open                                                                                | Next step                                                                 | Guidance |
+| ------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------- |
+| Types                     | Browser code and tests are not type-checked                                                  | `tsc` covers `server/`, `shared/` and `scripts/`; React components need prop typedefs first   | Add JSDoc prop types and widen the `include` list in `tsconfig.json`      | 4.2      |
+| Component tests           | Browser line coverage is about 56%; the Lights, Looks, Setup and Output screens are untested | The most error-prone parts (connection, guide, sequences, welcome, import) were covered first | Add tests screen by screen and raise the thresholds in `vitest.config.js` | 4.3, 4.4 |
+| End-to-end tests          | None                                                                                         | Needs a browser test runner and a stable flow                                                 | Small Playwright suite against the built app on the simulator             | 4.3      |
+| Manual accessibility pass | Not recorded for releases                                                                    | Automated checks cover only part of the issues                                                | Keyboard, screen reader and zoom checklist in each release PR             | 4.3      |
+| Node version              | The dev machine runs Node 20 while `engines` and `.nvmrc` say 24; `engine-strict` is off     | Enabling it would stop installs on Node 20                                                    | Move to Node 24, then add `engine-strict=true` to `.npmrc`                | 4.8      |
+| Dependencies              | No unused-dependency check                                                                   | Needs a tool and a baseline                                                                   | Add `knip` and fix what it finds                                          | 4.9      |
+| Security                  | No access token for the control surface                                                      | Loopback by default removes the main risk; a token needs a login design                       | Optional access token if the app is used on shared networks               | 4.16     |
+| Network output            | The network interface for broadcast and multicast cannot be chosen                           | Needs a setting in the schema, UI and guide                                                   | Optional interface setting                                                | 4.13     |
+| USB output                | Not verified on real hardware                                                                | No adapter was available                                                                      | `npm run dmx:ramp` on a real adapter, then update ADR 0003 and the docs   | 4.13     |
+| API                       | No OpenAPI description                                                                       | Only this app uses the API today                                                              | Add one when anything else does                                           | 4.14     |
+| Internationalisation      | Strings are written in the components                                                        | Not needed yet                                                                                | Centralise strings before translating                                     | 4.15     |
+| Browser support           | No `browserslist` policy                                                                     | Not defined yet                                                                               | Decide and test against it                                                | 4.15     |
+| Logging                   | No log shipping or metrics                                                                   | No question needs them yet                                                                    | Add OpenTelemetry-compatible tooling when one does                        | 4.1      |
+
+Closed by this work: stable ids for chase steps; a structured logger with request ids and health endpoints; JSDoc and
+`tsc` for the server; component and accessibility tests; coverage thresholds; CI with pinned actions and a bundle and
+licence check; Dependabot; versioned API under `/api/v1`; loopback by default; show file schema version, migrations,
+rolling backup and export and import; WebSocket backoff, heartbeat and protocol version; automatic recovery of a failed
+output; error boundaries; the guide split into one component per file and loaded on demand; contributor files and ADRs.
 
 ## Recommended order of work
 
-Ordered by value for the effort, so each step makes the next one safer.
-
-1. **CI and branch protection (4.5).** Lint, test, build and audit on every pull request. Everything below is easier
-   once a failing check blocks a merge.
-2. **Fix the real bug risk (2.5).** Stable ids for chase steps, replacing the index keys.
-3. **Show-file safety (4.13).** `schemaVersion` with migrations, a rolling backup and Export and Import. Users lose
-   work if a format change breaks saved shows.
-4. **Logger and request ids (4.1)**, with a `no-console` lint rule.
-5. **Component and accessibility tests (4.3)** and the jsx-a11y lint rule, starting with the connection panel and guide
-   modal.
-6. **Type checking with JSDoc and `tsc` (4.2)**, starting with `shared/` and the drivers.
-7. **Coverage thresholds (4.4)** once the tests exist, then ratchet them up.
-8. **Reliability polish (4.13)**: backoff with jitter, heartbeats, driver auto-retry, and fail-safe output behaviour
-   tested on real hardware.
-9. **Security defaults (4.16)**: loopback by default, optional access token, secret scanning.
-10. **Release hygiene (4.10, 4.11, 4.12)**: changelog, templates, `SECURITY.md`, `CONTRIBUTING.md`, ADRs.
-11. **Performance (4.6)**: code-split the guide modal and scope frame updates once a budget is in CI.
+1. **Verify USB output on real hardware** with `npm run dmx:ramp`, and record the result in ADR 0003.
+2. **Type the browser code** and bring the tests under `tsc`.
+3. **Cover the remaining screens** with component tests and raise the coverage thresholds.
+4. **Move development to Node 24** and enable `engine-strict`.
+5. **Add the end-to-end suite** and the manual accessibility checklist to the release process.
+6. **Add `knip`** and an optional access token for shared networks.

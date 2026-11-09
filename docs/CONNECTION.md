@@ -3,7 +3,7 @@
 This guide explains, step by step and in plain language, how to get Open DMX Stage talking to real lights. You do not
 need any lighting experience. If you only want to try the app, skip all of this: the **Simulator** needs no hardware.
 
-<!-- Keep in sync with the in-app guide: src/components/helpContentBasics.jsx and helpContentNetwork.jsx. -->
+<!-- Keep in sync with the in-app guide: the pages in src/components/guide/. -->
 
 > **Prefer to read it inside the app?** Open the **Output** screen and press **How to connect** in the Connection card.
 > The same guide opens in a window, already on the page for the interface you selected.
