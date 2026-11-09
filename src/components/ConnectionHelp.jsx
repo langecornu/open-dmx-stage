@@ -1,8 +1,14 @@
 // A modal with the full connection guide. Uses the native <dialog> element, which traps focus and closes on Escape.
 import { useEffect, useRef, useState } from 'react';
 
-import { EnttecPro, PassiveOrActive, StartHere, UsbCable } from './helpContentBasics.jsx';
-import { ArtNet, FixProblems, Sacn, Wiring } from './helpContentNetwork.jsx';
+import { ArtNet } from './guide/ArtNet.jsx';
+import { EnttecPro } from './guide/EnttecPro.jsx';
+import { FixProblems } from './guide/FixProblems.jsx';
+import { PassiveOrActive } from './guide/PassiveOrActive.jsx';
+import { Sacn } from './guide/Sacn.jsx';
+import { StartHere } from './guide/StartHere.jsx';
+import { UsbCable } from './guide/UsbCable.jsx';
+import { Wiring } from './guide/Wiring.jsx';
 import { Icon } from './Icon.jsx';
 
 const TABS = [
@@ -16,8 +22,6 @@ const TABS = [
   { id: 'fix', label: 'Fix problems', Content: FixProblems },
 ];
 
-export const TAB_FOR_DRIVER = { mock: 'start', 'open-dmx': 'usb', 'enttec-pro': 'pro', artnet: 'artnet', sacn: 'sacn' };
-
 export function ConnectionHelp({ initialTab = 'start', onClose }) {
   const dialogRef = useRef(null);
   const bodyRef = useRef(null);
@@ -30,12 +34,24 @@ export function ConnectionHelp({ initialTab = 'start', onClose }) {
     if (dialog && !dialog.open) {
       dialog.showModal();
     }
+    // A click on the backdrop lands on the <dialog> element itself (its content fills the rest), so it closes the guide.
+    const handleBackdropClick = (event) => {
+      if (event.target === dialog) {
+        requestCloseRef.current();
+      }
+    };
+    dialog?.addEventListener('click', handleBackdropClick);
     const trigger = triggerRef.current;
-    return () => trigger?.focus?.();
+    return () => {
+      dialog?.removeEventListener('click', handleBackdropClick);
+      trigger?.focus?.();
+    };
   }, []);
 
   useEffect(() => {
-    bodyRef.current?.scrollTo(0, 0);
+    if (bodyRef.current) {
+      bodyRef.current.scrollTop = 0;
+    }
   }, [tabId]);
 
   // Closing goes through dialog.close() so the browser's own close handling (and the close event) runs.
@@ -46,6 +62,11 @@ export function ConnectionHelp({ initialTab = 'start', onClose }) {
       onClose();
     }
   };
+  const requestCloseRef = useRef(requestClose);
+  // Updated after each render (not during it), so the backdrop listener always calls the latest version.
+  useEffect(() => {
+    requestCloseRef.current = requestClose;
+  });
 
   const handleTabKey = (event, index) => {
     let nextIndex = null;
@@ -71,17 +92,7 @@ export function ConnectionHelp({ initialTab = 'start', onClose }) {
   const ActiveContent = active.Content;
 
   return (
-    <dialog
-      ref={dialogRef}
-      className="help-dialog"
-      aria-labelledby="help-title"
-      onClose={onClose}
-      onClick={(event) => {
-        if (event.target === dialogRef.current) {
-          requestClose();
-        }
-      }}
-    >
+    <dialog ref={dialogRef} className="help-dialog" aria-labelledby="help-title" onClose={onClose}>
       <div className="help-head">
         <h2 id="help-title" className="section-title">
           How to connect your lights

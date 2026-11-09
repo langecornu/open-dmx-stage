@@ -88,6 +88,9 @@ Use **Setup** to manage your fixtures.
 - **Import fixture file:** load a fixture definition from a QLC+ `.qxf` file or an Open Fixture Library `.json` file.
   Imported fixtures then appear in the **Fixture** list. Only import files whose licence allows your use.
 - **Remove:** the bin icon takes a fixture out of the rig.
+- **Your show file:** **Export show** downloads your whole show (fixtures, looks and sequences) as a file you can back up
+  or move to another computer. **Import show** loads one back in, after asking you to confirm, because it replaces the
+  current show. Files from older versions of the app are upgraded automatically.
 
 Make sure each fixture's real DMX address and mode match what is shown here.
 
@@ -114,12 +117,14 @@ from an active adapter. The same guide is in [Connecting your lights](CONNECTION
 - **Blackout** switches all light output off at once; press it again to bring it back.
 - **Theme:** the sun/moon switch in the top bar changes between light and dark. The choice is remembered.
 - **Phone and tablet:** below 900 px wide the navigation moves to a bottom bar and the layout stacks, so you can run
-  the show from a phone or tablet on the same network.
+  the show from a phone or tablet on the same network (the server must be set to listen beyond this computer: see the
+  [install guide](INSTALL.md#control-it-from-a-phone-or-tablet)).
 
 ## 8. Saving
 
 Your show (fixtures, looks, sequences) saves automatically a moment after each change. The top bar shows
-_Unsaved_, _Saving…_ or _Saved_. The data lives in `server/data/project.json` on the machine running the server.
+_Unsaved_, _Saving…_ or _Saved_. The data lives in `server/data/project.json` on the machine running the server, and the previous save is kept as
+`project.json.bak`.
 
 ## Current limits
 

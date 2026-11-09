@@ -1,4 +1,8 @@
 // Turns free text into a short, id-safe slug.
+/**
+ * @param {string} text
+ * @returns {string} lower-case letters, digits and single dashes, at most 50 characters
+ */
 export function slugify(text) {
   return String(text)
     .toLowerCase()

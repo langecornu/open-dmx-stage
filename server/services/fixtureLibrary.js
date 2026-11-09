@@ -6,6 +6,11 @@ import { slugify } from '../utils/slugify.js';
 
 import { fixtureTypeSchema } from '../schemas/projectSchema.js';
 
+/**
+ * @param {string} name
+ * @param {string} type one of CHANNEL_TYPES
+ * @param {number} [defaultValue]
+ */
 const ch = (name, type, defaultValue = 0) => ({ name, type, defaultValue });
 
 export const BUILTIN_FIXTURE_TYPES = [
@@ -67,6 +72,7 @@ export const BUILTIN_FIXTURE_TYPES = [
   },
 ];
 
+/** @type {Record<string, string>} */
 const COLOR_TYPES = {
   red: 'red',
   green: 'green',
@@ -78,6 +84,10 @@ const COLOR_TYPES = {
   uv: 'uv',
 };
 
+/**
+ * @param {Record<string, any> | undefined} definition an Open Fixture Library channel definition
+ * @returns {Record<string, any> | undefined}
+ */
 function firstCapability(definition) {
   if (definition?.capability) {
     return definition.capability;
@@ -85,11 +95,16 @@ function firstCapability(definition) {
   return Array.isArray(definition?.capabilities) ? definition.capabilities[0] : undefined;
 }
 
+/**
+ * @param {string} name
+ * @param {Record<string, any> | undefined} definition
+ * @returns {string} one of CHANNEL_TYPES
+ */
 function classifyChannel(name, definition) {
   const capability = firstCapability(definition);
   const capType = capability?.type;
   if (capType === 'ColorIntensity') {
-    return COLOR_TYPES[String(capability.color ?? '').toLowerCase()] ?? 'other';
+    return COLOR_TYPES[String(capability?.color ?? '').toLowerCase()] ?? 'other';
   }
   if (capType === 'Intensity') {
     return 'intensity';
@@ -115,6 +130,10 @@ function classifyChannel(name, definition) {
   return 'other';
 }
 
+/**
+ * @param {unknown} value a number, or a percentage string such as "50%"
+ * @returns {number} 0 to 255
+ */
 function parseDefault(value) {
   if (typeof value === 'number') {
     return Math.max(0, Math.min(255, Math.round(value)));
@@ -126,6 +145,13 @@ function parseDefault(value) {
 }
 
 // Converts one OFL fixture document into a validated fixture type. Throws a 400 for unusable input.
+/**
+ * Converts one Open Fixture Library fixture document into a validated fixture type.
+ * @param {Record<string, any>} document untrusted JSON from an OFL fixture file
+ * @param {string} [manufacturer]
+ * @returns {import('../../shared/types.js').FixtureType}
+ * @throws {Error & { status: number }} 400 when the document is not a usable fixture
+ */
 export function convertOpenFixtureLibrary(document, manufacturer = '') {
   const availableChannels = document.availableChannels;
   const modes = document.modes;
@@ -133,6 +159,7 @@ export function convertOpenFixtureLibrary(document, manufacturer = '') {
     throw httpError(400, 'Not an Open Fixture Library fixture (missing name, availableChannels or modes)');
   }
 
+  /** @type {Map<string, string>} */
   const fineAliases = new Map();
   for (const [name, definition] of Object.entries(availableChannels)) {
     for (const alias of definition?.fineChannelAliases ?? []) {
@@ -140,6 +167,7 @@ export function convertOpenFixtureLibrary(document, manufacturer = '') {
     }
   }
 
+  /** @param {string | null} name */
   const resolveChannel = (name) => {
     if (name === null || typeof name !== 'string') {
       return { name: 'Unused', type: 'other', defaultValue: 0 };
@@ -158,7 +186,7 @@ export function convertOpenFixtureLibrary(document, manufacturer = '') {
     name: document.name,
     modes: modes.slice(0, 32).map((mode) => ({
       name: String(mode.name ?? 'Mode'),
-      channels: (mode.channels ?? []).map((name) => resolveChannel(name)),
+      channels: (mode.channels ?? []).map((/** @type {string | null} */ name) => resolveChannel(name)),
     })),
   };
 

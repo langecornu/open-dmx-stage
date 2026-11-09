@@ -2,8 +2,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { outputSettingsSchema } from '../server/schemas/projectSchema.js';
-import { isAllowedHost } from '../server/utils/networkHost.js';
+import { outputSettingsSchema } from '../../server/schemas/projectSchema.js';
+import { isAllowedHost } from '../../server/utils/networkHost.js';
 
 describe('isAllowedHost', () => {
   it('accepts empty, private, loopback, link-local, multicast and broadcast IPv4 addresses', () => {

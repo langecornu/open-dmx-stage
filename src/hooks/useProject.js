@@ -70,5 +70,15 @@ export function useProject() {
     [persist],
   );
 
-  return { project, library, update, flush, saveStatus, error };
+  // Swaps in a project the server has already saved (an imported show), dropping any pending edit.
+  const replace = useCallback((next) => {
+    clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    latest.current = next;
+    setProject(next);
+    setError(null);
+    setSaveStatus('saved');
+  }, []);
+
+  return { project, library, update, flush, replace, saveStatus, error };
 }

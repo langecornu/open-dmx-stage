@@ -45,13 +45,16 @@ far.
 
 ## Scripts
 
-| Command                          | What it does                                       |
-| -------------------------------- | -------------------------------------------------- |
-| `npm run dev`                    | API on :4000 and web app on :5173 with live reload |
-| `npm run build` then `npm start` | Production build, served from one port (:4000)     |
-| `npm test`                       | Unit and API tests (`node:test`)                   |
-| `npm run lint`                   | ESLint                                             |
-| `npm run format`                 | Prettier                                           |
+| Command                          | What it does                                                  |
+| -------------------------------- | ------------------------------------------------------------- |
+| `npm run dev`                    | API on :4000 and web app on :5173 with live reload            |
+| `npm run build` then `npm start` | Production build, served from one port (:4000)                |
+| `npm run check`                  | Lint, type check, tests and build (run before a pull request) |
+| `npm test`                       | Server tests (`node:test`) and browser tests (Vitest)         |
+| `npm run test:coverage`          | Tests with coverage thresholds                                |
+| `npm run typecheck`              | Type check the JavaScript through JSDoc                       |
+| `npm run lint`                   | ESLint                                                        |
+| `npm run format`                 | Prettier                                                      |
 
 ## How it works
 
@@ -59,8 +62,10 @@ far.
   blackout to brightness channels only, and sends one 512-slot frame per tick (default 30 Hz).
 - Drivers live in `server/clients/` (`mock`, `open-dmx`, `enttec-pro`, `artnet`, `sacn`). Add another by implementing
   `open`, `send`, `close` and `getStatus`, then register it in `server/services/outputManager.js`.
-- The browser sends fader moves over a WebSocket (`/live`) and receives the live frame and engine state.
-- Your show is one JSON document (`server/data/project.json`), validated with zod and saved atomically.
+- The browser sends fader moves over a WebSocket (`/live`) and receives the live frame and engine state. The HTTP API
+  is versioned under `/api/v1`; `/healthz` and `/readyz` report the server's state.
+- Your show is one JSON document (`server/data/project.json`) with a schema version and migrations, validated with zod,
+  saved atomically with a rolling backup, and exportable from the Setup screen.
 - `shared/patch.js` resolves fixtures to absolute DMX channels for both the server and the browser.
 
 ## Project status
@@ -70,12 +75,14 @@ Version 0.1. One universe. Planned: more DMX interfaces, a beat-synced timeline,
 ## Contributing
 
 See [docs/CODING_STANDARDS.md](docs/CODING_STANDARDS.md) for the code style, testing and review rules.
-Run `npm run lint`, `npm test` and `npm run build` before opening a pull request.
+Run `npm run check` before opening a pull request. See also [CONTRIBUTING.md](CONTRIBUTING.md) and
+[SECURITY.md](SECURITY.md).
 
 ## Security
 
-The server has no authentication and is meant for your own machine or a trusted local network. It restricts browser
-origins, validates all input and rate limits the API, but do not expose it to the internet.
+The server has no authentication, so it listens only on this computer by default (set `HOST` to change that, on a
+network you trust). It restricts browser origins, validates all input and rate limits the API, but do not expose it to
+the internet. To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## Credits
 

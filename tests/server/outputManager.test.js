@@ -5,9 +5,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
-import { MockDriver } from '../server/clients/mockDriver.js';
-import { DmxEngine } from '../server/services/dmxEngine.js';
-import { OutputManager } from '../server/services/outputManager.js';
+import { MockDriver } from '../../server/clients/mockDriver.js';
+import { DmxEngine } from '../../server/services/dmxEngine.js';
+import { OutputManager } from '../../server/services/outputManager.js';
 
 let dataDir;
 before(async () => {
@@ -165,5 +165,114 @@ describe('OutputManager', () => {
       /Serial support is not available on this computer/,
       'the user is told serial is unavailable, not that the port is missing',
     );
+  });
+
+  it('retries a failed output with backoff and recovers when the device returns', async () => {
+    let healthy = false;
+    let opens = 0;
+    const buildDriver = (settings) => {
+      const driver = new MockDriver();
+      driver.name = settings.driver;
+      driver.path = settings.serialPath;
+      driver.open = async () => {
+        opens += 1;
+        if (!healthy) {
+          throw Object.assign(new Error('gone'), { code: 'ENOENT' });
+        }
+      };
+      return driver;
+    };
+    const engine = new DmxEngine({ driver: new MockDriver() });
+    const freshDir = await mkdtemp(path.join(tmpdir(), 'odmx-watchdog-'));
+    const manager = new OutputManager({
+      engine,
+      dataDir: freshDir, // not the shared directory: earlier tests saved settings there
+      defaults: { driver: 'open-dmx', serialPath: '/dev/cable' },
+      listPorts: async () => [{ path: '/dev/cable' }],
+      buildDriver,
+    });
+    await manager.init();
+    assert.equal(manager.getStatus().connected, false, 'start-up with a missing device is not connected');
+    const opensAfterInit = opens;
+
+    assert.equal(await manager.checkHealth(10_000), true, 'the first check retries');
+    assert.equal(opens, opensAfterInit + 1, 'it tried to open the device');
+    assert.equal(await manager.checkHealth(10_500), false, 'a check inside the backoff window does nothing');
+    assert.equal(await manager.checkHealth(12_001), true, 'after 2 s the next retry happens');
+    assert.equal(await manager.checkHealth(14_000), false, 'the delay doubled to 4 s, so this is too early');
+
+    healthy = true;
+    assert.equal(await manager.checkHealth(16_100), true, 'the retry after the backoff succeeds');
+    assert.equal(manager.getStatus().connected, true, 'the output recovered without a restart');
+    assert.equal(manager.getStatus().error, null, 'the error is cleared');
+    assert.equal(await manager.checkHealth(60_000), false, 'a healthy output is left alone');
+  });
+
+  it('never retries the simulator', async () => {
+    const { manager } = createManager();
+    assert.equal(await manager.checkHealth(1_000_000), false, 'nothing to recover when using the simulator');
+  });
+
+  it('keeps a watchdog retry and a user switch in order, one after the other', async () => {
+    const log = [];
+    let release;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    const buildDriver = (settings) => {
+      const driver = new MockDriver();
+      driver.name = settings.driver;
+      driver.path = settings.serialPath;
+      driver.open = async () => {
+        log.push(`open ${settings.driver} start`);
+        if (settings.driver === 'open-dmx') {
+          await gate; // the retry is still in flight when the user switches
+          throw Object.assign(new Error('gone'), { code: 'ENOENT' });
+        }
+        log.push(`open ${settings.driver} end`);
+      };
+      return driver;
+    };
+    const freshDir = await mkdtemp(path.join(tmpdir(), 'odmx-queue-'));
+    const manager = new OutputManager({
+      engine: new DmxEngine({ driver: new MockDriver() }),
+      dataDir: freshDir,
+      defaults: { driver: 'open-dmx', serialPath: '/dev/cable' },
+      listPorts: async () => [{ path: '/dev/cable' }],
+      buildDriver,
+    });
+    release();
+    await manager.init(); // fails and falls back to the simulator
+    log.length = 0;
+    let release2;
+    const gate2 = new Promise((resolve) => {
+      release2 = resolve;
+    });
+    manager.buildDriver = (settings) => {
+      const driver = buildDriver(settings);
+      if (settings.driver === 'open-dmx') {
+        driver.open = async () => {
+          log.push('retry start');
+          await gate2;
+          log.push('retry end');
+          throw new Error('still gone');
+        };
+      }
+      return driver;
+    };
+    const retry = manager.checkHealth(10_000);
+    await new Promise((resolve) => setImmediate(resolve));
+    const userSwitch = manager.apply({ driver: 'mock' });
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.deepEqual(log, ['retry start'], 'the switch waits for the retry instead of overlapping it');
+    release2();
+    await retry;
+    await userSwitch;
+    assert.deepEqual(
+      log,
+      ['retry start', 'retry end', 'open mock start', 'open mock end'],
+      'the retry finished completely before the user switch began',
+    );
+    assert.equal(manager.getStatus().settings.driver, 'mock', 'and the user switch then took effect');
   });
 });

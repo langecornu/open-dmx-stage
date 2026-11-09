@@ -5,9 +5,10 @@ import { DMX_CHANNELS, indexFixtureTypes } from '../../shared/patch.js';
 import { api } from '../api.js';
 import { planFixtures } from '../utils/patchTools.js';
 import { EmptyState } from './EmptyState.jsx';
+import { ShowFileCard } from './ShowFileCard.jsx';
 import { Icon } from './Icon.jsx';
 
-export function PatchView({ project, library, patch, update }) {
+export function PatchView({ project, library, patch, update, replaceProject }) {
   const typesById = useMemo(() => indexFixtureTypes(project, library), [project, library]);
   const allTypes = [...library, ...project.fixtureTypes];
   const [typeId, setTypeId] = useState(allTypes[0]?.id ?? '');
@@ -183,6 +184,7 @@ export function PatchView({ project, library, patch, update }) {
           })}
         </div>
       )}
+      <ShowFileCard onImported={replaceProject} />
     </section>
   );
 }

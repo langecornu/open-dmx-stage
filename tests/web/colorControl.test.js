@@ -1,8 +1,8 @@
 // Tests for turning a colour and brightness into DMX channel values per fixture.
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 
-import { applyColor } from '../src/utils/colorControl.js';
+import { applyColor } from '../../src/utils/colorControl.js';
 
 function patchOf(types) {
   const channels = new Map();
@@ -50,7 +50,7 @@ describe('applyColor', () => {
 
 describe('averageColor', () => {
   it('averages only lit fixtures and falls back to all when everything is dark', async () => {
-    const { averageColor } = await import('../src/utils/sceneColors.js');
+    const { averageColor } = await import('../../src/utils/sceneColors.js');
     const lit = averageColor([
       { r: 200, g: 0, b: 0, level: 0.8 },
       { r: 0, g: 0, b: 0, level: 0 },

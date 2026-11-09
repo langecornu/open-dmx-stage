@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import dgram from 'node:dgram';
 import { describe, it } from 'node:test';
 
-import { ArtNetDriver, buildArtNetPacket } from '../server/clients/artNetDriver.js';
-import { EnttecProDriver } from '../server/clients/enttecProDriver.js';
-import { OpenDmxDriver } from '../server/clients/openDmxDriver.js';
-import { SacnDriver, buildSacnPacket, multicastAddress } from '../server/clients/sacnDriver.js';
+import { ArtNetDriver, buildArtNetPacket } from '../../server/clients/artNetDriver.js';
+import { EnttecProDriver } from '../../server/clients/enttecProDriver.js';
+import { OpenDmxDriver } from '../../server/clients/openDmxDriver.js';
+import { SacnDriver, buildSacnPacket, multicastAddress } from '../../server/clients/sacnDriver.js';
 
 const frameWith = (first) => {
   const frame = new Uint8Array(512);

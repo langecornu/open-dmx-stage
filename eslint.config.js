@@ -1,11 +1,12 @@
-// ESLint flat config: Node rules for server/tests, React rules for src.
+// ESLint flat config: Node rules for server, tests and scripts; React and accessibility rules for src.
 import js from '@eslint/js';
 import globals from 'globals';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
-  { ignores: ['dist', 'node_modules'] },
+  { ignores: ['dist', 'node_modules', 'coverage'] },
   js.configs.recommended,
   {
     rules: {
@@ -17,20 +18,29 @@ export default [
     },
   },
   {
-    files: ['server/**/*.js', 'tests/**/*.js', 'scripts/**/*.js', '*.js'],
+    files: ['server/**/*.js', 'tests/server/**/*.js', 'scripts/**/*.js', '*.js'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: globals.node },
+  },
+  {
+    // All server output goes through server/logger.js (Standards 4.1).
+    files: ['server/**/*.js'],
+    rules: { 'no-console': 'error' },
+  },
+  {
+    files: ['server/logger.js'],
+    rules: { 'no-console': 'off' },
   },
   {
     files: ['public/**/*.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: globals.browser },
   },
   {
-    files: ['src/**/*.{js,jsx}'],
+    files: ['src/**/*.{js,jsx}', 'tests/web/**/*.{js,jsx}'],
     plugins: { react, 'react-hooks': reactHooks },
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',
-      globals: globals.browser,
+      globals: { ...globals.browser, ...globals.node },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
     settings: { react: { version: '18.3' } },
@@ -40,5 +50,9 @@ export default [
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
     },
+  },
+  {
+    files: ['src/**/*.{js,jsx}'],
+    ...jsxA11y.flatConfigs.recommended,
   },
 ];

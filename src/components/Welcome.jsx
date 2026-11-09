@@ -1,5 +1,5 @@
 // First-run welcome: three short steps (hello, pick your lights, ready) shown until the rig has fixtures.
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { planFixtures } from '../utils/patchTools.js';
 import { Icon } from './Icon.jsx';
@@ -7,8 +7,23 @@ import { Icon } from './Icon.jsx';
 const STEPS = ['Welcome', 'Your lights', 'Ready'];
 
 export function Welcome({ project, library, patch, update, output, onDone }) {
+  const dialogRef = useRef(null);
   const [step, setStep] = useState(0);
   const [quantities, setQuantities] = useState({});
+
+  // A real modal: the browser traps keyboard focus inside it and makes the app behind it inert.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) {
+      dialog.showModal();
+    }
+  }, []);
+
+  // Escape means "skip", the same as the Skip button, instead of closing the dialog and leaving the screen blank.
+  const handleCancel = (event) => {
+    event.preventDefault();
+    onDone();
+  };
 
   const handleQuantity = (id, delta) =>
     setQuantities((current) => ({ ...current, [id]: Math.max(0, Math.min(32, (current[id] ?? 0) + delta)) }));
@@ -46,7 +61,7 @@ export function Welcome({ project, library, patch, update, output, onDone }) {
   const hardware = output && output.driver !== 'mock';
 
   return (
-    <div className="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+    <dialog ref={dialogRef} className="welcome" aria-labelledby="welcome-title" onCancel={handleCancel}>
       <div className="welcome-card card">
         <div className="welcome-brand">
           <div className="brand-mark" aria-hidden="true" />
@@ -162,6 +177,6 @@ export function Welcome({ project, library, patch, update, output, onDone }) {
           </div>
         ) : null}
       </div>
-    </div>
+    </dialog>
   );
 }

@@ -6,6 +6,10 @@ const IPV4 = new RegExp(`^(${OCTET})\\.(${OCTET})\\.(${OCTET})\\.(${OCTET})$`);
 
 export const HOST_HELP = "Use your device's IP address on your own network, for example 192.168.1.50";
 
+/**
+ * @param {string} host an IPv4 address, or an empty string meaning "broadcast or multicast"
+ * @returns {boolean}
+ */
 export function isAllowedHost(host) {
   if (host === '') {
     return true;

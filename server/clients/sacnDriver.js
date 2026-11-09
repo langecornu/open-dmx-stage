@@ -6,7 +6,14 @@ const SACN_PORT = 5568;
 const SOURCE_NAME = 'Open DMX Stage';
 const PRIORITY = 100;
 
-// Builds a full E1.31 data packet for one universe (1-63999). 638 bytes for 512 slots.
+/**
+ * Builds a full E1.31 data packet for one universe: 638 bytes for 512 slots.
+ * @param {Uint8Array} frame the DMX slots, normally 512
+ * @param {number} universe 1 to 63999
+ * @param {number} sequence 0 to 255
+ * @param {Buffer} cid 16-byte sender id
+ * @returns {Buffer}
+ */
 export function buildSacnPacket(frame, universe, sequence, cid) {
   const total = 126 + frame.length;
   const packet = Buffer.alloc(total);
@@ -38,11 +45,22 @@ export function buildSacnPacket(frame, universe, sequence, cid) {
   return packet;
 }
 
+/**
+ * @param {number} universe 1 to 63999
+ * @returns {string} the standard multicast group for the universe
+ */
 export function multicastAddress(universe) {
   return `239.255.${universe >> 8}.${universe & 0xff}`;
 }
 
+/** @typedef {import('../../shared/types.js').Driver} Driver */
+
+/** @implements {Driver} */
 export class SacnDriver {
+  /**
+   * @param {{ host?: string, universe?: number, port?: number, createSocket?: () => import('node:dgram').Socket }} options
+   *   `createSocket` is injectable so tests can use a fake socket.
+   */
   constructor({
     host = '',
     universe = 1,
@@ -55,26 +73,30 @@ export class SacnDriver {
     this.port = port;
     this.createSocket = createSocket;
     this.cid = crypto.randomBytes(16);
+    /** @type {import('node:dgram').Socket | null} */
     this.socket = null;
     this.sequence = 0;
+    /** @type {string | null} */
     this.error = null;
   }
 
   async open() {
-    this.socket = this.createSocket();
-    this.socket.on('error', (error) => {
+    const socket = this.createSocket();
+    this.socket = socket;
+    socket.on('error', (error) => {
       this.error = error.message;
     });
     await new Promise((resolve, reject) => {
-      this.socket.once('error', reject);
-      this.socket.bind(0, () => {
-        this.socket.off('error', reject);
-        this.socket.setMulticastTTL(8);
-        resolve();
+      socket.once('error', reject);
+      socket.bind(0, () => {
+        socket.off('error', reject);
+        socket.setMulticastTTL(8);
+        resolve(undefined);
       });
     });
   }
 
+  /** @param {Uint8Array} frame 512 slots */
   send(frame) {
     if (!this.socket) {
       return;
@@ -93,12 +115,14 @@ export class SacnDriver {
   }
 
   async close() {
-    if (this.socket) {
-      await new Promise((resolve) => this.socket.close(resolve));
+    const socket = this.socket;
+    if (socket) {
       this.socket = null;
+      await new Promise((resolve) => socket.close(() => resolve(undefined)));
     }
   }
 
+  /** @returns {import('../../shared/types.js').DriverStatus} */
   getStatus() {
     return {
       driver: this.name,

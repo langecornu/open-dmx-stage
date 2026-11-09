@@ -1,21 +1,62 @@
 // WebSocket endpoint for low-latency control (faders, recall, chases) and live frame/state streaming.
+// Clients are checked with ping and pong so a dead connection is dropped, and the first message is a `hello` carrying
+// the protocol version so an old browser tab and a new server can tell they differ.
 import { WebSocketServer } from 'ws';
 
+import { logger } from '../logger.js';
 import { liveMessageSchema } from '../schemas/projectSchema.js';
 
-const FRAME_BROADCAST_MS = 66;
+const log = logger.child({ module: 'live-socket' });
 
-export function attachLiveSocket({ server, engine, projectService, outputManager, allowedOrigins }) {
+export const PROTOCOL_VERSION = 1;
+const FRAME_BROADCAST_MS = 66;
+const STATUS_CHECK_MS = 2000;
+const HEARTBEAT_MS = 15000;
+
+/** @typedef {import('ws').WebSocket & { isAlive?: boolean }} LiveClient */
+
+/**
+ * @param {{
+ *   server: import('node:http').Server,
+ *   engine: import('../services/dmxEngine.js').DmxEngine,
+ *   projectService: import('../services/projectService.js').ProjectService,
+ *   outputManager: import('../services/outputManager.js').OutputManager,
+ *   allowedOrigins: string[],
+ *   heartbeatMs?: number,
+ * }} options `heartbeatMs` is how often idle clients are pinged; tests shorten it.
+ * @returns {{ close: () => void }}
+ */
+export function attachLiveSocket({
+  server,
+  engine,
+  projectService,
+  outputManager,
+  allowedOrigins,
+  heartbeatMs = HEARTBEAT_MS,
+}) {
   const wss = new WebSocketServer({
     server,
     path: '/live',
     maxPayload: 64 * 1024,
-    verifyClient: ({ origin }) => !origin || allowedOrigins.includes(origin),
+    verifyClient: (/** @type {{ origin: string }} */ { origin }) => !origin || allowedOrigins.includes(origin),
   });
 
+  /**
+   * @param {import('ws').WebSocket} socket
+   * @param {unknown} message
+   */
   const send = (socket, message) => {
     if (socket.readyState === socket.OPEN) {
       socket.send(JSON.stringify(message));
+    }
+  };
+
+  /** @param {string} payload */
+  const broadcast = (payload) => {
+    for (const client of wss.clients) {
+      if (client.readyState === client.OPEN) {
+        client.send(payload);
+      }
     }
   };
 
@@ -27,20 +68,10 @@ export function attachLiveSocket({ server, engine, projectService, outputManager
         return;
       }
       lastFrameAt = at;
-      const payload = JSON.stringify({ type: 'frame', frame: Array.from(event.frame) });
-      for (const client of wss.clients) {
-        if (client.readyState === client.OPEN) {
-          client.send(payload);
-        }
-      }
+      broadcast(JSON.stringify({ type: 'frame', frame: Array.from(event.frame) }));
       return;
     }
-    const payload = JSON.stringify(event);
-    for (const client of wss.clients) {
-      if (client.readyState === client.OPEN) {
-        client.send(payload);
-      }
-    }
+    broadcast(JSON.stringify(event));
   });
 
   // Push output status on change, and re-check every couple of seconds so an unplugged cable shows up.
@@ -54,15 +85,24 @@ export function attachLiveSocket({ server, engine, projectService, outputManager
       return;
     }
     lastStatus = payload;
-    for (const client of wss.clients) {
-      if (client.readyState === client.OPEN) {
-        client.send(payload);
-      }
-    }
+    broadcast(payload);
   };
   const unsubscribeOutput = outputManager.subscribe(broadcastStatus);
-  const statusTimer = setInterval(broadcastStatus, 2000);
+  const statusTimer = setInterval(broadcastStatus, STATUS_CHECK_MS);
 
+  // Drop clients that stop answering pings (closed laptop lid, lost Wi-Fi) so they do not pile up.
+  const heartbeatTimer = setInterval(() => {
+    for (const client of /** @type {Set<LiveClient>} */ (wss.clients)) {
+      if (client.isAlive === false) {
+        client.terminate();
+      } else {
+        client.isAlive = false;
+        client.ping();
+      }
+    }
+  }, heartbeatMs);
+
+  /** @param {import('zod').z.infer<typeof liveMessageSchema>} message */
   const handleMessage = (message) => {
     const project = projectService.get();
     switch (message.type) {
@@ -100,7 +140,12 @@ export function attachLiveSocket({ server, engine, projectService, outputManager
     }
   };
 
-  wss.on('connection', (socket) => {
+  wss.on('connection', (/** @type {LiveClient} */ socket) => {
+    socket.isAlive = true;
+    socket.on('pong', () => {
+      socket.isAlive = true;
+    });
+    send(socket, { type: 'hello', version: PROTOCOL_VERSION });
     send(socket, { type: 'state', state: engine.getState() });
     send(socket, { type: 'output', status: outputManager.getStatus() });
     socket.on('message', (data) => {
@@ -117,6 +162,7 @@ export function attachLiveSocket({ server, engine, projectService, outputManager
       }
       handleMessage(parsed.data);
     });
+    socket.on('error', (error) => log.warn({ err: error }, 'Socket error'));
   });
 
   return {
@@ -124,6 +170,7 @@ export function attachLiveSocket({ server, engine, projectService, outputManager
       unsubscribe();
       unsubscribeOutput();
       clearInterval(statusTimer);
+      clearInterval(heartbeatTimer);
       wss.close();
     },
   };

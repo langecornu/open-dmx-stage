@@ -16,7 +16,7 @@ export function SequenceTimeline({ chase, project, patch, playingIndex }) {
           const fadeShare = Math.min(100, (step.fadeMs / durations[index]) * 100);
           return (
             <div
-              key={index}
+              key={step.id}
               className="timeline-block"
               data-playing={playingIndex === index}
               style={{ flexGrow: durations[index], background: sceneGradient(colors) }}

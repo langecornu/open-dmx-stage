@@ -8,11 +8,11 @@ import { after, before, describe, it } from 'node:test';
 
 import { WebSocket } from 'ws';
 
-import { MockDriver } from '../server/clients/mockDriver.js';
-import { DmxEngine } from '../server/services/dmxEngine.js';
-import { OutputManager } from '../server/services/outputManager.js';
-import { ProjectService } from '../server/services/projectService.js';
-import { attachLiveSocket } from '../server/ws/liveSocket.js';
+import { MockDriver } from '../../server/clients/mockDriver.js';
+import { DmxEngine } from '../../server/services/dmxEngine.js';
+import { OutputManager } from '../../server/services/outputManager.js';
+import { ProjectService } from '../../server/services/projectService.js';
+import { attachLiveSocket } from '../../server/ws/liveSocket.js';
 
 const ALLOWED_ORIGIN = 'http://localhost:5173';
 let server;
@@ -88,5 +88,36 @@ describe('live socket', () => {
       socket.on('error', () => resolve('error'));
     });
     assert.notEqual(outcome, 'opened', 'a foreign origin must not be able to open the control socket');
+  });
+
+  it('drops a client that stops answering pings', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'odmx-ws-hb-'));
+    const engine = new DmxEngine({ driver: new MockDriver() });
+    const projectService = new ProjectService({ dataDir: dir });
+    await projectService.load();
+    const manager = new OutputManager({ engine, dataDir: dir, defaults: { driver: 'mock' } });
+    const heartbeatServer = createServer();
+    const api = attachLiveSocket({
+      server: heartbeatServer,
+      engine,
+      projectService,
+      outputManager: manager,
+      allowedOrigins: [ALLOWED_ORIGIN],
+      heartbeatMs: 40,
+    });
+    await new Promise((resolve) => heartbeatServer.listen(0, resolve));
+    const silent = new WebSocket(`ws://localhost:${heartbeatServer.address().port}/live`, {
+      headers: { Origin: ALLOWED_ORIGIN },
+      autoPong: false, // a client that never answers, like a laptop with its lid closed
+    });
+    const closed = new Promise((resolve) => silent.on('close', resolve));
+    await new Promise((resolve) => silent.on('open', resolve));
+    await Promise.race([
+      closed,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('the silent client was not dropped')), 2000)),
+    ]);
+    api.close();
+    await new Promise((resolve) => heartbeatServer.close(resolve));
+    await rm(dir, { recursive: true, force: true });
   });
 });

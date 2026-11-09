@@ -1,6 +1,7 @@
 // Looks (scenes): save what is on stage, then recall it with a fade.
 import { useState } from 'react';
 
+import { frameStore } from '../hooks/frameStore.js';
 import { fixtureColors, sceneGradient } from '../utils/sceneColors.js';
 import { EmptyState } from './EmptyState.jsx';
 import { Icon } from './Icon.jsx';
@@ -52,7 +53,7 @@ export function ScenesView({ project, patch, update, flush, live }) {
   const handleRecord = () => {
     const values = {};
     for (const channel of patch.channels.keys()) {
-      const value = live.frame[channel - 1] ?? 0;
+      const value = frameStore.get()[channel - 1] ?? 0;
       if (value > 0) {
         values[channel] = value;
       }

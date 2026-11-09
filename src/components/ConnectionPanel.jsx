@@ -1,9 +1,15 @@
 // Connection: choose how DMX leaves the app (simulator, USB cable, ENTTEC Pro, Art-Net, sACN) without env vars.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { api } from '../api.js';
-import { ConnectionHelp, TAB_FOR_DRIVER } from './ConnectionHelp.jsx';
+import { ErrorBoundary } from './ErrorBoundary.jsx';
+import { TAB_FOR_DRIVER } from './guide/guideTabs.js';
 import { Icon } from './Icon.jsx';
+
+// The guide is large and rarely opened, so it loads on demand rather than with the app.
+const ConnectionHelp = lazy(() =>
+  import('./ConnectionHelp.jsx').then((module) => ({ default: module.ConnectionHelp })),
+);
 
 const INTERFACES = [
   { id: 'mock', label: 'Simulator', hint: 'No hardware needed. Good for trying things out.' },
@@ -61,17 +67,21 @@ export function ConnectionPanel({ output }) {
       current.driver === driver ? current : { ...current, driver, universe: DEFAULT_UNIVERSE[driver] ?? 0 },
     );
 
-  const handleUniverse = (rawValue) => {
+  const clampUniverse = (value) => {
     const [min, max] = UNIVERSE_LIMITS[form.driver] ?? [0, 63999];
-    const value = Math.round(Number(rawValue));
-    setForm({ ...form, universe: Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : min });
+    const rounded = Math.round(Number(value));
+    return Number.isFinite(rounded) && value !== '' ? Math.min(max, Math.max(min, rounded)) : min;
   };
+
+  // Let the person type freely (including clearing the field); the range is enforced when they leave the field.
+  const handleUniverse = (rawValue) => setForm({ ...form, universe: rawValue === '' ? '' : Number(rawValue) });
+  const handleUniverseBlur = () => setForm({ ...form, universe: clampUniverse(form.universe) });
 
   const handleConnect = async () => {
     setIsBusy(true);
     setMessage(null);
     try {
-      await api.saveOutputSettings(form);
+      await api.saveOutputSettings({ ...form, universe: clampUniverse(form.universe) });
       setMessage({ kind: 'ok', text: 'Connected. Output is now going to the selected interface.' });
     } catch (error) {
       setMessage({ kind: 'error', text: error.message });
@@ -162,6 +172,7 @@ export function ConnectionPanel({ output }) {
                 max={form.driver === 'artnet' ? 32767 : 63999}
                 value={form.universe}
                 onChange={(event) => handleUniverse(event.target.value)}
+                onBlur={handleUniverseBlur}
               />
             </label>
           </>
@@ -185,7 +196,11 @@ export function ConnectionPanel({ output }) {
         </p>
       ) : null}
       {isHelpOpen ? (
-        <ConnectionHelp initialTab={TAB_FOR_DRIVER[form.driver]} onClose={() => setIsHelpOpen(false)} />
+        <ErrorBoundary label="the guide">
+          <Suspense fallback={null}>
+            <ConnectionHelp initialTab={TAB_FOR_DRIVER[form.driver]} onClose={() => setIsHelpOpen(false)} />
+          </Suspense>
+        </ErrorBoundary>
       ) : null}
     </section>
   );
