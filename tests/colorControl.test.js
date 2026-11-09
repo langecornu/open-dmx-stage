@@ -47,3 +47,18 @@ describe('applyColor', () => {
     assert.equal(values[1], 0, 'dimmer goes to zero for black');
   });
 });
+
+describe('averageColor', () => {
+  it('averages only lit fixtures and falls back to all when everything is dark', async () => {
+    const { averageColor } = await import('../src/utils/sceneColors.js');
+    const lit = averageColor([
+      { r: 200, g: 0, b: 0, level: 0.8 },
+      { r: 0, g: 0, b: 0, level: 0 },
+      { r: 100, g: 100, b: 0, level: 0.4 },
+    ]);
+    assert.deepEqual([lit.r, lit.g, lit.b], [150, 50, 0], 'dark fixtures are ignored in the mean');
+    const dark = averageColor([{ r: 0, g: 0, b: 0, level: 0 }]);
+    assert.equal(dark.level, 0, 'all-dark input stays dark');
+    assert.equal(averageColor([]).css, 'rgb(0, 0, 0)', 'no fixtures gives black');
+  });
+});

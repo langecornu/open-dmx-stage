@@ -48,8 +48,10 @@ export class DmxEngine {
     this.emitState();
   }
 
+  // Playing a look or sequence takes over from any manual changes, otherwise the manual layer would hide it.
   recallScene(scene, fadeMs = 0) {
     this.stopChase();
+    this.programmer.clear();
     this.activeSceneId = scene.id;
     this.startFade(scene.values, fadeMs);
     this.emitState();
@@ -60,6 +62,7 @@ export class DmxEngine {
     if (steps.length === 0) {
       return false;
     }
+    this.programmer.clear();
     this.chase = { id: chase.id, loop: chase.loop, steps, scenesById, index: 0, phase: 'fade', phaseStart: 0 };
     this.activeSceneId = null;
     this.beginChaseStep(this.now());

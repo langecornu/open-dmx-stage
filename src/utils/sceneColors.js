@@ -42,6 +42,20 @@ export function fixtureColor(range, patch, valueOf) {
   return { r, g, b, level: Math.max(r, g, b) / 255, css: `rgb(${r}, ${g}, ${b})` };
 }
 
+// Mean colour of the lit fixtures in a list (or of all of them when none is lit). Used for the studio preview.
+export function averageColor(colors) {
+  const lit = colors.filter((color) => color.level > 0.02);
+  const pool = lit.length > 0 ? lit : colors;
+  if (pool.length === 0) {
+    return { r: 0, g: 0, b: 0, level: 0, css: 'rgb(0, 0, 0)' };
+  }
+  const mean = (key) => Math.round(pool.reduce((sum, color) => sum + color[key], 0) / pool.length);
+  const r = mean('r');
+  const g = mean('g');
+  const b = mean('b');
+  return { r, g, b, level: Math.max(r, g, b) / 255, css: `rgb(${r}, ${g}, ${b})` };
+}
+
 export function fixtureColors(project, patch, values) {
   return project.fixtures
     .map((fixture) =>

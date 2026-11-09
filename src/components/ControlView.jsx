@@ -1,7 +1,8 @@
 // Lights: choose a colour and brightness for all or selected fixtures; fine-tune single channels per fixture.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { applyColor } from '../utils/colorControl.js';
+import { averageColor, fixtureColor } from '../utils/sceneColors.js';
 import { ColorStudio } from './ColorStudio.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { FixtureTile } from './FixtureTile.jsx';
@@ -12,6 +13,15 @@ export function ControlView({ project, patch, live }) {
   const [color, setColor] = useState([255, 190, 120]);
   const [brightness, setBrightness] = useState(1);
   const overridden = new Set(live.engine.programmerChannels);
+  const overrideCount = live.engine.programmerChannels.length;
+
+  // When the server drops manual changes (a look or sequence took over), forget the local fader values too.
+  useEffect(() => {
+    if (overrideCount === 0) {
+      setEdits({});
+    }
+  }, [overrideCount]);
+
   const valueOf = (channel) => edits[channel] ?? live.frame[channel - 1] ?? 0;
 
   const patched = project.fixtures.filter((fixture) =>
@@ -20,6 +30,14 @@ export function ControlView({ project, patch, live }) {
   const rangeOf = (fixture) => patch.fixtures.find((entry) => entry.id === fixture.id);
   const targets = selected.size > 0 ? patched.filter((fixture) => selected.has(fixture.id)) : patched;
   const targetLabel = selected.size > 0 ? `${selected.size} selected` : 'all fixtures';
+
+  const liveColor = averageColor(targets.map((fixture) => fixtureColor(rangeOf(fixture), patch, valueOf)));
+  // Swatch highlight and slider only mean something while the output still matches the chosen colour.
+  const expected = color.map((part) => part * brightness);
+  const isInSync =
+    Math.abs(liveColor.r - expected[0]) <= 12 &&
+    Math.abs(liveColor.g - expected[1]) <= 12 &&
+    Math.abs(liveColor.b - expected[2]) <= 12;
 
   const handleSet = (values) => {
     setEdits((current) => ({ ...current, ...values }));
@@ -78,6 +96,8 @@ export function ControlView({ project, patch, live }) {
           <ColorStudio
             color={color}
             brightness={brightness}
+            liveColor={liveColor}
+            isInSync={isInSync}
             targetLabel={targetLabel}
             onColor={handleColor}
             onBrightness={handleBrightness}

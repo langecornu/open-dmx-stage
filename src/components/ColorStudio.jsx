@@ -19,11 +19,11 @@ export const SWATCHES = [
 
 const isSameColor = (a, b) => a.every((part, index) => part === b[index]);
 
-export function ColorStudio({ color, brightness, targetLabel, onColor, onBrightness }) {
+export function ColorStudio({ color, brightness, liveColor, isInSync, targetLabel, onColor, onBrightness }) {
   const [r, g, b] = color;
-  const level = brightness;
-  const previewColor = `rgb(${Math.round(r * level)}, ${Math.round(g * level)}, ${Math.round(b * level)})`;
-  const glow = Math.max(r, g, b) * level;
+  // The preview shows what the targeted fixtures are really emitting, not the last colour that was clicked.
+  const previewColor = liveColor.css;
+  const glow = Math.max(liveColor.r, liveColor.g, liveColor.b);
 
   return (
     <section className="card card-pad studio" aria-label="Colour studio">
@@ -49,7 +49,7 @@ export function ColorStudio({ color, brightness, targetLabel, onColor, onBrightn
               className="swatch"
               title={swatch.name}
               aria-label={swatch.name}
-              aria-pressed={isSameColor(color, swatch.rgb)}
+              aria-pressed={isInSync && isSameColor(color, swatch.rgb)}
               style={{ background: swatch.name === 'Off' ? 'var(--surface-3)' : `rgb(${swatch.rgb.join(',')})` }}
               onClick={() => onColor(swatch.rgb)}
             />

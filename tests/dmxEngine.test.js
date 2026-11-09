@@ -88,4 +88,21 @@ describe('DmxEngine', () => {
     const chase = { id: 'c', loop: true, steps: [{ sceneId: 'gone', fadeMs: 0, holdMs: 0 }] };
     assert.equal(engine.startChase(chase, new Map()), false, 'missing scenes should not start a chase');
   });
+
+  it('clears manual changes when a look is recalled so the look is actually visible', () => {
+    const { engine } = createEngine();
+    engine.setProgrammer({ 1: 10 });
+    engine.recallScene({ id: 's1', values: { 1: 200 } }, 0);
+    assert.equal(engine.tick(0)[0], 200, 'the recalled look replaces the manual value');
+    assert.deepEqual(engine.getState().programmerChannels, [], 'no manual overrides remain');
+  });
+
+  it('clears manual changes when a chase starts', () => {
+    const { engine } = createEngine();
+    engine.setProgrammer({ 1: 10 });
+    const scenes = new Map([['a', { id: 'a', values: { 1: 255 } }]]);
+    engine.startChase({ id: 'c', loop: true, steps: [{ sceneId: 'a', fadeMs: 0, holdMs: 100 }] }, scenes);
+    assert.equal(engine.tick(0)[0], 255, 'the chase look is visible');
+    assert.deepEqual(engine.getState().programmerChannels, [], 'no manual overrides remain');
+  });
 });
