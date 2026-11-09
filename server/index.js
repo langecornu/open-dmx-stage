@@ -30,7 +30,7 @@ const liveSocket = attachLiveSocket({ server, engine, projectService, allowedOri
 
 engine.start();
 server.listen(config.port, () => {
-  console.log(`[server] Open DMX Studio API on http://localhost:${config.port} (driver: ${driver.name})`);
+  console.log(`[server] Open DMX Stage API on http://localhost:${config.port} (driver: ${driver.name})`);
 });
 
 async function shutdown(signal) {

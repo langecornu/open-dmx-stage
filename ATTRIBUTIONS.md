@@ -1,6 +1,6 @@
 # Attributions
 
-Open DMX Studio is built on open-source software and public specifications. Thank you to their authors.
+Open DMX Stage is built on open-source software and public specifications. Thank you to their authors.
 All runtime and build dependencies below are MIT licensed (versions as installed; see `package-lock.json`).
 
 ## Runtime dependencies

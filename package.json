@@ -1,7 +1,7 @@
 {
-  "name": "open-dmx-studio",
+  "name": "open-dmx-stage",
   "version": "0.1.0",
-  "description": "Open DMX Studio: design, program and run DMX lighting scenes and chases from the browser.",
+  "description": "Open DMX Stage: design, program and run DMX lighting scenes and chases from the browser.",
   "private": true,
   "type": "module",
   "license": "MIT",

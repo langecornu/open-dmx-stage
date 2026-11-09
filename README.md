@@ -1,9 +1,9 @@
-# Open DMX Studio
+# Open DMX Stage
 
 **Light your show from the browser.** Colour your fixtures, save looks, and chain them into sequences with smooth
 fades. Works with an ENTTEC DMX USB Pro, or in a built-in simulator when you have no hardware.
 
-![Open DMX Studio, Lights screen](docs/images/03-lights-light.jpg)
+![Open DMX Stage, Lights screen](docs/images/03-lights-light.jpg)
 
 ## Features
 
@@ -20,8 +20,8 @@ fades. Works with an ENTTEC DMX USB Pro, or in a built-in simulator when you hav
 ## Quick start
 
 ```bash
-git clone https://github.com/langecornu2027/open-dmx-studio.git
-cd open-dmx-studio
+git clone https://github.com/langecornu2027/open-dmx-stage.git
+cd open-dmx-stage
 npm install
 npm run dev
 ```

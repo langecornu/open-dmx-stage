@@ -1,6 +1,6 @@
 # Usage guide
 
-A quick tour of Open DMX Studio. If you have not installed it yet, start with the [install guide](INSTALL.md).
+A quick tour of Open DMX Stage. If you have not installed it yet, start with the [install guide](INSTALL.md).
 
 The app has five screens, reached from the left rail (or the bottom bar on phones and tablets):
 

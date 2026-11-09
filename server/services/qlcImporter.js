@@ -1,4 +1,4 @@
-// Converts a QLC+ fixture definition (.qxf, XML) into an Open DMX Studio fixture type.
+// Converts a QLC+ fixture definition (.qxf, XML) into an Open DMX Stage fixture type.
 // QLC+ (https://github.com/mcallegari/qlcplus, Apache-2.0) documents and ships this format; no QLC+ data
 // or code is bundled here, users import files they already have.
 import { XMLParser } from 'fast-xml-parser';

@@ -15,7 +15,7 @@ export function Sidebar({ current, onSelect }) {
       <div className="brand">
         <div className="brand-mark" aria-hidden="true" />
         <div>
-          <div className="brand-name">Open DMX Studio</div>
+          <div className="brand-name">Open DMX Stage</div>
           <div className="brand-sub">Light your show</div>
         </div>
       </div>

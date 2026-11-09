@@ -63,7 +63,7 @@ export function Welcome({ project, library, patch, update, output, onDone }) {
         {step === 0 ? (
           <div className="welcome-body">
             <h1 id="welcome-title" className="welcome-title">
-              Welcome to Open DMX Studio
+              Welcome to Open DMX Stage
             </h1>
             <p className="view-sub">
               Colour your lights, save looks, and chain them into a show, all from your browser. Setting up takes under

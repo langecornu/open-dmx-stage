@@ -1,6 +1,6 @@
 # Install guide
 
-Open DMX Studio is a Node.js server plus a React web app. It runs on macOS, Windows and Linux. You do not need any
+Open DMX Stage is a Node.js server plus a React web app. It runs on macOS, Windows and Linux. You do not need any
 lighting hardware to try it: without a DMX interface it runs in **simulator mode**.
 
 ## 1. Requirements
@@ -42,8 +42,8 @@ your machine, everything still works in simulator mode.
 ## 2. Get the code and install
 
 ```bash
-git clone https://github.com/langecornu2027/open-dmx-studio.git
-cd open-dmx-studio
+git clone https://github.com/langecornu2027/open-dmx-stage.git
+cd open-dmx-stage
 npm install
 ```
 
