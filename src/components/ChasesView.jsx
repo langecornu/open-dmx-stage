@@ -2,11 +2,10 @@
 import { useState } from 'react';
 
 import { fixtureColors, sceneGradient } from '../utils/sceneColors.js';
+import { SequenceStepRow } from './SequenceStepRow.jsx';
 import { SequenceTimeline } from './SequenceTimeline.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { Icon } from './Icon.jsx';
-
-const clampMs = (raw) => Math.max(0, Math.min(600000, Math.round(Number(raw) * 1000) || 0));
 
 export function ChasesView({ project, patch, update, flush, live }) {
   const [selectedId, setSelectedId] = useState(project.chases[0]?.id ?? null);
@@ -33,7 +32,9 @@ export function ChasesView({ project, patch, update, flush, live }) {
   const handleAddStep = () => {
     const firstScene = project.scenes[0];
     if (firstScene) {
-      patchChase(chase.id, { steps: [...chase.steps, { sceneId: firstScene.id, fadeMs: 1000, holdMs: 2000 }] });
+      patchChase(chase.id, {
+        steps: [...chase.steps, { id: crypto.randomUUID(), sceneId: firstScene.id, fadeMs: 1000, holdMs: 2000 }],
+      });
     }
   };
   const handleStep = (index, changes) =>
@@ -68,24 +69,24 @@ export function ChasesView({ project, patch, update, flush, live }) {
         <EmptyState title="No sequences yet" hint="Save a few looks first, then chain them into a sequence." />
       ) : (
         <div className="split">
-          <div className="card list" role="list">
+          <ul className="card list">
             {project.chases.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                role="listitem"
-                className="list-item"
-                aria-current={item.id === selectedId}
-                onClick={() => setSelectedId(item.id)}
-              >
-                {item.name}
-                {live.engine.activeChaseId === item.id ? <span className="badge badge-live">Playing</span> : null}
-              </button>
+              <li key={item.id}>
+                <button
+                  type="button"
+                  className="list-item"
+                  aria-current={item.id === selectedId}
+                  onClick={() => setSelectedId(item.id)}
+                >
+                  {item.name}
+                  {live.engine.activeChaseId === item.id ? <span className="badge badge-live">Playing</span> : null}
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
 
           {chase ? (
-            <div className="card card-pad" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <div className="card card-pad chase-editor">
               <div className="toolbar">
                 <label className="field">
                   Name
@@ -145,84 +146,23 @@ export function ChasesView({ project, patch, update, flush, live }) {
                 </div>
               ) : null}
               {chase.steps.map((step, index) => (
-                <div key={index} className="step-row" data-playing={isPlaying && live.engine.chaseStep === index}>
-                  <span className="step-index">{index + 1}</span>
-                  <span
-                    className="step-thumb"
-                    aria-hidden="true"
-                    style={{
-                      background: sceneGradient(
-                        fixtureColors(
-                          project,
-                          patch,
-                          project.scenes.find((scene) => scene.id === step.sceneId)?.values ?? {},
-                        ),
-                      ),
-                    }}
-                  />
-                  <select
-                    className="select"
-                    aria-label={`Look for step ${index + 1}`}
-                    value={step.sceneId}
-                    onChange={(e) => handleStep(index, { sceneId: e.target.value })}
-                  >
-                    {project.scenes.map((scene) => (
-                      <option key={scene.id} value={scene.id}>
-                        {scene.name}
-                      </option>
-                    ))}
-                  </select>
-                  <label className="field">
-                    <span className="sr-only">Fade seconds</span>
-                    <input
-                      className="input"
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      aria-label={`Fade seconds for step ${index + 1}`}
-                      value={step.fadeMs / 1000}
-                      onChange={(e) => handleStep(index, { fadeMs: clampMs(e.target.value) })}
-                    />
-                  </label>
-                  <label className="field">
-                    <span className="sr-only">Hold seconds</span>
-                    <input
-                      className="input"
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      aria-label={`Hold seconds for step ${index + 1}`}
-                      value={step.holdMs / 1000}
-                      onChange={(e) => handleStep(index, { holdMs: clampMs(e.target.value) })}
-                    />
-                  </label>
-                  <span style={{ display: 'flex', gap: 2 }}>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-icon"
-                      aria-label={`Move step ${index + 1} up`}
-                      onClick={() => handleMove(index, -1)}
-                    >
-                      <Icon name="up" size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-icon"
-                      aria-label={`Move step ${index + 1} down`}
-                      onClick={() => handleMove(index, 1)}
-                    >
-                      <Icon name="down" size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-icon btn-danger"
-                      aria-label={`Remove step ${index + 1}`}
-                      onClick={() => handleRemoveStep(index)}
-                    >
-                      <Icon name="trash" size={16} />
-                    </button>
-                  </span>
-                </div>
+                <SequenceStepRow
+                  key={step.id}
+                  step={step}
+                  index={index}
+                  isPlaying={Boolean(isPlaying) && live.engine.chaseStep === index}
+                  scenes={project.scenes}
+                  thumbnail={sceneGradient(
+                    fixtureColors(
+                      project,
+                      patch,
+                      project.scenes.find((scene) => scene.id === step.sceneId)?.values ?? {},
+                    ),
+                  )}
+                  onChange={handleStep}
+                  onMove={handleMove}
+                  onRemove={handleRemoveStep}
+                />
               ))}
               <div>
                 <button type="button" className="btn" onClick={handleAddStep} disabled={project.scenes.length === 0}>
