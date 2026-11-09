@@ -32,6 +32,10 @@ the project follows [Semantic Versioning](https://semver.org/). Nothing has been
 ### Fixed
 
 - Switching adapter type on the same serial port, output status when network sends fail, blank frame on output switch.
+- Shows larger than 1 MB (up to the schema's 2.4 MB) can be saved, exported and imported again.
+- A show saved by a newer version of the app is left untouched and is never overwritten by an older one.
+- The welcome screen is a real modal: keyboard focus stays inside it and Escape skips it.
+- The connection guide's comparison table has an accessible header.
 
 ### Not verified
 

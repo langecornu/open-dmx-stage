@@ -55,4 +55,13 @@ describe('logger', () => {
     logger.child({ module: 'output' }).warn({ port: 4000 }, 'Using the simulator');
     assert.match(lines[0].line, /WARN \[output\] Using the simulator port=4000/, 'text format is readable');
   });
+
+  it('does not let caller fields overwrite the reserved level, message and time', () => {
+    configureLogger({ level: 'info', format: 'json', write: capture });
+    logger.warn({ msg: 'fake', level: 'debug', time: 'yesterday' }, 'Real message');
+    const entry = JSON.parse(lines[0].line);
+    assert.equal(entry.msg, 'Real message', 'the real message wins');
+    assert.equal(entry.level, 'warn', 'the real level wins');
+    assert.notEqual(entry.time, 'yesterday', 'the real timestamp wins');
+  });
 });

@@ -56,7 +56,7 @@ export function createApiRouter({ engine, projectService, outputManager }) {
       if (!parsed.success) {
         throw httpError(400, 'That file is not a valid Open DMX Stage show.');
       }
-      const saved = await projectService.save(parsed.data);
+      const saved = await projectService.save(parsed.data, { replaceNewerShow: true });
       syncEngineWithProject(saved);
       res.json(saved);
     }),

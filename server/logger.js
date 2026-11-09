@@ -101,7 +101,8 @@ function emit(level, base, fieldsOrMessage, message) {
   }
   const time = new Date().toISOString();
   if (state.format === 'json') {
-    state.write(JSON.stringify({ time, level, msg: text, ...entry }), level);
+    // The reserved keys come last so a caller's field named `msg`, `level` or `time` cannot overwrite them.
+    state.write(JSON.stringify({ ...entry, time, level, msg: text }), level);
     return;
   }
   const { module: moduleName, ...rest } = entry;

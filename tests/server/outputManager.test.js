@@ -212,4 +212,67 @@ describe('OutputManager', () => {
     const { manager } = createManager();
     assert.equal(await manager.checkHealth(1_000_000), false, 'nothing to recover when using the simulator');
   });
+
+  it('keeps a watchdog retry and a user switch in order, one after the other', async () => {
+    const log = [];
+    let release;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    const buildDriver = (settings) => {
+      const driver = new MockDriver();
+      driver.name = settings.driver;
+      driver.path = settings.serialPath;
+      driver.open = async () => {
+        log.push(`open ${settings.driver} start`);
+        if (settings.driver === 'open-dmx') {
+          await gate; // the retry is still in flight when the user switches
+          throw Object.assign(new Error('gone'), { code: 'ENOENT' });
+        }
+        log.push(`open ${settings.driver} end`);
+      };
+      return driver;
+    };
+    const freshDir = await mkdtemp(path.join(tmpdir(), 'odmx-queue-'));
+    const manager = new OutputManager({
+      engine: new DmxEngine({ driver: new MockDriver() }),
+      dataDir: freshDir,
+      defaults: { driver: 'open-dmx', serialPath: '/dev/cable' },
+      listPorts: async () => [{ path: '/dev/cable' }],
+      buildDriver,
+    });
+    release();
+    await manager.init(); // fails and falls back to the simulator
+    log.length = 0;
+    let release2;
+    const gate2 = new Promise((resolve) => {
+      release2 = resolve;
+    });
+    manager.buildDriver = (settings) => {
+      const driver = buildDriver(settings);
+      if (settings.driver === 'open-dmx') {
+        driver.open = async () => {
+          log.push('retry start');
+          await gate2;
+          log.push('retry end');
+          throw new Error('still gone');
+        };
+      }
+      return driver;
+    };
+    const retry = manager.checkHealth(10_000);
+    await new Promise((resolve) => setImmediate(resolve));
+    const userSwitch = manager.apply({ driver: 'mock' });
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.deepEqual(log, ['retry start'], 'the switch waits for the retry instead of overlapping it');
+    release2();
+    await retry;
+    await userSwitch;
+    assert.deepEqual(
+      log,
+      ['retry start', 'retry end', 'open mock start', 'open mock end'],
+      'the retry finished completely before the user switch began',
+    );
+    assert.equal(manager.getStatus().settings.driver, 'mock', 'and the user switch then took effect');
+  });
 });

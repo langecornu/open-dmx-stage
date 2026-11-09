@@ -1,5 +1,5 @@
 // Component tests for the first-run welcome: three steps, automatic addressing, skipping.
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -63,5 +63,17 @@ describe('Welcome', () => {
     await user.click(screen.getByRole('button', { name: 'Get started' }));
     expect(screen.getByText('1 channel')).toBeInTheDocument();
     expect(screen.getByText('3 channels')).toBeInTheDocument();
+  });
+
+  it('is a real modal dialog, and Escape means skip rather than leaving a blank screen', () => {
+    const showModal = vi.spyOn(HTMLDialogElement.prototype, 'showModal');
+    const { onDone } = renderWelcome();
+    expect(showModal).toHaveBeenCalledTimes(1);
+    const dialog = screen.getByRole('dialog', { name: 'Welcome to Open DMX Stage' });
+    const escape = new Event('cancel', { cancelable: true });
+    fireEvent(dialog, escape);
+    expect(escape.defaultPrevented, "the dialog is not closed behind the app's back").toBe(true);
+    expect(onDone).toHaveBeenCalledTimes(1);
+    showModal.mockRestore();
   });
 });

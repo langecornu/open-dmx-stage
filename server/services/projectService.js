@@ -6,7 +6,8 @@ import path from 'node:path';
 
 import { logger } from '../logger.js';
 import { createEmptyProject, projectSchema } from '../schemas/projectSchema.js';
-import { migrateProject } from './projectMigrations.js';
+import { httpError } from '../utils/httpError.js';
+import { migrateProject, SHOW_FROM_NEWER_VERSION } from './projectMigrations.js';
 
 const log = logger.child({ module: 'project' });
 
@@ -20,6 +21,8 @@ export class ProjectService {
     /** @type {Project} */
     this.project = createEmptyProject();
     this.writeQueue = Promise.resolve();
+    /** @type {string | null} set when the saved show was written by a newer app, so we never overwrite it */
+    this.lockedReason = null;
   }
 
   /** @returns {Promise<Project>} */
@@ -37,6 +40,16 @@ export class ProjectService {
     try {
       this.project = projectSchema.parse(migrateProject(JSON.parse(raw)));
     } catch (error) {
+      if (/** @type {{ code?: string }} */ (error).code === SHOW_FROM_NEWER_VERSION) {
+        // Not corrupt, just newer: leave the file exactly where it is, start empty, and refuse to save over it.
+        this.lockedReason = error instanceof Error ? error.message : String(error);
+        log.error(
+          { err: error },
+          'The saved show is from a newer version; it is left untouched and saving is disabled',
+        );
+        this.project = createEmptyProject();
+        return this.project;
+      }
       // Keep the unreadable file next to the new one instead of letting the next save overwrite it.
       const asideName = `${this.filePath}.unreadable-${Date.now()}`;
       await rename(this.filePath, asideName).catch((renameError) => {
@@ -55,9 +68,15 @@ export class ProjectService {
 
   /**
    * @param {Project} project already validated by the caller
+   * @param {{ replaceNewerShow?: boolean }} [options] an explicit import may replace a show from a newer version
    * @returns {Promise<Project>}
+   * @throws {Error & { status: number }} 409 while the saved show is from a newer version and this is not an import
    */
-  async save(project) {
+  async save(project, { replaceNewerShow = false } = {}) {
+    if (this.lockedReason && !replaceNewerShow) {
+      throw httpError(409, this.lockedReason);
+    }
+    this.lockedReason = null;
     this.project = project;
     const write = async () => {
       await mkdir(path.dirname(this.filePath), { recursive: true });

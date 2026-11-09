@@ -22,10 +22,18 @@ const HEARTBEAT_MS = 15000;
  *   projectService: import('../services/projectService.js').ProjectService,
  *   outputManager: import('../services/outputManager.js').OutputManager,
  *   allowedOrigins: string[],
- * }} options
+ *   heartbeatMs?: number,
+ * }} options `heartbeatMs` is how often idle clients are pinged; tests shorten it.
  * @returns {{ close: () => void }}
  */
-export function attachLiveSocket({ server, engine, projectService, outputManager, allowedOrigins }) {
+export function attachLiveSocket({
+  server,
+  engine,
+  projectService,
+  outputManager,
+  allowedOrigins,
+  heartbeatMs = HEARTBEAT_MS,
+}) {
   const wss = new WebSocketServer({
     server,
     path: '/live',
@@ -92,7 +100,7 @@ export function attachLiveSocket({ server, engine, projectService, outputManager
         client.ping();
       }
     }
-  }, HEARTBEAT_MS);
+  }, heartbeatMs);
 
   /** @param {import('zod').z.infer<typeof liveMessageSchema>} message */
   const handleMessage = (message) => {

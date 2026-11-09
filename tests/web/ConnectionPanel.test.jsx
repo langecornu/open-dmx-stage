@@ -107,7 +107,7 @@ describe('ConnectionPanel', () => {
 
   it('has no automated accessibility violations', async () => {
     const { container } = render(<ConnectionPanel output={OUTPUT} />);
-    await screen.findByRole('combobox', { hidden: true }).catch(() => undefined);
+    await waitFor(() => expect(api.listOutputPorts).toHaveBeenCalled());
     expect(await accessibilityViolations(container)).toEqual([]);
   });
 });

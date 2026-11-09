@@ -200,19 +200,28 @@ export class OutputManager {
   }
 
   /**
-   * Switches are queued one at a time so persisted settings, this.settings and the active driver always agree.
-   * @param {unknown} input the requested settings, validated here
-   * @returns {Promise<OutputStatus>}
+   * Runs a task after every task queued before it, one at a time. A failure does not stop the queue; the caller still
+   * receives it through the returned promise.
+   * @template T
+   * @param {() => Promise<T>} task
+   * @returns {Promise<T>}
    */
-  apply(input) {
-    const run = () => this.applyNow(input);
-    const result = this.queue.then(run, run);
-    // Keep the queue alive after a failure; the caller still receives the error through `result`.
+  enqueue(task) {
+    const result = this.queue.then(task, task);
     this.queue = result.then(
       () => undefined,
       () => undefined,
     );
     return result;
+  }
+
+  /**
+   * Switches are queued one at a time so persisted settings, this.settings and the active driver always agree.
+   * @param {unknown} input the requested settings, validated here
+   * @returns {Promise<OutputStatus>}
+   */
+  apply(input) {
+    return this.enqueue(() => this.applyNow(input));
   }
 
   /**
@@ -257,13 +266,12 @@ export class OutputManager {
     this.retryDelayMs = Math.min(this.retryDelayMs * 2, RETRY_MAX_MS);
     const settings = this.settings;
     try {
-      await (this.queue = this.queue.then(() => this.activate(settings)));
+      await this.enqueue(() => this.activate(settings));
       log.info({ driver: settings.driver }, 'The output recovered');
       this.retryDelayMs = RETRY_START_MS;
       this.emit();
     } catch (error) {
       log.debug({ err: error, nextRetryInMs: this.nextRetryAt - now }, 'The output is still unavailable');
-      this.queue = Promise.resolve();
     }
     return true;
   }

@@ -11,6 +11,8 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { requestId } from './middleware/requestId.js';
 import { createApiRouter } from './routes/apiRoutes.js';
 
+const SHOW_BODY_LIMIT = '8mb';
+
 /**
  * @param {{
  *   config: { allowedOrigins: string[], distDir: string },
@@ -38,6 +40,9 @@ export function createApp({ config, engine, projectService, outputManager }) {
     }),
   );
   app.use(cors({ origin: config.allowedOrigins }));
+  // A show can legitimately be a few megabytes (500 looks with 512 values each is about 2.4 MB), so the show routes get a
+  // larger limit. It is mounted first: body-parser skips a body that is already parsed, so everything else keeps 1 MB.
+  app.use('/api/v1/project', express.json({ limit: SHOW_BODY_LIMIT }));
   app.use(express.json({ limit: '1mb' }));
 
   // Liveness and readiness: unauthenticated and free of detail beyond the output driver name and state.

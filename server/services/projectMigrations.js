@@ -6,6 +6,9 @@ import { randomUUID } from 'node:crypto';
 import { CURRENT_SCHEMA_VERSION } from '../schemas/projectSchema.js';
 import { httpError } from '../utils/httpError.js';
 
+/** Error code for a show file written by a newer version of the app than this one. */
+export const SHOW_FROM_NEWER_VERSION = 'SHOW_FROM_NEWER_VERSION';
+
 /**
  * Version 1 (no `schemaVersion` field) had chase steps without ids. Version 2 gives each step a stable id, which the
  * editor uses to keep rows steady when steps are reordered.
@@ -41,7 +44,10 @@ export function migrateProject(raw) {
   let project = /** @type {Record<string, any>} */ (structuredClone(raw));
   let version = Number.isInteger(project.schemaVersion) ? Number(project.schemaVersion) : 1;
   if (version > CURRENT_SCHEMA_VERSION) {
-    throw httpError(400, 'That show was saved by a newer version of Open DMX Stage. Please update the app.');
+    throw Object.assign(
+      httpError(400, 'That show was saved by a newer version of Open DMX Stage. Please update the app.'),
+      { code: SHOW_FROM_NEWER_VERSION },
+    );
   }
   for (const migration of MIGRATIONS) {
     if (migration.from === version) {

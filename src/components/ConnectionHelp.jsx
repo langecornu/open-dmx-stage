@@ -63,7 +63,10 @@ export function ConnectionHelp({ initialTab = 'start', onClose }) {
     }
   };
   const requestCloseRef = useRef(requestClose);
-  requestCloseRef.current = requestClose;
+  // Updated after each render (not during it), so the backdrop listener always calls the latest version.
+  useEffect(() => {
+    requestCloseRef.current = requestClose;
+  });
 
   const handleTabKey = (event, index) => {
     let nextIndex = null;

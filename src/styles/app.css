@@ -1316,14 +1316,25 @@ input[type='range'] {
   position: fixed;
   inset: 0;
   z-index: 50;
-  display: grid;
+  display: none;
   place-items: center;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  color: var(--text);
   padding: var(--space-4);
   background-color: var(--bg);
   background-image:
     radial-gradient(900px 520px at 8% -8%, var(--bg-glow-1), transparent 62%),
     radial-gradient(800px 480px at 100% 0%, var(--bg-glow-2), transparent 58%);
   overflow: auto;
+}
+
+.welcome[open] {
+  display: grid;
 }
 
 .welcome-card {

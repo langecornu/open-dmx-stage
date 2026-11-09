@@ -100,4 +100,22 @@ describe('ProjectService', () => {
     assert.ok(!names.includes('project.json'), 'the bad file is no longer where the next save would overwrite it');
     await rm(dir, { recursive: true, force: true });
   });
+
+  it('leaves a show from a newer app version untouched, refuses to save over it, and lets an explicit import replace it', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'odmx-newer-'));
+    const newer = JSON.stringify({ ...VERSION_1, schemaVersion: CURRENT_SCHEMA_VERSION + 1 });
+    await writeFile(path.join(dir, 'project.json'), newer);
+    const service = new ProjectService({ dataDir: dir });
+    const project = await service.load();
+    assert.equal(project.name, 'Untitled show', 'the app starts with an empty show');
+    assert.equal(await readFile(path.join(dir, 'project.json'), 'utf8'), newer, 'the newer file is not modified');
+    assert.deepEqual(await readdir(dir), ['project.json'], 'and it is not moved aside either');
+    await assert.rejects(service.save(project), (error) => error.status === 409 && /newer version/.test(error.message));
+    assert.equal(await readFile(path.join(dir, 'project.json'), 'utf8'), newer, 'a refused save leaves the file alone');
+
+    await service.save({ ...project, name: 'Imported on purpose' }, { replaceNewerShow: true });
+    assert.equal(JSON.parse(await readFile(path.join(dir, 'project.json'), 'utf8')).name, 'Imported on purpose');
+    await service.save({ ...project, name: 'Saved normally afterwards' });
+    await rm(dir, { recursive: true, force: true });
+  });
 });

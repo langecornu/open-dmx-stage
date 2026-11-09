@@ -168,4 +168,37 @@ describe('API', () => {
       'the client can quote the id from the header',
     );
   });
+
+  it('accepts the largest show the schema allows (about 2.4 MB), through both save and import', async () => {
+    const scenes = [];
+    for (let index = 0; index < 500; index += 1) {
+      const values = {};
+      for (let channel = 1; channel <= 512; channel += 1) {
+        values[channel] = 255;
+      }
+      scenes.push({ id: `scene-${index}`, name: `Scene ${index}`, values });
+    }
+    const biggest = { ...validProject, scenes, chases: [] };
+    assert.ok(JSON.stringify(biggest).length > 2_000_000, 'the test show really is larger than the default 1 MB limit');
+    assert.equal((await putProject(biggest)).status, 200, 'saving a large show works');
+    const imported = await fetch(`${baseUrl}/project/import`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(biggest),
+    });
+    assert.equal(imported.status, 200, 'importing a large show works');
+    const oversized = await putProject({ ...biggest, padding: 'x'.repeat(9_000_000) });
+    assert.equal(oversized.status, 413, 'a body beyond the show limit is still refused');
+    assert.equal(
+      (
+        await fetch(`${baseUrl}/fixtures/import-qlc`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ xml: 'x'.repeat(1_200_000) }),
+        })
+      ).status,
+      413,
+      'other routes keep the 1 MB limit',
+    );
+  });
 });
