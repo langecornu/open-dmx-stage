@@ -21,6 +21,11 @@ export class DmxEngine {
     this.frame = new Uint8Array(DMX_CHANNELS);
   }
 
+  // Swaps the output driver at runtime; the caller closes the old one.
+  setDriver(driver) {
+    this.driver = driver;
+  }
+
   setLevelChannels(levelChannels) {
     this.levelChannels = levelChannels;
   }

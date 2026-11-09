@@ -95,6 +95,21 @@ export const importFixtureSchema = z
 
 export const importQlcSchema = z.object({ xml: z.string().min(1).max(300_000) }).strict();
 
+export const DRIVER_NAMES = ['mock', 'enttec-pro', 'open-dmx', 'artnet', 'sacn'];
+
+export const outputSettingsSchema = z
+  .object({
+    driver: z.enum(DRIVER_NAMES),
+    serialPath: z.string().max(200).default(''),
+    host: z
+      .string()
+      .max(253)
+      .regex(/^[A-Za-z0-9.-]*$/, 'Host may contain only letters, digits, dots and dashes')
+      .default(''),
+    universe: z.number().int().min(0).max(63999).default(0),
+  })
+  .strict();
+
 export function createEmptyProject() {
   return { name: 'Untitled show', fixtureTypes: [], fixtures: [], scenes: [], chases: [] };
 }

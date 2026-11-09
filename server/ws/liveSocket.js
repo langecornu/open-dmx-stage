@@ -5,7 +5,7 @@ import { liveMessageSchema } from '../schemas/projectSchema.js';
 
 const FRAME_BROADCAST_MS = 66;
 
-export function attachLiveSocket({ server, engine, projectService, allowedOrigins }) {
+export function attachLiveSocket({ server, engine, projectService, outputManager, allowedOrigins }) {
   const wss = new WebSocketServer({
     server,
     path: '/live',
@@ -42,6 +42,23 @@ export function attachLiveSocket({ server, engine, projectService, allowedOrigin
       }
     }
   });
+
+  // Push output status on change, and re-check every couple of seconds so an unplugged cable shows up.
+  let lastStatus = '';
+  const broadcastStatus = () => {
+    const payload = JSON.stringify({ type: 'output', status: outputManager.getStatus() });
+    if (payload === lastStatus) {
+      return;
+    }
+    lastStatus = payload;
+    for (const client of wss.clients) {
+      if (client.readyState === client.OPEN) {
+        client.send(payload);
+      }
+    }
+  };
+  const unsubscribeOutput = outputManager.subscribe(broadcastStatus);
+  const statusTimer = setInterval(broadcastStatus, 2000);
 
   const handleMessage = (message) => {
     const project = projectService.get();
@@ -82,7 +99,7 @@ export function attachLiveSocket({ server, engine, projectService, allowedOrigin
 
   wss.on('connection', (socket) => {
     send(socket, { type: 'state', state: engine.getState() });
-    send(socket, { type: 'output', status: engine.driver.getStatus() });
+    send(socket, { type: 'output', status: outputManager.getStatus() });
     socket.on('message', (data) => {
       let parsed;
       try {
@@ -102,6 +119,8 @@ export function attachLiveSocket({ server, engine, projectService, allowedOrigin
   return {
     close: () => {
       unsubscribe();
+      unsubscribeOutput();
+      clearInterval(statusTimer);
       wss.close();
     },
   };

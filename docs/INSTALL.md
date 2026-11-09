@@ -26,12 +26,21 @@ folder and it picks up `.nvmrc`.
 
 ### Hardware (optional, for real lights)
 
-| Item                     | Notes                                                                                                                                                  |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| USB to DMX interface     | An **ENTTEC DMX USB Pro** or a compatible interface that speaks the same protocol. The cheaper "Open DMX USB" style dongles are **not** supported yet. |
-| DMX cable                | 3-pin or 5-pin XLR, matching your interface and fixtures.                                                                                              |
-| At least one DMX fixture | Set its DMX address and mode on the fixture itself (the studio assigns addresses in the app; they must match).                                         |
-| DMX terminator           | A 120 Ω terminator on the last fixture in the chain is good practice on long runs.                                                                     |
+You need a way to get DMX out of the computer. Pick **one** of these:
+
+| Interface                                   | Examples                                                             | Status                                                                                                                                      |
+| ------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **USB-DMX cable (passive FTDI "Open DMX")** | DSD TECH SH-RS09B, ENTTEC Open DMX USB, most cheap USB-to-DMX cables | Supported, **experimental**. The computer generates the DMX timing, so it needs a quiet, unloaded machine. Not yet tested on real hardware. |
+| **ENTTEC DMX USB Pro and compatibles**      | ENTTEC DMX USB Pro, DMXKing ultraDMX Micro/Pro                       | Supported (these have a built-in processor, so timing is reliable). Not yet tested on real hardware.                                        |
+| **Art-Net** (network)                       | Art-Net nodes and gateways, many lighting apps and visualizers       | Supported.                                                                                                                                  |
+| **sACN / E1.31** (network)                  | sACN nodes and gateways, many lighting apps and visualizers          | Supported.                                                                                                                                  |
+| **Simulator**                               | none                                                                 | Always available.                                                                                                                           |
+
+You will also need a DMX cable (3-pin or 5-pin XLR to match your fixtures) and at least one DMX fixture. Set the
+fixture's DMX address and mode on the fixture itself so they match the **Setup** screen. A 120 Ω terminator on the last
+fixture in the chain is good practice on long runs.
+
+> SoundSwitch's own dongles (Micro DMX, Control One) use a proprietary protocol and are not supported.
 
 ### Native package
 
@@ -63,28 +72,56 @@ Then open **http://localhost:5173**.
 
 ## 4. Connect real DMX lights
 
-1. Plug in the DMX interface and connect the DMX cable to your first fixture.
-2. Find the interface's serial port:
-   - **macOS:** `ls /dev/tty.usbserial-*` (an ENTTEC Pro typically looks like `/dev/tty.usbserial-EN123456`).
-   - **Linux:** `ls /dev/ttyUSB*`. Add yourself to the serial group once, then log out and in:
-     `sudo usermod -aG dialout $USER`.
-   - **Windows:** open Device Manager, expand _Ports (COM & LPT)_, and note the COM number (for example `COM3`).
-   - If the port does not appear, install the interface vendor's FTDI driver and re-plug the device.
-3. Start the server with the driver and port set:
+### In the app (recommended)
 
-   ```bash
-   # macOS / Linux
-   DMX_DRIVER=enttec-pro DMX_SERIAL_PATH=/dev/tty.usbserial-EN123456 npm run dev
-   ```
+1. Plug in the interface and connect the DMX cable to your first fixture.
+2. Open the **Output** screen and find the **Connection** card.
+3. Choose your interface type:
+   - **USB-DMX cable** for the DSD TECH SH-RS09B and other passive FTDI cables.
+   - **ENTTEC DMX USB Pro** for ENTTEC Pro and DMXKing interfaces.
+   - **Art-Net** or **sACN** for network interfaces (optionally enter the device's IP address and a universe).
+4. For USB interfaces, pick the **Serial port** (FTDI cables are labelled) and press **Connect**. Press **Refresh** if the
+   port is missing.
+5. The top bar should show **DMX ready**. Move a colour in **Lights** and the fixture should react.
 
-   ```powershell
-   # Windows PowerShell
-   $env:DMX_DRIVER = "enttec-pro"; $env:DMX_SERIAL_PATH = "COM3"; npm run dev
-   ```
+Your choice is remembered. If the saved cable is unplugged when the app starts, it falls back to the simulator and tells
+you why.
 
-4. The top bar should now show **DMX ready**. Move a colour in the **Lights** screen and the fixture should react.
+If the port does not appear:
 
-You can also list candidate ports from the running server: open http://localhost:4000/api/output/ports.
+- **macOS:** the cable appears as `/dev/tty.usbserial-XXXX`. If not, check _System Settings, Privacy & Security_ for a
+  blocked driver prompt, then unplug and re-plug.
+- **Linux:** add yourself to the serial group once, then log out and in: `sudo usermod -aG dialout $USER`.
+- **Windows:** check Device Manager, _Ports (COM & LPT)_, for a `COM` port, and install the FTDI driver if none shows up.
+- Only one program can use the cable at a time, so close other lighting software first.
+
+### With environment variables
+
+You can also preselect the output at start-up (the in-app choice, once saved, takes precedence):
+
+```bash
+# USB-DMX cable (Open DMX style), macOS / Linux
+DMX_DRIVER=open-dmx DMX_SERIAL_PATH=/dev/tty.usbserial-XXXX npm run dev
+
+# ENTTEC DMX USB Pro
+DMX_DRIVER=enttec-pro DMX_SERIAL_PATH=/dev/tty.usbserial-EN123456 npm run dev
+
+# Art-Net to one node (omit DMX_NET_HOST to broadcast), universe 0
+DMX_DRIVER=artnet DMX_NET_HOST=192.168.1.50 DMX_UNIVERSE=0 npm run dev
+```
+
+```powershell
+# Windows PowerShell
+$env:DMX_DRIVER = "open-dmx"; $env:DMX_SERIAL_PATH = "COM3"; npm run dev
+```
+
+### A note on cheap USB-DMX cables
+
+Passive cables such as the SH-RS09B have no processor, so this app generates the DMX break and timing in software.
+That is within the DMX specification (it uses a long break), but it makes the output more sensitive to a busy computer
+than an ENTTEC Pro. If lights flicker or ignore the cable, close other programs, try a different USB port (avoid hubs),
+or use an Art-Net/sACN node or an ENTTEC Pro or DMXKing interface instead. Reviews of these cables are mixed, so make
+sure yours works in another program first.
 
 ## 5. Configuration
 

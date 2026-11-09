@@ -27,5 +27,7 @@ export const api = {
   importOpenFixture: (fixture, manufacturer) =>
     request('/fixtures/import-ofl', jsonBody('POST', { fixture, manufacturer })),
   importQlcFixture: (xml) => request('/fixtures/import-qlc', jsonBody('POST', { xml })),
+  listOutputPorts: () => request('/output/ports'),
+  saveOutputSettings: (settings) => request('/output/settings', jsonBody('PUT', settings)),
   getOutput: () => request('/output'),
 };

@@ -20,21 +20,6 @@ export function buildEnttecProPacket(frame) {
   return packet;
 }
 
-export async function listSerialPorts() {
-  try {
-    const { SerialPort } = await import('serialport');
-    const ports = await SerialPort.list();
-    return ports.map((port) => ({
-      path: port.path,
-      manufacturer: port.manufacturer ?? '',
-      serialNumber: port.serialNumber ?? '',
-    }));
-  } catch (error) {
-    console.error('[dmx] Could not list serial ports:', error.message);
-    return [];
-  }
-}
-
 export class EnttecProDriver {
   constructor({ path }) {
     this.name = 'enttec-pro';
