@@ -67,6 +67,11 @@ far.
 
 Version 0.1. One universe. Planned: more DMX interfaces, a beat-synced timeline, and export to other lighting systems. Issues and pull requests are welcome.
 
+## Contributing
+
+See [docs/CODING_STANDARDS.md](docs/CODING_STANDARDS.md) for the code style, testing and review rules.
+Run `npm run lint`, `npm test` and `npm run build` before opening a pull request.
+
 ## Security
 
 The server has no authentication and is meant for your own machine or a trusted local network. It restricts browser
