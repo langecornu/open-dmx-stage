@@ -51,6 +51,9 @@ export const sceneSchema = z
   })
   .strict();
 
+/** Bump with every change to the saved show format, and add a migration in server/services/projectMigrations.js. */
+export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (2);
+
 export const chaseSchema = z
   .object({
     id,
@@ -60,6 +63,7 @@ export const chaseSchema = z
       .array(
         z
           .object({
+            id,
             sceneId: id,
             fadeMs: z.number().int().min(0).max(600000),
             holdMs: z.number().int().min(0).max(600000),
@@ -72,6 +76,7 @@ export const chaseSchema = z
 
 export const projectSchema = z
   .object({
+    schemaVersion: z.literal(CURRENT_SCHEMA_VERSION),
     name: label,
     fixtureTypes: z.array(fixtureTypeSchema).max(200),
     fixtures: z.array(fixtureSchema).max(256),
@@ -118,6 +123,14 @@ export const outputSettingsSchema = z
     }
   });
 
+/** @returns {import('../../shared/types.js').Project} an empty show at the current schema version */
 export function createEmptyProject() {
-  return { name: 'Untitled show', fixtureTypes: [], fixtures: [], scenes: [], chases: [] };
+  return {
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    name: 'Untitled show',
+    fixtureTypes: [],
+    fixtures: [],
+    scenes: [],
+    chases: [],
+  };
 }

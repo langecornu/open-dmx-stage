@@ -1,6 +1,7 @@
 // Owns the active DMX output driver: builds one from settings, switches at runtime, persists the choice and
 // reports status. Serial paths must be one of the ports the OS reports, so clients cannot open arbitrary files.
-// Switches are serialised, and a failed switch leaves the app on a working output.
+// Switches are serialised, and a failed switch leaves the app on a working output. A watchdog retries a failed
+// output with backoff, so unplugging and re-plugging a cable recovers without restarting the app.
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -10,13 +11,28 @@ import { MockDriver } from '../clients/mockDriver.js';
 import { OpenDmxDriver } from '../clients/openDmxDriver.js';
 import { SacnDriver } from '../clients/sacnDriver.js';
 import { listSerialPorts } from '../clients/serial.js';
+import { logger } from '../logger.js';
 import { outputSettingsSchema } from '../schemas/projectSchema.js';
 import { httpError } from '../utils/httpError.js';
 
+const log = logger.child({ module: 'output' });
+
+/** @typedef {import('../../shared/types.js').Driver} Driver */
+/** @typedef {import('../../shared/types.js').OutputSettings} OutputSettings */
+/** @typedef {import('../../shared/types.js').ResolvedOutputSettings} ResolvedOutputSettings */
+/** @typedef {import('../../shared/types.js').DriverStatus & { settings: ResolvedOutputSettings }} OutputStatus */
+
+/** @type {Record<string, number>} */
 const DEFAULT_UNIVERSE = { artnet: 0, sacn: 1 };
 const SERIAL_DRIVERS = new Set(['enttec-pro', 'open-dmx']);
 const SERIAL_UNAVAILABLE = 'Serial support is not available on this computer. Use Art-Net or sACN, or the simulator.';
+const RETRY_START_MS = 2000;
+const RETRY_MAX_MS = 30000;
 
+/**
+ * @param {ResolvedOutputSettings} settings
+ * @returns {Driver}
+ */
 export function createDriver(settings) {
   switch (settings.driver) {
     case 'enttec-pro':
@@ -32,9 +48,14 @@ export function createDriver(settings) {
   }
 }
 
-// Turns a low-level open error into a message a person can act on. The original error is logged by the caller.
+/**
+ * Turns a low-level open error into a message a person can act on. The original error is logged by the caller.
+ * @param {unknown} error
+ * @returns {string}
+ */
 export function describeOpenError(error) {
-  const text = `${error?.code ?? ''} ${error?.message ?? ''}`;
+  const code = /** @type {{ code?: unknown }} */ (error)?.code ?? '';
+  const text = `${code} ${error instanceof Error ? error.message : ''}`;
   if (/EBUSY|EAGAIN|busy|unavailable|lock/i.test(text)) {
     return 'Another program is using this cable. Close it, then press Connect again.';
   }
@@ -51,6 +72,15 @@ export function describeOpenError(error) {
 }
 
 export class OutputManager {
+  /**
+   * @param {{
+   *   engine: import('./dmxEngine.js').DmxEngine,
+   *   dataDir: string,
+   *   defaults: OutputSettings,
+   *   listPorts?: () => Promise<{ path: string }[]>,
+   *   buildDriver?: (settings: ResolvedOutputSettings) => Driver,
+   * }} options `listPorts` and `buildDriver` are injectable so tests need no hardware.
+   */
   constructor({ engine, dataDir, defaults, listPorts = listSerialPorts, buildDriver = createDriver }) {
     this.engine = engine;
     this.filePath = path.join(dataDir, 'output.json');
@@ -58,11 +88,22 @@ export class OutputManager {
     this.buildDriver = buildDriver;
     this.defaults = this.withDefaults(outputSettingsSchema.parse(defaults));
     this.settings = this.defaults;
+    /** @type {string | null} */
     this.lastError = null;
+    /** @type {Set<(status: OutputStatus) => void>} */
     this.listeners = new Set();
     this.queue = Promise.resolve();
+    this.isSwitching = false;
+    this.retryDelayMs = RETRY_START_MS;
+    this.nextRetryAt = 0;
+    /** @type {ReturnType<typeof setInterval> | null} */
+    this.watchdogTimer = null;
   }
 
+  /**
+   * @param {OutputSettings} settings
+   * @returns {ResolvedOutputSettings}
+   */
   withDefaults(settings) {
     return { ...settings, universe: settings.universe ?? DEFAULT_UNIVERSE[settings.driver] ?? 0 };
   }
@@ -72,21 +113,22 @@ export class OutputManager {
     try {
       wanted = this.withDefaults(outputSettingsSchema.parse(JSON.parse(await readFile(this.filePath, 'utf8'))));
     } catch (error) {
-      if (error.code !== 'ENOENT') {
-        console.error('[output] Could not read saved output settings, using defaults:', error.message);
+      if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') {
+        log.error({ err: error }, 'Could not read saved output settings, using defaults');
       }
     }
     try {
       await this.activate(wanted);
     } catch (error) {
       // The app must still start when the dongle is unplugged: fall back to the simulator and surface the error.
-      console.error(`[output] Could not open ${wanted.driver}: ${error.message}`);
+      log.error({ err: error, driver: wanted.driver }, 'Could not open the saved output, using the simulator');
       this.settings = wanted;
-      this.lastError = error.message;
+      this.lastError = error instanceof Error ? error.message : String(error);
       this.engine.setDriver(new MockDriver());
     }
   }
 
+  /** @param {ResolvedOutputSettings} settings */
   async assertPortListed(settings) {
     if (!SERIAL_DRIVERS.has(settings.driver)) {
       return;
@@ -95,7 +137,7 @@ export class OutputManager {
     try {
       ports = await this.listPorts();
     } catch (error) {
-      console.error('[output] Could not list serial ports:', error.message);
+      log.error({ err: error }, 'Could not list serial ports');
       throw httpError(503, SERIAL_UNAVAILABLE);
     }
     if (!ports.some((port) => port.path === settings.serialPath)) {
@@ -103,24 +145,31 @@ export class OutputManager {
     }
   }
 
-  // Blanks an output, then closes it, so lights do not hold stale values after a switch.
+  /**
+   * Blanks an output, then closes it, so lights do not hold stale values after a switch.
+   * @param {Driver} driver
+   */
   async retire(driver) {
     driver.send(new Uint8Array(512));
     await driver.close();
   }
 
-  // Re-opens the previous output after a failed switch. If that fails too, the app stays on the simulator.
+  /**
+   * Re-opens the previous output after a failed switch. If that fails too, the app stays on the simulator.
+   * @param {ResolvedOutputSettings} settings
+   */
   async restore(settings) {
     try {
       const driver = this.buildDriver(settings);
       await driver.open();
       this.engine.setDriver(driver);
     } catch (error) {
-      console.error('[output] Could not restore the previous output:', error.message);
+      log.error({ err: error }, 'Could not restore the previous output');
       this.lastError = describeOpenError(error);
     }
   }
 
+  /** @param {ResolvedOutputSettings} settings */
   async activate(settings) {
     await this.assertPortListed(settings);
     const previous = this.engine.driver;
@@ -136,7 +185,7 @@ export class OutputManager {
     try {
       await driver.open();
     } catch (error) {
-      console.error(`[output] Could not open ${settings.driver}:`, error.message);
+      log.error({ err: error, driver: settings.driver }, 'Could not open the output');
       if (mustReleaseFirst) {
         await this.restore(previousSettings);
       }
@@ -150,22 +199,40 @@ export class OutputManager {
     this.lastError = null;
   }
 
-  // Switches are queued one at a time so persisted settings, this.settings and the active driver always agree.
+  /**
+   * Switches are queued one at a time so persisted settings, this.settings and the active driver always agree.
+   * @param {unknown} input the requested settings, validated here
+   * @returns {Promise<OutputStatus>}
+   */
   apply(input) {
     const run = () => this.applyNow(input);
     const result = this.queue.then(run, run);
     // Keep the queue alive after a failure; the caller still receives the error through `result`.
-    this.queue = result.catch(() => undefined);
+    this.queue = result.then(
+      () => undefined,
+      () => undefined,
+    );
     return result;
   }
 
+  /**
+   * @param {unknown} input
+   * @returns {Promise<OutputStatus>}
+   */
   async applyNow(input) {
     const parsed = outputSettingsSchema.safeParse(input);
     if (!parsed.success) {
       throw httpError(400, `Invalid output settings: ${parsed.error.issues.map((issue) => issue.message).join('; ')}`);
     }
     const settings = this.withDefaults(parsed.data);
-    await this.activate(settings);
+    this.isSwitching = true;
+    try {
+      await this.activate(settings);
+    } finally {
+      this.isSwitching = false;
+    }
+    this.retryDelayMs = RETRY_START_MS;
+    this.nextRetryAt = 0;
     await mkdir(path.dirname(this.filePath), { recursive: true });
     const tempPath = `${this.filePath}.tmp`;
     await writeFile(tempPath, JSON.stringify(settings, null, 2), 'utf8');
@@ -174,6 +241,48 @@ export class OutputManager {
     return this.getStatus();
   }
 
+  /**
+   * Retries a failed output with exponential backoff (2 s, 4 s ... up to 30 s). Called by the watchdog timer; exposed so
+   * tests can drive it with a fake clock.
+   * @param {number} [now] milliseconds on the same clock as the retry schedule
+   * @returns {Promise<boolean>} true when an attempt was made
+   */
+  async checkHealth(now = Date.now()) {
+    const status = this.engine.driver.getStatus();
+    const hasFailed = this.settings.driver !== 'mock' && (this.lastError !== null || !status.connected || status.error);
+    if (!hasFailed || this.isSwitching || now < this.nextRetryAt) {
+      return false;
+    }
+    this.nextRetryAt = now + this.retryDelayMs;
+    this.retryDelayMs = Math.min(this.retryDelayMs * 2, RETRY_MAX_MS);
+    const settings = this.settings;
+    try {
+      await (this.queue = this.queue.then(() => this.activate(settings)));
+      log.info({ driver: settings.driver }, 'The output recovered');
+      this.retryDelayMs = RETRY_START_MS;
+      this.emit();
+    } catch (error) {
+      log.debug({ err: error, nextRetryInMs: this.nextRetryAt - now }, 'The output is still unavailable');
+      this.queue = Promise.resolve();
+    }
+    return true;
+  }
+
+  startWatchdog() {
+    if (!this.watchdogTimer) {
+      this.watchdogTimer = setInterval(() => void this.checkHealth(), 1000);
+      this.watchdogTimer.unref();
+    }
+  }
+
+  stopWatchdog() {
+    if (this.watchdogTimer) {
+      clearInterval(this.watchdogTimer);
+      this.watchdogTimer = null;
+    }
+  }
+
+  /** @returns {OutputStatus} */
   getStatus() {
     const status = this.engine.driver.getStatus();
     return {
@@ -184,6 +293,10 @@ export class OutputManager {
     };
   }
 
+  /**
+   * @param {(status: OutputStatus) => void} listener
+   * @returns {() => void} call to stop listening
+   */
   subscribe(listener) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);

@@ -4,12 +4,15 @@ import { createServer } from 'node:http';
 import { MockDriver } from './clients/mockDriver.js';
 import { createApp } from './app.js';
 import { loadConfig } from './config.js';
+import { configureLogger, logger } from './logger.js';
 import { DmxEngine } from './services/dmxEngine.js';
 import { OutputManager } from './services/outputManager.js';
 import { ProjectService } from './services/projectService.js';
 import { attachLiveSocket } from './ws/liveSocket.js';
 
 const config = loadConfig();
+configureLogger({ level: config.logLevel, format: config.logFormat });
+const log = logger.child({ module: 'server' });
 const projectService = new ProjectService({ dataDir: config.dataDir });
 await projectService.load();
 
@@ -37,14 +40,21 @@ const liveSocket = attachLiveSocket({
 });
 
 engine.start();
-server.listen(config.port, () => {
-  console.log(
-    `[server] Open DMX Stage API on http://localhost:${config.port} (output: ${outputManager.settings.driver})`,
+outputManager.startWatchdog();
+server.listen(config.port, config.host, () => {
+  log.info(
+    { host: config.host, port: config.port, output: outputManager.settings.driver },
+    'Open DMX Stage is listening',
   );
+  if (config.host !== '127.0.0.1' && config.host !== 'localhost' && config.host !== '::1') {
+    log.warn('Listening beyond this computer. The control surface has no login, so use a network you trust.');
+  }
 });
 
+/** @param {string} signal */
 async function shutdown(signal) {
-  console.log(`[server] ${signal} received, shutting down`);
+  log.info({ signal }, 'Shutting down');
+  outputManager.stopWatchdog();
   liveSocket.close();
   await engine.stop();
   server.close(() => process.exit(0));
@@ -53,10 +63,10 @@ async function shutdown(signal) {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('unhandledRejection', (reason) => {
-  console.error('[server] Unhandled rejection:', reason);
+  log.error({ err: reason }, 'Unhandled rejection');
   process.exit(1);
 });
 process.on('uncaughtException', (error) => {
-  console.error('[server] Uncaught exception:', error);
+  log.error({ err: error }, 'Uncaught exception');
   process.exit(1);
 });

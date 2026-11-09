@@ -19,6 +19,7 @@ const parser = new XMLParser({
   isArray: (name) => ['Channel', 'Mode'].includes(name),
 });
 
+/** @type {Record<string, string>} */
 const PRESET_TYPES = {
   IntensityMasterDimmer: 'intensity',
   IntensityDimmer: 'intensity',
@@ -32,8 +33,10 @@ const PRESET_TYPES = {
   PositionTilt: 'tilt',
 };
 
+/** @type {Record<string, string>} */
 const COLOUR_TYPES = { red: 'red', green: 'green', blue: 'blue', white: 'white', amber: 'amber', uv: 'uv' };
 
+/** @type {Record<string, string>} */
 const GROUP_TYPES = {
   pan: 'pan',
   tilt: 'tilt',
@@ -43,6 +46,10 @@ const GROUP_TYPES = {
   speed: 'speed',
 };
 
+/**
+ * @param {any} node a parsed XML node: text, or an object with `#text`
+ * @returns {string}
+ */
 function textOf(node) {
   if (node === undefined || node === null) {
     return '';
@@ -50,6 +57,7 @@ function textOf(node) {
   return String(typeof node === 'object' ? (node['#text'] ?? '') : node).trim();
 }
 
+/** @param {string} preset a QLC+ channel preset name @returns {string} one of CHANNEL_TYPES */
 function classifyByPreset(preset) {
   if (PRESET_TYPES[preset]) {
     return PRESET_TYPES[preset];
@@ -72,6 +80,7 @@ function classifyByPreset(preset) {
   return 'other';
 }
 
+/** @param {any} group the parsed <Group> element @returns {string} one of CHANNEL_TYPES */
 function classifyByGroup(group) {
   const name = textOf(group).toLowerCase();
   const isFine = String(group?.['@_Byte'] ?? '0') !== '0';
@@ -84,6 +93,7 @@ function classifyByGroup(group) {
   return GROUP_TYPES[name] ?? 'other';
 }
 
+/** @param {Record<string, any> | undefined} definition the parsed <Channel> element @returns {string} */
 function classifyChannel(definition) {
   if (!definition) {
     return 'other';
@@ -99,6 +109,12 @@ function classifyChannel(definition) {
   return type;
 }
 
+/**
+ * Converts a QLC+ fixture definition (.qxf) into a validated fixture type.
+ * @param {string} xml the file contents
+ * @returns {import('../../shared/types.js').FixtureType}
+ * @throws {Error & { status: number }} 400 when the file is not a usable fixture definition
+ */
 export function convertQlcPlus(xml) {
   let document;
   try {
@@ -113,12 +129,13 @@ export function convertQlcPlus(xml) {
 
   const manufacturer = textOf(root.Manufacturer);
   const model = textOf(root.Model);
+  /** @type {Map<string, Record<string, any>>} */
   const definitions = new Map();
   for (const channel of root.Channel ?? []) {
     definitions.set(channel['@_Name'], channel);
   }
 
-  const modes = (root.Mode ?? []).map((mode) => {
+  const modes = (root.Mode ?? []).map((/** @type {Record<string, any>} */ mode) => {
     const slots = [];
     for (const entry of mode.Channel ?? []) {
       const number = Number(entry['@_Number']);

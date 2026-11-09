@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { convertOpenFixtureLibrary } from '../server/services/fixtureLibrary.js';
+import { convertOpenFixtureLibrary } from '../../server/services/fixtureLibrary.js';
 
 const SAMPLE = {
   name: 'Test Par',

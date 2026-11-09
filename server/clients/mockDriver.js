@@ -8,6 +8,7 @@ export class MockDriver {
 
   async open() {}
 
+  /** @param {Uint8Array} frame */
   send(frame) {
     this.lastFrame = Uint8Array.from(frame);
     this.frameCount += 1;

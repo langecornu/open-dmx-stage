@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { convertQlcPlus } from '../server/services/qlcImporter.js';
+import { convertQlcPlus } from '../../server/services/qlcImporter.js';
 
 const RGBW = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE FixtureDefinition>

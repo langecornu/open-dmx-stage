@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { buildEnttecProPacket } from '../server/clients/enttecProDriver.js';
+import { buildEnttecProPacket } from '../../server/clients/enttecProDriver.js';
 
 describe('buildEnttecProPacket', () => {
   it('frames 512 slots with start/label/length/start-code/end bytes', () => {

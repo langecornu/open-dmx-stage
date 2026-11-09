@@ -8,11 +8,11 @@ import { after, before, describe, it } from 'node:test';
 
 import { WebSocket } from 'ws';
 
-import { MockDriver } from '../server/clients/mockDriver.js';
-import { DmxEngine } from '../server/services/dmxEngine.js';
-import { OutputManager } from '../server/services/outputManager.js';
-import { ProjectService } from '../server/services/projectService.js';
-import { attachLiveSocket } from '../server/ws/liveSocket.js';
+import { MockDriver } from '../../server/clients/mockDriver.js';
+import { DmxEngine } from '../../server/services/dmxEngine.js';
+import { OutputManager } from '../../server/services/outputManager.js';
+import { ProjectService } from '../../server/services/projectService.js';
+import { attachLiveSocket } from '../../server/ws/liveSocket.js';
 
 const ALLOWED_ORIGIN = 'http://localhost:5173';
 let server;
