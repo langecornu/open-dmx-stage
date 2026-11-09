@@ -2,6 +2,7 @@
 import { z } from 'zod';
 
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
+import { HOST_HELP, isAllowedHost } from '../utils/networkHost.js';
 
 const id = z.string().min(1).max(64);
 const label = z.string().trim().min(1).max(80);
@@ -101,14 +102,21 @@ export const outputSettingsSchema = z
   .object({
     driver: z.enum(DRIVER_NAMES),
     serialPath: z.string().max(200).default(''),
-    host: z
-      .string()
-      .max(253)
-      .regex(/^[A-Za-z0-9.-]*$/, 'Host may contain only letters, digits, dots and dashes')
-      .default(''),
-    universe: z.number().int().min(0).max(63999).default(0),
+    host: z.string().max(253).default('').refine(isAllowedHost, HOST_HELP),
+    universe: z.number().int().min(0).max(63999).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((settings, context) => {
+    if (settings.universe === undefined) {
+      return;
+    }
+    if (settings.driver === 'artnet' && settings.universe > 32767) {
+      context.addIssue({ code: 'custom', path: ['universe'], message: 'Art-Net universe must be 0 to 32767' });
+    }
+    if (settings.driver === 'sacn' && settings.universe < 1) {
+      context.addIssue({ code: 'custom', path: ['universe'], message: 'sACN universe must be 1 to 63999' });
+    }
+  });
 
 export function createEmptyProject() {
   return { name: 'Untitled show', fixtureTypes: [], fixtures: [], scenes: [], chases: [] };

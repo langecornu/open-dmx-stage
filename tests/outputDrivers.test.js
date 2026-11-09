@@ -4,6 +4,7 @@ import dgram from 'node:dgram';
 import { describe, it } from 'node:test';
 
 import { ArtNetDriver, buildArtNetPacket } from '../server/clients/artNetDriver.js';
+import { EnttecProDriver } from '../server/clients/enttecProDriver.js';
 import { OpenDmxDriver } from '../server/clients/openDmxDriver.js';
 import { SacnDriver, buildSacnPacket, multicastAddress } from '../server/clients/sacnDriver.js';
 
@@ -39,12 +40,28 @@ function createMockPort() {
   return port;
 }
 
+// Yields to the event loop instead of waiting real time, so driver loops run fast and deterministically.
+const yieldToLoop = () => new Promise((resolve) => setImmediate(resolve));
+
+async function waitFor(condition, label) {
+  const deadline = Date.now() + 2000;
+  while (!condition()) {
+    if (Date.now() > deadline) {
+      assert.fail(`Timed out waiting for: ${label}`);
+    }
+    await yieldToLoop();
+  }
+}
+
+const writesOf = (port) => port.calls.filter((call) => call[0] === 'write');
+
 describe('OpenDmxDriver', () => {
   it('opens at 250000 baud 8N2 and sends break, then start code plus 512 slots, every frame', async () => {
     const port = createMockPort();
     let options;
     const driver = new OpenDmxDriver({
       path: '/dev/test',
+      sleep: yieldToLoop,
       createPort: async (opts) => {
         options = opts;
         return port;
@@ -52,31 +69,58 @@ describe('OpenDmxDriver', () => {
     });
     await driver.open();
     driver.send(frameWith(200));
-    await new Promise((resolve) => setTimeout(resolve, 80));
+    await waitFor(() => writesOf(port).some((call) => call[3] === 200), 'a frame carrying slot 1 = 200');
     await driver.close();
     assert.equal(options.baudRate, 250000, 'DMX512 runs at 250 kbaud');
     assert.equal(options.stopBits, 2, 'DMX512 uses two stop bits');
     const kinds = port.calls.map((call) => call.join(':'));
     assert.deepEqual(kinds.slice(0, 2), ['set:true', 'set:false'], 'a break comes before the data');
-    const write = port.calls.find((call) => call[0] === 'write');
+    const write = writesOf(port)[0];
     assert.equal(write[1], 513, 'start code plus 512 slots');
     assert.equal(write[2], 0, 'the start code is zero');
-    assert.ok(
-      port.calls.some((call) => call[0] === 'write' && call[3] === 200),
-      'slot 1 carries the frame value',
-    );
     assert.ok(kinds.includes('drain'), 'frames are drained before the next break');
+  });
+
+  it('transmits a final blank frame on close so lights do not hold stale values', async () => {
+    const port = createMockPort();
+    const driver = new OpenDmxDriver({ path: '/dev/test', sleep: yieldToLoop, createPort: async () => port });
+    await driver.open();
+    driver.send(frameWith(255));
+    await waitFor(() => writesOf(port).some((call) => call[3] === 255), 'a frame with slot 1 = 255');
+    driver.send(new Uint8Array(512));
+    await driver.close();
+    const lastWrite = writesOf(port).at(-1);
+    assert.equal(lastWrite[3], 0, 'the last frame on the wire is the blank one');
+    assert.equal(port.isOpen, false, 'the port is closed afterwards');
   });
 
   it('reports an error status when the port fails', async () => {
     const port = createMockPort();
     port.set = (_options, done) => done(new Error('device unplugged'));
-    const driver = new OpenDmxDriver({ path: '/dev/test', createPort: async () => port });
+    const driver = new OpenDmxDriver({ path: '/dev/test', sleep: yieldToLoop, createPort: async () => port });
     await driver.open();
-    await new Promise((resolve) => setTimeout(resolve, 30));
+    await waitFor(() => driver.getStatus().error !== null, 'the failure to be reported');
     assert.equal(driver.getStatus().error, 'device unplugged', 'the failure is surfaced');
     assert.equal(driver.getStatus().connected, false, 'a failed driver is not connected');
     await driver.close();
+  });
+});
+
+describe('EnttecProDriver', () => {
+  it('flushes the newest frame and drains before closing, even if the last write was skipped', async () => {
+    const port = createMockPort();
+    port.writableNeedDrain = true;
+    const driver = new EnttecProDriver({ path: '/dev/test', createPort: async () => port });
+    await driver.open();
+    driver.send(frameWith(99));
+    assert.equal(writesOf(port).length, 0, 'send() skips the write while the port is backed up');
+    await driver.close();
+    const final = writesOf(port)[0];
+    assert.equal(final[1], 518, 'a full Pro packet was written on close');
+    assert.equal(final[2], 0x7e, 'it starts with the Pro start byte');
+    const kinds = port.calls.map((call) => call[0]);
+    assert.ok(kinds.indexOf('drain') > kinds.indexOf('write'), 'the port is drained after the final write');
+    assert.equal(port.isOpen, false, 'the port is closed afterwards');
   });
 });
 
@@ -146,5 +190,51 @@ describe('sACN', () => {
     assert.equal(packet[126], 11, 'data reached the receiver');
     await driver.close();
     receiver.close();
+  });
+});
+
+function createFakeSocket(sendResults) {
+  const sent = [];
+  return {
+    sent,
+    on() {},
+    once() {},
+    off() {},
+    bind(_port, done) {
+      done();
+    },
+    setBroadcast() {},
+    setMulticastTTL() {},
+    send(packet, _port, host, done) {
+      sent.push({ length: packet.length, host });
+      done(sendResults.shift() ?? null);
+    },
+    close(done) {
+      done();
+    },
+  };
+}
+
+describe('network driver status', () => {
+  it('reports not connected while sends fail and recovers when they succeed again', async () => {
+    const socket = createFakeSocket([new Error('ENETUNREACH'), null]);
+    const driver = new ArtNetDriver({ host: '192.168.1.50', createSocket: () => socket });
+    await driver.open();
+    driver.send(frameWith(1));
+    assert.equal(driver.getStatus().connected, false, 'a failed send is not "connected"');
+    assert.equal(driver.getStatus().error, 'ENETUNREACH', 'the cause is reported');
+    driver.send(frameWith(1));
+    assert.equal(driver.getStatus().connected, true, 'a later successful send clears the error');
+    await driver.close();
+  });
+
+  it('applies the same status rules to sACN and uses multicast when no host is set', async () => {
+    const socket = createFakeSocket([new Error('EHOSTUNREACH')]);
+    const driver = new SacnDriver({ universe: 3, createSocket: () => socket });
+    await driver.open();
+    driver.send(frameWith(1));
+    assert.equal(driver.getStatus().connected, false, 'a failed sACN send is not "connected"');
+    assert.equal(socket.sent[0].host, '239.255.0.3', 'with no host the destination is the universe multicast address');
+    await driver.close();
   });
 });

@@ -3,6 +3,8 @@
 This guide explains, step by step and in plain language, how to get Open DMX Stage talking to real lights. You do not
 need any lighting experience. If you only want to try the app, skip all of this: the **Simulator** needs no hardware.
 
+<!-- Keep in sync with the in-app guide: src/components/helpContentBasics.jsx and helpContentNetwork.jsx. -->
+
 > **Prefer to read it inside the app?** Open the **Output** screen and press **How to connect** in the Connection card.
 > The same guide opens in a window, already on the page for the interface you selected.
 
@@ -58,7 +60,8 @@ SoundSwitch's own dongles (Micro DMX, Control One) use a proprietary protocol an
 ## 3. Passive or active USB adapters?
 
 USB-to-DMX adapters come in two families. They look alike, but they work differently, and the app has to speak to them
-differently. Choosing the wrong one does no harm; the lights simply will not respond.
+differently. A wrong choice is unlikely to cause harm and the lights simply will not respond, but this has not been
+tested on real equipment, so unplug your lights from the cable while you experiment if you want to be careful.
 
 |                         | **Passive** (cheap cable)                         | **Active** (has a processor)                         |
 | ----------------------- | ------------------------------------------------- | ---------------------------------------------------- |
@@ -163,7 +166,7 @@ flowchart LR
 2. Find the node's **IP address** (its display or manual shows it, for example `192.168.1.50`). The computer should be on
    the same family of addresses (for example `192.168.1.x`).
 3. In **Output**, choose **Art-Net**.
-4. **Send to:** type the node's IP address. Leave it empty to broadcast to everything on the network.
+4. **Send to:** type the node's IP address (it must be an address on your own network, such as `192.168.1.50`; names like `node.local` are not accepted). Leave it empty to broadcast to everything on the network.
 5. **Universe:** set the universe your node outputs. The default is **0**. Many nodes number universes from 1, so if
    nothing happens, try one number up or down.
 6. Press **Connect**, then test in **Lights**.
@@ -176,7 +179,7 @@ No node yet? Any program that receives Art-Net on the same computer can act as a
 sACN is set up like Art-Net, with two differences:
 
 - **Send to:** leave it empty to use **multicast** (the standard way; it needs a network switch that supports it), or
-  type the node's IP address to send straight to it. If nothing arrives with multicast, use the IP address.
+  type the node's IP address (an address on your own network) to send straight to it. If nothing arrives with multicast, use the IP address.
 - **Universe** starts at **1** (the default) and must match the universe your node listens to.
 
 ## 6. Wiring and addresses
@@ -305,7 +308,7 @@ top bar says, and any message shown in the Connection card.
 **Do I need a driver?** Often not, but some systems need the FTDI driver for USB adapters. If your port does not appear, see
 the troubleshooting table above.
 
-**Is it safe to try the wrong adapter type?** Yes. If you pick the wrong one, the lights simply do not respond.
+**Is it safe to try the wrong adapter type?** It is unlikely to cause harm and the lights simply do not respond, but this has not been tested on real equipment. Unplug your lights from the cable while you experiment if you want to be careful.
 
 **Has this been tested on real lights?** The simulator and Art-Net output have been checked. The USB drivers follow the
 published formats but have not been tested on real hardware yet, so report what you find.

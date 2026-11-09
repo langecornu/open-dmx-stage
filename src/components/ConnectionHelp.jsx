@@ -20,6 +20,9 @@ export const TAB_FOR_DRIVER = { mock: 'start', 'open-dmx': 'usb', 'enttec-pro': 
 
 export function ConnectionHelp({ initialTab = 'start', onClose }) {
   const dialogRef = useRef(null);
+  const bodyRef = useRef(null);
+  // Captured during the first render, before the dialog moves focus, so we can hand focus back afterwards.
+  const triggerRef = useRef(document.activeElement);
   const [tabId, setTabId] = useState(initialTab);
 
   useEffect(() => {
@@ -27,15 +30,39 @@ export function ConnectionHelp({ initialTab = 'start', onClose }) {
     if (dialog && !dialog.open) {
       dialog.showModal();
     }
+    const trigger = triggerRef.current;
+    return () => trigger?.focus?.();
   }, []);
 
+  useEffect(() => {
+    bodyRef.current?.scrollTo(0, 0);
+  }, [tabId]);
+
+  // Closing goes through dialog.close() so the browser's own close handling (and the close event) runs.
+  const requestClose = () => {
+    if (dialogRef.current?.open) {
+      dialogRef.current.close();
+    } else {
+      onClose();
+    }
+  };
+
   const handleTabKey = (event, index) => {
-    const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
-    if (step === 0) {
+    let nextIndex = null;
+    if (event.key === 'ArrowRight') {
+      nextIndex = (index + 1) % TABS.length;
+    } else if (event.key === 'ArrowLeft') {
+      nextIndex = (index - 1 + TABS.length) % TABS.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = TABS.length - 1;
+    }
+    if (nextIndex === null) {
       return;
     }
     event.preventDefault();
-    const next = TABS[(index + step + TABS.length) % TABS.length];
+    const next = TABS[nextIndex];
     setTabId(next.id);
     document.getElementById(`help-tab-${next.id}`)?.focus();
   };
@@ -51,7 +78,7 @@ export function ConnectionHelp({ initialTab = 'start', onClose }) {
       onClose={onClose}
       onClick={(event) => {
         if (event.target === dialogRef.current) {
-          onClose();
+          requestClose();
         }
       }}
     >
@@ -59,7 +86,7 @@ export function ConnectionHelp({ initialTab = 'start', onClose }) {
         <h2 id="help-title" className="section-title">
           How to connect your lights
         </h2>
-        <button type="button" className="btn btn-ghost btn-icon" aria-label="Close guide" onClick={onClose}>
+        <button type="button" className="btn btn-ghost btn-icon" aria-label="Close guide" onClick={requestClose}>
           <Icon name="close" />
         </button>
       </div>
@@ -81,7 +108,13 @@ export function ConnectionHelp({ initialTab = 'start', onClose }) {
           </button>
         ))}
       </div>
-      <div id="help-panel" className="help-body" role="tabpanel" aria-labelledby={`help-tab-${active.id}`}>
+      <div
+        id="help-panel"
+        ref={bodyRef}
+        className="help-body"
+        role="tabpanel"
+        aria-labelledby={`help-tab-${active.id}`}
+      >
         <ActiveContent />
       </div>
     </dialog>

@@ -46,6 +46,9 @@ export function attachLiveSocket({ server, engine, projectService, outputManager
   // Push output status on change, and re-check every couple of seconds so an unplugged cable shows up.
   let lastStatus = '';
   const broadcastStatus = () => {
+    if (wss.clients.size === 0) {
+      return;
+    }
     const payload = JSON.stringify({ type: 'output', status: outputManager.getStatus() });
     if (payload === lastStatus) {
       return;

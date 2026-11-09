@@ -1,4 +1,5 @@
 // Guide content, part 1: the big picture, passive vs active adapters, and the two USB interface types.
+// Keep in sync with docs/CONNECTION.md, which carries the same guide for readers outside the app.
 import { ChainDiagram } from './HelpDiagrams.jsx';
 
 export function StartHere() {
@@ -162,7 +163,8 @@ export function PassiveOrActive() {
         </li>
         <li>
           <strong>Try it here.</strong> Choose one type and press Connect. If the lights stay dark, switch to the other
-          type and try again. Only the right one works, and a wrong choice does no harm.
+          type and try again. Only the right one works. A wrong choice is unlikely to cause harm, but it has not been
+          tested, so unplug your lights from the cable while you experiment if you want to be careful.
         </li>
       </ol>
       <p className="help-note">

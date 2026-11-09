@@ -9,17 +9,18 @@ const BREAK_MS = 1;
 const FRAME_INTERVAL_MS = 25;
 const DMX_START_CODE = 0;
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const defaultSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const asPromise = (call) =>
   new Promise((resolve, reject) => {
     call((error) => (error ? reject(error) : resolve()));
   });
 
 export class OpenDmxDriver {
-  constructor({ path, createPort = openSerialPort }) {
+  constructor({ path, createPort = openSerialPort, sleep = defaultSleep }) {
     this.name = 'open-dmx';
     this.path = path;
     this.createPort = createPort;
+    this.sleep = sleep;
     this.port = null;
     this.error = null;
     this.isRunning = false;
@@ -62,7 +63,7 @@ export class OpenDmxDriver {
       }
       const wait = FRAME_INTERVAL_MS - (Date.now() - startedAt);
       if (wait > 0) {
-        await sleep(wait);
+        await this.sleep(wait);
       }
     }
   }
@@ -70,7 +71,7 @@ export class OpenDmxDriver {
   async sendFrame() {
     const port = this.port;
     await asPromise((done) => port.set({ brk: true }, done));
-    await sleep(BREAK_MS);
+    await this.sleep(BREAK_MS);
     await asPromise((done) => port.set({ brk: false }, done));
     await asPromise((done) => port.write(Buffer.from(this.packet), done));
     await asPromise((done) => port.drain(done));
@@ -79,8 +80,19 @@ export class OpenDmxDriver {
   async close() {
     this.isRunning = false;
     await this.loop;
-    if (this.port?.isOpen) {
+    if (!this.port?.isOpen) {
+      return;
+    }
+    try {
+      // One last frame, so a blanking caller's zeros actually reach the lights instead of them holding stale values.
+      await this.sendFrame();
+    } catch (error) {
+      console.error('[dmx] Could not send the final frame:', error.message);
+    }
+    try {
       await asPromise((done) => this.port.close(done));
+    } catch (error) {
+      console.error('[dmx] Could not close the serial port cleanly:', error.message);
     }
   }
 

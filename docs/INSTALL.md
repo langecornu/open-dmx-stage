@@ -131,14 +131,16 @@ sure yours works in another program first.
 Settings are environment variables. Copy `.env.example` for reference; the app reads the real environment (export the
 variables, or set them in your process manager). Nothing is required.
 
-| Variable          | Default                 | Meaning                                                              |
-| ----------------- | ----------------------- | -------------------------------------------------------------------- |
-| `PORT`            | `4000`                  | API and WebSocket port.                                              |
-| `ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated browser origins allowed to talk to the API.          |
-| `DMX_DRIVER`      | `mock`                  | `mock` (simulator) or `enttec-pro`.                                  |
-| `DMX_SERIAL_PATH` | _(empty)_               | Serial path of the interface. Required when `DMX_DRIVER=enttec-pro`. |
-| `DMX_FRAME_RATE`  | `30`                    | DMX frames per second, 1 to 44.                                      |
-| `DATA_DIR`        | `server/data`           | Where `project.json` (your show) is stored.                          |
+| Variable          | Default                 | Meaning                                                                                                                                                                                                       |
+| ----------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`            | `4000`                  | API and WebSocket port.                                                                                                                                                                                       |
+| `ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated browser origins allowed to talk to the API.                                                                                                                                                   |
+| `DMX_DRIVER`      | `mock`                  | `mock` (simulator), `open-dmx`, `enttec-pro`, `artnet` or `sacn`. You can also choose this in the app, on the Output screen.                                                                                  |
+| `DMX_SERIAL_PATH` | _(empty)_               | Serial port for `open-dmx` and `enttec-pro`.                                                                                                                                                                  |
+| `DMX_NET_HOST`    | _(empty)_               | Art-Net or sACN destination IP on your own network (private, loopback, link-local, multicast or broadcast). Hostnames and public addresses are rejected. Empty means broadcast (Art-Net) or multicast (sACN). |
+| `DMX_UNIVERSE`    | `0` Art-Net, `1` sACN   | Universe to send on: Art-Net 0 to 32767, sACN 1 to 63999.                                                                                                                                                     |
+| `DMX_FRAME_RATE`  | `30`                    | DMX frames per second, 1 to 44.                                                                                                                                                                               |
+| `DATA_DIR`        | `server/data`           | Where `project.json` (your show) is stored.                                                                                                                                                                   |
 
 ## 6. Production build (single port)
 
@@ -164,7 +166,7 @@ npm run lint    # code style
 | `EBADENGINE` warning on `npm install`               | You are on Node older than 24. It still runs on Node 20; install Node 24 to remove the warning.                                                                     |
 | Port 5173 is already in use                         | Run the web app on another port and allow it: `ALLOWED_ORIGINS=http://localhost:5180 npm run dev:api` in one terminal, `npm run dev:web -- --port 5180` in another. |
 | Top bar says **Server offline**                     | The API is not running or the browser origin is not in `ALLOWED_ORIGINS`. Check the terminal for errors.                                                            |
-| Top bar says **DMX not connected**                  | Wrong `DMX_SERIAL_PATH`, the device was unplugged, or the port is in use by another program. Close other DMX software and re-plug.                                  |
+| Top bar says **DMX not connected**                  | The device was unplugged, the wrong port was chosen, or another program is using it. Close other DMX software, re-plug, then reconnect on the **Output** screen.    |
 | `Permission denied` opening the serial port (Linux) | Add your user to the `dialout` group (see step 4) and log back in.                                                                                                  |
 | Lights do not respond but the app shows output      | Check the fixture's DMX address and mode match the studio's **Setup** screen, the cable is firmly connected, and Master is above 0 and Blackout is off.             |
 | Want to start over                                  | Stop the server and delete `server/data/project.json`.                                                                                                              |

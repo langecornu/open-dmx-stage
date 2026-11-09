@@ -8,6 +8,7 @@ import { importFixtureSchema, importQlcSchema, projectSchema } from '../schemas/
 import { BUILTIN_FIXTURE_TYPES, convertOpenFixtureLibrary } from '../services/fixtureLibrary.js';
 import { convertQlcPlus } from '../services/qlcImporter.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { httpError } from '../utils/httpError.js';
 
 export function createApiRouter({ engine, projectService, outputManager }) {
   const router = Router();
@@ -57,7 +58,14 @@ export function createApiRouter({ engine, projectService, outputManager }) {
   router.get(
     '/output/ports',
     asyncHandler(async (_req, res) => {
-      res.json(await listSerialPorts());
+      try {
+        res.json(await listSerialPorts());
+      } catch {
+        throw httpError(
+          503,
+          'Serial support is not available on this computer. Use Art-Net or sACN, or the simulator.',
+        );
+      }
     }),
   );
 

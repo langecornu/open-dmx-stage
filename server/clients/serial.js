@@ -12,8 +12,9 @@ export async function listSerialPorts() {
       productId: port.productId ?? '',
     }));
   } catch (error) {
+    // Distinguish "serial support is missing" from "no ports plugged in": callers turn this into a clear message.
     console.error('[dmx] Could not list serial ports:', error.message);
-    return [];
+    throw new Error('Serial support is not available', { cause: error });
   }
 }
 

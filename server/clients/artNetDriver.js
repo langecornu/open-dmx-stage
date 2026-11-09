@@ -21,18 +21,19 @@ export function buildArtNetPacket(frame, universe, sequence) {
 }
 
 export class ArtNetDriver {
-  constructor({ host = '', universe = 0, port = ART_NET_PORT }) {
+  constructor({ host = '', universe = 0, port = ART_NET_PORT, createSocket = () => dgram.createSocket('udp4') }) {
     this.name = 'artnet';
     this.host = host || '255.255.255.255';
     this.universe = universe;
     this.port = port;
+    this.createSocket = createSocket;
     this.socket = null;
     this.sequence = 0;
     this.error = null;
   }
 
   async open() {
-    this.socket = dgram.createSocket('udp4');
+    this.socket = this.createSocket();
     this.socket.on('error', (error) => {
       this.error = error.message;
     });
@@ -51,7 +52,10 @@ export class ArtNetDriver {
       return;
     }
     this.sequence = (this.sequence % 255) + 1;
-    this.socket.send(buildArtNetPacket(frame, this.universe, this.sequence), this.port, this.host);
+    this.socket.send(buildArtNetPacket(frame, this.universe, this.sequence), this.port, this.host, (error) => {
+      // Report send failures (no route, network down) in the status, and clear them once sending works again.
+      this.error = error ? error.message : null;
+    });
   }
 
   async close() {
@@ -64,7 +68,7 @@ export class ArtNetDriver {
   getStatus() {
     return {
       driver: this.name,
-      connected: Boolean(this.socket),
+      connected: Boolean(this.socket) && !this.error,
       error: this.error,
       host: this.host,
       universe: this.universe,

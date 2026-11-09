@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 import { z } from 'zod';
 
+import { HOST_HELP, isAllowedHost } from './utils/networkHost.js';
+
 const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const envSchema = z.object({
@@ -11,11 +13,7 @@ const envSchema = z.object({
   ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
   DMX_DRIVER: z.enum(['mock', 'enttec-pro', 'open-dmx', 'artnet', 'sacn']).default('mock'),
   DMX_SERIAL_PATH: z.string().default(''),
-  DMX_NET_HOST: z
-    .string()
-    .max(253)
-    .regex(/^[A-Za-z0-9.-]*$/)
-    .default(''),
+  DMX_NET_HOST: z.string().max(253).default('').refine(isAllowedHost, HOST_HELP),
   DMX_UNIVERSE: z.coerce.number().int().min(0).max(63999).optional(),
   DMX_FRAME_RATE: z.coerce.number().int().min(1).max(44).default(30),
   DATA_DIR: z.string().default('server/data'),

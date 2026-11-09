@@ -22,6 +22,9 @@ const INTERFACES = [
 ];
 
 const DEFAULT_UNIVERSE = { artnet: 0, sacn: 1 };
+const UNIVERSE_LIMITS = { artnet: [0, 32767], sacn: [1, 63999] };
+const DRIVER_LABELS = Object.fromEntries(INTERFACES.map((entry) => [entry.id, entry.label]));
+
 const isSerial = (driver) => driver === 'open-dmx' || driver === 'enttec-pro';
 const isNetwork = (driver) => driver === 'artnet' || driver === 'sacn';
 
@@ -52,8 +55,17 @@ export function ConnectionPanel({ output }) {
     refreshPorts();
   }, [refreshPorts]);
 
+  // Re-selecting the current interface keeps what was typed; choosing a different one starts from its default universe.
   const handleDriver = (driver) =>
-    setForm((current) => ({ ...current, driver, universe: DEFAULT_UNIVERSE[driver] ?? 0 }));
+    setForm((current) =>
+      current.driver === driver ? current : { ...current, driver, universe: DEFAULT_UNIVERSE[driver] ?? 0 },
+    );
+
+  const handleUniverse = (rawValue) => {
+    const [min, max] = UNIVERSE_LIMITS[form.driver] ?? [0, 63999];
+    const value = Math.round(Number(rawValue));
+    setForm({ ...form, universe: Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : min });
+  };
 
   const handleConnect = async () => {
     setIsBusy(true);
@@ -82,7 +94,9 @@ export function ConnectionPanel({ output }) {
           </button>
           <span className="pill" role="status">
             <span className={`dot ${output?.connected ? 'dot-ok' : 'dot-bad'}`} />
-            {output?.connected ? `Active: ${output.driver}` : (output?.error ?? 'Not connected')}
+            {output?.connected
+              ? `Active: ${DRIVER_LABELS[output.driver] ?? output.driver}`
+              : (output?.error ?? 'Not connected')}
           </span>
         </div>
       </div>
@@ -130,12 +144,12 @@ export function ConnectionPanel({ output }) {
         {isNetwork(form.driver) ? (
           <>
             <label className="field">
-              Send to (optional)
+              Send to (optional IP address)
               <input
                 className="input"
                 value={form.host}
                 maxLength={253}
-                placeholder={form.driver === 'artnet' ? 'broadcast' : 'multicast'}
+                placeholder={form.driver === 'artnet' ? 'broadcast (or 192.168.1.50)' : 'multicast (or 192.168.1.50)'}
                 onChange={(event) => setForm({ ...form, host: event.target.value.trim() })}
               />
             </label>
@@ -147,7 +161,7 @@ export function ConnectionPanel({ output }) {
                 min={form.driver === 'artnet' ? 0 : 1}
                 max={form.driver === 'artnet' ? 32767 : 63999}
                 value={form.universe}
-                onChange={(event) => setForm({ ...form, universe: Number(event.target.value) || 0 })}
+                onChange={(event) => handleUniverse(event.target.value)}
               />
             </label>
           </>

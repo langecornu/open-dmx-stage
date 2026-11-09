@@ -1,4 +1,5 @@
 // Guide content, part 2: network interfaces, wiring and addressing, and troubleshooting.
+// Keep in sync with docs/CONNECTION.md, which carries the same guide for readers outside the app.
 import { AddressDiagram, ChainDiagram } from './HelpDiagrams.jsx';
 
 function NetworkDiagram() {

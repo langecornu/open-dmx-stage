@@ -43,11 +43,17 @@ export function multicastAddress(universe) {
 }
 
 export class SacnDriver {
-  constructor({ host = '', universe = 1, port = SACN_PORT }) {
+  constructor({
+    host = '',
+    universe = 1,
+    port = SACN_PORT,
+    createSocket = () => dgram.createSocket({ type: 'udp4', reuseAddr: true }),
+  }) {
     this.name = 'sacn';
     this.host = host;
     this.universe = universe;
     this.port = port;
+    this.createSocket = createSocket;
     this.cid = crypto.randomBytes(16);
     this.socket = null;
     this.sequence = 0;
@@ -55,7 +61,7 @@ export class SacnDriver {
   }
 
   async open() {
-    this.socket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+    this.socket = this.createSocket();
     this.socket.on('error', (error) => {
       this.error = error.message;
     });
@@ -75,7 +81,15 @@ export class SacnDriver {
     }
     this.sequence = (this.sequence + 1) % 256;
     const destination = this.host || multicastAddress(this.universe);
-    this.socket.send(buildSacnPacket(frame, this.universe, this.sequence, this.cid), this.port, destination);
+    this.socket.send(
+      buildSacnPacket(frame, this.universe, this.sequence, this.cid),
+      this.port,
+      destination,
+      (error) => {
+        // Report send failures in the status, and clear them once sending works again.
+        this.error = error ? error.message : null;
+      },
+    );
   }
 
   async close() {
@@ -88,7 +102,7 @@ export class SacnDriver {
   getStatus() {
     return {
       driver: this.name,
-      connected: Boolean(this.socket),
+      connected: Boolean(this.socket) && !this.error,
       error: this.error,
       host: this.host || multicastAddress(this.universe),
       universe: this.universe,
