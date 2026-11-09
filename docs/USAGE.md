@@ -103,8 +103,10 @@ and for confirming that something is really being sent.
 
 The **Connection** card at the top of **Output** chooses how DMX leaves the app: the simulator, a USB-DMX cable, an
 ENTTEC DMX USB Pro, Art-Net or sACN. Pick one, choose the serial port (or enter a network address and universe), and
-press **Connect**. The status pill shows whether it is active, and any problem is explained in plain words. See the
-[install guide](INSTALL.md#4-connect-real-dmx-lights) for details.
+press **Connect**. The status pill shows whether it is active, and any problem is explained in plain words.
+
+Press **How to connect** in that card for a step-by-step guide with diagrams, including how to tell a passive USB cable
+from an active adapter. The same guide is in [Connecting your lights](CONNECTION.md).
 
 ## 7. Master, Blackout, themes and devices
 

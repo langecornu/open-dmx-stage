@@ -2,6 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { api } from '../api.js';
+import { ConnectionHelp, TAB_FOR_DRIVER } from './ConnectionHelp.jsx';
+import { Icon } from './Icon.jsx';
 
 const INTERFACES = [
   { id: 'mock', label: 'Simulator', hint: 'No hardware needed. Good for trying things out.' },
@@ -28,6 +30,7 @@ export function ConnectionPanel({ output }) {
   const [ports, setPorts] = useState([]);
   const [isBusy, setIsBusy] = useState(false);
   const [message, setMessage] = useState(null);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const hasLoadedSettings = useRef(false);
 
   useEffect(() => {
@@ -72,10 +75,16 @@ export function ConnectionPanel({ output }) {
     <section className="card card-pad connection" aria-label="Connection">
       <div className="section-bar">
         <h2 className="section-title">Connection</h2>
-        <span className="pill" role="status">
-          <span className={`dot ${output?.connected ? 'dot-ok' : 'dot-bad'}`} />
-          {output?.connected ? `Active: ${output.driver}` : (output?.error ?? 'Not connected')}
-        </span>
+        <div className="conn-actions">
+          <button type="button" className="btn" onClick={() => setIsHelpOpen(true)}>
+            <Icon name="help" size={16} />
+            How to connect
+          </button>
+          <span className="pill" role="status">
+            <span className={`dot ${output?.connected ? 'dot-ok' : 'dot-bad'}`} />
+            {output?.connected ? `Active: ${output.driver}` : (output?.error ?? 'Not connected')}
+          </span>
+        </div>
       </div>
 
       <div className="iface-list" role="group" aria-label="Interface type">
@@ -160,6 +169,9 @@ export function ConnectionPanel({ output }) {
         >
           {message.text}
         </p>
+      ) : null}
+      {isHelpOpen ? (
+        <ConnectionHelp initialTab={TAB_FOR_DRIVER[form.driver]} onClose={() => setIsHelpOpen(false)} />
       ) : null}
     </section>
   );

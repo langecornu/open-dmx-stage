@@ -72,6 +72,9 @@ Then open **http://localhost:5173**.
 
 ## 4. Connect real DMX lights
 
+> New to DMX? The [connection guide](CONNECTION.md) explains adapters (including passive vs active), wiring and addresses
+> from scratch, with diagrams. The same guide opens inside the app from **Output, How to connect**.
+
 ### In the app (recommended)
 
 1. Plug in the interface and connect the DMX cable to your first fixture.
