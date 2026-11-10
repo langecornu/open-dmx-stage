@@ -61,6 +61,18 @@ describe('PerformView', () => {
     expect(live.send).toHaveBeenLastCalledWith({ type: 'recall', sceneId: 'cool', fadeMs: 0 });
   });
 
+  it('shows an error instead of losing it when playing fails, and clears it on the next press', async () => {
+    const user = userEvent.setup();
+    renderView();
+    flush.mockRejectedValueOnce(new Error('The show could not be saved.'));
+    await user.click(screen.getByRole('button', { name: /Warm wash/ }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The show could not be saved.');
+    expect(live.send, 'nothing is played when the save failed').not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: /Cool wash/ }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(live.send).toHaveBeenCalledWith({ type: 'recall', sceneId: 'cool', fadeMs: 500 });
+  });
+
   it('starts a sequence, and stops it when it is pressed again while playing', async () => {
     const user = userEvent.setup();
     const { unmount } = renderView();

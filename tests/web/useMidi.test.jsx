@@ -67,4 +67,20 @@ describe('useMidi', () => {
     expect([...access.inputs.values()][0].onmidimessage, 'handlers are removed').toBeNull();
     expect(access.onstatechange).toBeNull();
   });
+
+  it('does not listen on behalf of a screen that closed while the browser was still asking', async () => {
+    const access = createFakeAccess();
+    let allow;
+    setRequestMidiAccess(vi.fn(() => new Promise((resolve) => (allow = () => resolve(access)))));
+    const { result, unmount } = renderHook(() => useMidi({ onMessage: vi.fn() }));
+    let pending;
+    act(() => {
+      pending = result.current.enable();
+    });
+    unmount();
+    allow();
+    await pending;
+    expect([...access.inputs.values()][0].onmidimessage, 'no handler is attached after unmount').toBeNull();
+    expect(access.onstatechange).toBeNull();
+  });
 });

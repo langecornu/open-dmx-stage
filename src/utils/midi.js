@@ -102,12 +102,31 @@ export function pruneMap(map, validIds) {
 }
 
 const STORAGE_KEY = 'odmx-midi-map';
+const KEY_PATTERN = /^(note|cc):\d{1,2}:\d{1,3}$/;
+
+/** @param {unknown} value @returns {value is Action} saved data is untrusted, so check the shape before using it */
+function isAction(value) {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const { type, id } = /** @type {Record<string, unknown>} */ (value);
+  if (type === 'look' || type === 'sequence') {
+    return typeof id === 'string' && id.length > 0 && id.length <= 200;
+  }
+  return type === 'blackout' || type === 'stop' || type === 'master';
+}
 
 /** @returns {Record<string, Action>} the saved map, or an empty one when storage is blocked or empty */
 export function loadMidiMap() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+    // Keep only well-formed entries; anything else (edited by hand, or from an older version) is dropped.
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([key, action]) => KEY_PATTERN.test(key) && isAction(action)),
+    );
   } catch {
     return {};
   }

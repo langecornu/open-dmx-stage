@@ -1,6 +1,6 @@
 // Perform: big buttons for every look and sequence, with keyboard shortcuts and MIDI controller mapping, plus master,
 // blackout and stop. Built for running a show without the mouse.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 
 import { useMidi } from '../hooks/useMidi.js';
 import { usePerformKeys } from '../hooks/usePerformKeys.js';
@@ -25,10 +25,25 @@ import { PerformTile } from './PerformTile.jsx';
 const FADES = [0, 250, 500, 1000, 2000];
 const MASTER_STEP = 0.1;
 
+// Learn mode is a small flow: switch it on, tap a button to arm it, then touch a control. Turning it off, or finishing
+// a link, always disarms. One reducer keeps those transitions together.
+function learnReducer(state, event) {
+  switch (event.type) {
+    case 'toggle':
+      return { isLearning: !state.isLearning, armed: null };
+    case 'arm':
+      return { ...state, armed: event.action };
+    case 'disarm':
+      return { ...state, armed: null };
+    default:
+      return state;
+  }
+}
+
 export function PerformView({ project, patch, live, flush }) {
   const [fadeMs, setFadeMs] = useState(500);
-  const [isLearning, setIsLearning] = useState(false);
-  const [armed, setArmed] = useState(null);
+  const [{ isLearning, armed }, dispatchLearn] = useReducer(learnReducer, { isLearning: false, armed: null });
+  const [error, setError] = useState(null);
   const [midiMap, setMidiMap] = useState(loadMidiMap);
 
   const items = useMemo(() => {
@@ -67,7 +82,7 @@ export function PerformView({ project, patch, live, flush }) {
     });
   }, [items]);
 
-  const run = async (action, value) => {
+  const perform = async (action, value) => {
     if (action.type === 'look') {
       await flush();
       live.send({ type: 'recall', sceneId: action.id, fadeMs });
@@ -87,9 +102,20 @@ export function PerformView({ project, patch, live, flush }) {
     }
   };
 
+  // Keys, pads and buttons all start actions without waiting; a failure (for example a show that cannot be saved before
+  // playing) is shown on screen instead of being lost.
+  const run = async (action, value) => {
+    try {
+      setError(null);
+      await perform(action, value);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'That did not work. Try again.');
+    }
+  };
+
   const handlePress = (action) => {
     if (isLearning) {
-      setArmed(action);
+      dispatchLearn({ type: 'arm', action });
     } else {
       run(action);
     }
@@ -104,7 +130,7 @@ export function PerformView({ project, patch, live, flush }) {
       const next = bindAction(midiMap, key, armed);
       setMidiMap(next);
       saveMidiMap(next);
-      setArmed(null);
+      dispatchLearn({ type: 'disarm' });
       return;
     }
     const action = midiMap[key];
@@ -128,6 +154,10 @@ export function PerformView({ project, patch, live, flush }) {
     const id = actionId(action);
     const entry = Object.entries(midiMap).find(([, bound]) => actionId(bound) === id);
     return entry ? describeMidiKey(entry[0]) : null;
+  };
+  const withMidiLabel = (text, action) => {
+    const label = midiLabelOf(action);
+    return label ? `${text} · ${label}` : text;
   };
   const isArmed = (action) => armed !== null && actionId(armed) === actionId(action);
   const isPlaying = (item) =>
@@ -158,6 +188,12 @@ export function PerformView({ project, patch, live, flush }) {
         </label>
       </div>
 
+      {error ? (
+        <p className="error-banner" role="alert">
+          {error}
+        </p>
+      ) : null}
+
       <div className="card card-pad perform-controls">
         <label className="slider-row perform-master">
           Master
@@ -178,7 +214,7 @@ export function PerformView({ project, patch, live, flush }) {
           onClick={() => handlePress({ type: 'blackout' })}
         >
           <Icon name="power" />
-          Blackout {midiLabelOf({ type: 'blackout' }) ? `· ${midiLabelOf({ type: 'blackout' })}` : ''}
+          {withMidiLabel('Blackout', { type: 'blackout' })}
         </button>
         <button
           type="button"
@@ -187,7 +223,7 @@ export function PerformView({ project, patch, live, flush }) {
           onClick={() => handlePress({ type: 'stop' })}
         >
           <Icon name="stop" size={16} />
-          Stop sequence {midiLabelOf({ type: 'stop' }) ? `· ${midiLabelOf({ type: 'stop' })}` : ''}
+          {withMidiLabel('Stop sequence', { type: 'stop' })}
         </button>
         {isLearning ? (
           <button
@@ -196,7 +232,7 @@ export function PerformView({ project, patch, live, flush }) {
             data-armed={isArmed({ type: 'master' })}
             onClick={() => handlePress({ type: 'master' })}
           >
-            Link master to a knob {midiLabelOf({ type: 'master' }) ? `· ${midiLabelOf({ type: 'master' })}` : ''}
+            {withMidiLabel('Link master to a knob', { type: 'master' })}
           </button>
         ) : null}
       </div>
@@ -224,10 +260,7 @@ export function PerformView({ project, patch, live, flush }) {
       <MidiPanel
         midi={midi}
         isLearning={isLearning}
-        onToggleLearn={() => {
-          setIsLearning((on) => !on);
-          setArmed(null);
-        }}
+        onToggleLearn={() => dispatchLearn({ type: 'toggle' })}
         mappingCount={Object.keys(midiMap).length}
         onClear={() => {
           setMidiMap({});

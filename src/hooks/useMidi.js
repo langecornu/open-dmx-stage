@@ -14,6 +14,7 @@ export function useMidi({ onMessage }) {
   const [status, setStatus] = useState(isSupported ? 'idle' : 'unsupported');
   const [inputNames, setInputNames] = useState([]);
   const accessRef = useRef(null);
+  const isMountedRef = useRef(true);
   const onMessageRef = useRef(onMessage);
   useEffect(() => {
     onMessageRef.current = onMessage;
@@ -40,18 +41,26 @@ export function useMidi({ onMessage }) {
     setStatus('requesting');
     try {
       const access = await navigator.requestMIDIAccess();
+      if (!isMountedRef.current) {
+        return; // the screen closed while the browser was asking; do not listen on its behalf
+      }
       accessRef.current = access;
       access.onstatechange = () => attach(access);
       attach(access);
       setStatus('ready');
     } catch {
-      setStatus('denied');
+      if (isMountedRef.current) {
+        setStatus('denied');
+      }
     }
   }, [attach, isSupported]);
 
-  // Stop listening when the screen closes.
-  useEffect(
-    () => () => {
+  // Stop listening when the screen closes. Setting the flag on mount too keeps this correct under React StrictMode,
+  // which mounts, unmounts and mounts again in development.
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
       const access = accessRef.current;
       if (access) {
         access.onstatechange = null;
@@ -59,9 +68,8 @@ export function useMidi({ onMessage }) {
           input.onmidimessage = null;
         }
       }
-    },
-    [],
-  );
+    };
+  }, []);
 
   return { status, inputNames, enable };
 }

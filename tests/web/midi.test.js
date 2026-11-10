@@ -104,6 +104,25 @@ describe('saved mappings', () => {
     expect(loadMidiMap()).toEqual({ 'note:1:36': { type: 'blackout' } });
   });
 
+  it('drops saved entries that are not well-formed, because stored data is untrusted', () => {
+    localStorage.setItem(
+      'odmx-midi-map',
+      JSON.stringify({
+        'note:1:36': { type: 'look', id: 'warm' },
+        'cc:1:7': { type: 'master' },
+        'bad key': { type: 'blackout' },
+        'note:1:37': { type: 'look' },
+        'note:1:38': { type: 'launch-missiles' },
+        'note:1:39': 'blackout',
+        'note:1:40': null,
+      }),
+    );
+    expect(loadMidiMap()).toEqual({
+      'note:1:36': { type: 'look', id: 'warm' },
+      'cc:1:7': { type: 'master' },
+    });
+  });
+
   it('starts empty when nothing is saved, the data is corrupt, or storage is blocked', () => {
     expect(loadMidiMap()).toEqual({});
     localStorage.setItem('odmx-midi-map', 'not json');
