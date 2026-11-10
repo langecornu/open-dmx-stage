@@ -41,8 +41,11 @@ Prettier (https://github.com/prettier/prettier), concurrently (https://github.co
   files they already have, and should check the licence of any definitions they use.
 - **Open Fixture Library (OFL)**: `server/services/fixtureLibrary.js` converts OFL fixture JSON files
   (format documented at https://github.com/OpenLightingProject/open-fixture-library, `docs/fixture-format.md`).
-  No OFL data is bundled. If you import fixtures from https://open-fixture-library.org, check the license terms
-  stated by that project for the data you use, and keep credit to the OFL contributors.
+  No OFL data is bundled. The Fixtures screen can search https://open-fixture-library.org through its public API
+  (`server/clients/oflClient.js`; one fixed host, only the search words are sent) and copy a chosen fixture's channels
+  into the user's own show. The project's repository is MIT-licensed. Each fixture added this way records, in its
+  description, where it came from and who wrote it; keep that credit, and check the terms stated by that project for
+  the data you use. The online search can be turned off with `OFL_ENABLED=false`.
 
 ## Not affiliated
 

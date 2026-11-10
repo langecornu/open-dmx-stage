@@ -1,6 +1,8 @@
 // Built-in fixture profiles plus a converter for Open Fixture Library (OFL) JSON files.
 // The OFL fixture format is described at https://github.com/OpenLightingProject/open-fixture-library
 // (docs/fixture-format.md). OFL warns the format is unstable, so all of it is isolated in this module.
+import { createHash } from 'node:crypto';
+
 import { httpError } from '../utils/httpError.js';
 import { slugify } from '../utils/slugify.js';
 
@@ -222,7 +224,7 @@ function firstCapability(definition) {
  * @param {Record<string, any> | undefined} definition
  * @returns {string} one of CHANNEL_TYPES
  */
-function classifyChannel(name, definition) {
+export function classifyChannel(name, definition) {
   const capability = firstCapability(definition);
   const capType = capability?.type;
   if (capType === 'ColorIntensity') {
@@ -256,7 +258,7 @@ function classifyChannel(name, definition) {
  * @param {unknown} value a number, or a percentage string such as "50%"
  * @returns {number} 0 to 255
  */
-function parseDefault(value) {
+export function parseDefault(value) {
   if (typeof value === 'number') {
     return Math.max(0, Math.min(255, Math.round(value)));
   }
@@ -266,47 +268,146 @@ function parseDefault(value) {
   return 0;
 }
 
-// Converts one OFL fixture document into a validated fixture type. Throws a 400 for unusable input.
+/**
+ * A stable id for a fixture fetched from the library, so adding the same one twice is recognised. Ids are 64 characters
+ * at most, so a long key is cut and given a short hash to keep different keys apart.
+ * @param {string} key `manufacturer/fixture`
+ * @returns {string}
+ */
+export function oflFixtureId(key) {
+  const plain = `ofl-${key.replace('/', '-')}`;
+  if (plain.length <= 64) {
+    return plain;
+  }
+  return `${plain.slice(0, 55)}-${createHash('sha1').update(key).digest('hex').slice(0, 8)}`;
+}
+
+/**
+ * Credits the Open Fixture Library and its authors in the description of a fixture fetched from it.
+ * @param {Record<string, any>} document
+ * @param {{ key: string, creditKey?: string } | null} source
+ * @param {string[]} leftOut names of modes that were not copied
+ * @returns {string}
+ */
+function describeSource(document, source, leftOut) {
+  if (!source) {
+    return '';
+  }
+  const text = (/** @type {unknown} */ list) =>
+    Array.isArray(list) ? list.filter((item) => typeof item === 'string').join(', ') : '';
+  const categories = text(document.categories);
+  const authors = text(document.meta?.authors);
+  const parts = [
+    categories ? `${categories}.` : '',
+    `From the Open Fixture Library (open-fixture-library.org/${source.creditKey ?? source.key}).`,
+    authors ? `Authors: ${authors}.` : '',
+    leftOut.length > 0 ? `Not copied (pixel channels are not supported yet): ${leftOut.join(', ')}.` : '',
+  ];
+  return parts.filter(Boolean).join(' ').slice(0, 500);
+}
+
+const MAX_TEMPLATE_KEY = 100;
+
+/** @param {string} text @returns {string} the text with regular expression characters made literal */
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Finds the definition of a channel by name. The library describes most channels in `availableChannels`, but channels
+ * repeated for each pixel (for example "Red Master") come from `templateChannels` keys such as "Red $pixelKey", so a
+ * name that is not listed is matched against those too. Fine channels ("Pan fine") are recognised the same way.
+ * @param {Record<string, any>} document untrusted fixture document
+ * @returns {{ definitionOf: (name: string) => Record<string, any> | undefined, isFine: (name: string) => boolean }}
+ */
+export function createChannelLookup(document) {
+  const asEntries = (/** @type {unknown} */ value) =>
+    typeof value === 'object' && value !== null ? Object.entries(value) : [];
+  const available = new Map(asEntries(document.availableChannels));
+  /** @param {string} template */
+  const toPattern = (template) => {
+    const parts = template.split('$pixelKey');
+    if (template.length > MAX_TEMPLATE_KEY || parts.length < 2 || parts.length > 3) {
+      return null;
+    }
+    return new RegExp(`^${parts.map(escapeRegExp).join('(.+)')}$`);
+  };
+  /** @type {{ pattern: RegExp, definition: Record<string, any> }[]} */
+  const templates = [];
+  /** @type {RegExp[]} */
+  const fineTemplates = [];
+  const fine = new Set();
+  for (const [, definition] of available) {
+    for (const alias of definition?.fineChannelAliases ?? []) {
+      fine.add(alias);
+    }
+  }
+  for (const [name, definition] of asEntries(document.templateChannels)) {
+    const pattern = toPattern(name);
+    if (pattern) {
+      templates.push({ pattern, definition });
+    }
+    for (const alias of definition?.fineChannelAliases ?? []) {
+      const aliasPattern = typeof alias === 'string' ? toPattern(alias) : null;
+      if (aliasPattern) {
+        fineTemplates.push(aliasPattern);
+      }
+    }
+  }
+  return {
+    definitionOf: (name) => available.get(name) ?? templates.find((entry) => entry.pattern.test(name))?.definition,
+    isFine: (name) => fine.has(name) || fineTemplates.some((pattern) => pattern.test(name)),
+  };
+}
+
 /**
  * Converts one Open Fixture Library fixture document into a validated fixture type.
  * @param {Record<string, any>} document untrusted JSON from an OFL fixture file
  * @param {string} [manufacturer]
+ * @param {{ key: string, creditKey?: string } | null} [source] set when the fixture was fetched from the library: `key`
+ *   is what the person chose (it makes the id) and `creditKey` the entry the channels really came from, if different
  * @returns {import('../../shared/types.js').FixtureType}
  * @throws {Error & { status: number }} 400 when the document is not a usable fixture
  */
-export function convertOpenFixtureLibrary(document, manufacturer = '') {
-  const availableChannels = document.availableChannels;
+export function convertOpenFixtureLibrary(document, manufacturer = '', source = null) {
   const modes = document.modes;
-  if (typeof document.name !== 'string' || typeof availableChannels !== 'object' || !Array.isArray(modes)) {
+  if (typeof document.name !== 'string' || typeof document.availableChannels !== 'object' || !Array.isArray(modes)) {
     throw httpError(400, 'Not an Open Fixture Library fixture (missing name, availableChannels or modes)');
   }
 
-  /** @type {Map<string, string>} */
-  const fineAliases = new Map();
-  for (const [name, definition] of Object.entries(availableChannels)) {
-    for (const alias of definition?.fineChannelAliases ?? []) {
-      fineAliases.set(alias, name);
-    }
+  // A mode entry that is not a channel name or null (for example a pixel matrix insert) would be turned into one
+  // placeholder channel and shift every address after it. Such modes are left out rather than guessed; the fixture is
+  // refused only when no mode is left.
+  const usesInserts = (/** @type {Record<string, any>} */ mode) =>
+    (mode?.channels ?? []).some((/** @type {unknown} */ entry) => entry !== null && typeof entry !== 'string');
+  const supportedModes = modes.filter((/** @type {Record<string, any>} */ mode) => !usesInserts(mode));
+  if (modes.length > 0 && supportedModes.length === 0) {
+    throw httpError(400, 'This fixture uses pixel or matrix channels, which are not supported yet.');
   }
+  const leftOut = modes
+    .filter(usesInserts)
+    .map((/** @type {Record<string, any>} */ mode) => String(mode.name ?? 'Mode'));
+
+  const lookup = createChannelLookup(document);
 
   /** @param {string | null} name */
   const resolveChannel = (name) => {
     if (name === null || typeof name !== 'string') {
       return { name: 'Unused', type: 'other', defaultValue: 0 };
     }
-    const baseName = fineAliases.get(name);
-    if (baseName) {
+    if (lookup.isFine(name)) {
       return { name, type: 'other', defaultValue: 0 };
     }
-    const definition = availableChannels[name];
+    const definition = lookup.definitionOf(name);
     return { name, type: classifyChannel(name, definition), defaultValue: parseDefault(definition?.defaultValue) };
   };
 
   const converted = {
-    id: `ofl-${slugify(manufacturer)}-${slugify(document.name)}`.replace(/-+$/, ''),
+    id: source ? oflFixtureId(source.key) : `ofl-${slugify(manufacturer)}-${slugify(document.name)}`.replace(/-+$/, ''),
     manufacturer,
     name: document.name,
-    modes: modes.slice(0, 32).map((mode) => ({
+    description: describeSource(document, source, leftOut),
+    modes: supportedModes.slice(0, 32).map((/** @type {Record<string, any>} */ mode) => ({
       name: String(mode.name ?? 'Mode'),
       channels: (mode.channels ?? []).map((/** @type {string | null} */ name) => resolveChannel(name)),
     })),

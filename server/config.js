@@ -22,6 +22,8 @@ const envSchema = z.object({
   DMX_UNIVERSE: z.coerce.number().int().min(0).max(63999).optional(),
   DMX_FRAME_RATE: z.coerce.number().int().min(1).max(44).default(30),
   DATA_DIR: z.string().default('server/data'),
+  // Online fixture search (Open Fixture Library). Turn it off to keep the app from contacting the internet.
+  OFL_ENABLED: z.enum(['true', 'false']).default('true'),
 });
 
 export function loadConfig(env = process.env) {
@@ -42,6 +44,7 @@ export function loadConfig(env = process.env) {
     dmxNetHost: values.DMX_NET_HOST,
     dmxUniverse: values.DMX_UNIVERSE,
     dmxFrameRate: values.DMX_FRAME_RATE,
+    isOflEnabled: values.OFL_ENABLED === 'true',
     dataDir: path.resolve(ROOT_DIR, values.DATA_DIR),
     distDir: path.join(ROOT_DIR, 'dist'),
   };

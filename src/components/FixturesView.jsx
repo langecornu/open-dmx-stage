@@ -10,6 +10,7 @@ import {
   usageCount,
 } from '../utils/fixtureTypes.js';
 import { FixtureTypeEditor } from './FixtureTypeEditor.jsx';
+import { OflSearch } from './OflSearch.jsx';
 import { Icon } from './Icon.jsx';
 
 const EXAMPLE_ID = 'uking-40w-beam-moving-head';
@@ -32,6 +33,13 @@ export function FixturesView({ project, library, update }) {
   const addType = (created) => {
     update((current) => ({ ...current, fixtureTypes: [...current.fixtureTypes, created] }));
     setSelectedId(created.id);
+  };
+  const handleFound = (found) => {
+    update((current) => ({
+      ...current,
+      fixtureTypes: [...current.fixtureTypes.filter((candidate) => candidate.id !== found.id), found],
+    }));
+    setSelectedId(found.id);
   };
   const handleDelete = () => {
     update((current) => ({
@@ -74,6 +82,8 @@ export function FixturesView({ project, library, update }) {
           New fixture
         </button>
       </div>
+
+      <OflSearch ownIds={new Set(own.map((mine) => mine.id))} onAdd={handleFound} />
 
       <div className="split">
         <div className="fixture-lists">

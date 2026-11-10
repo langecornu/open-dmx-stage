@@ -7,7 +7,7 @@ import { logger } from '../logger.js';
 const log = logger.child({ module: 'http' });
 
 /**
- * @param {Error & { status?: number }} err
+ * @param {Error & { status?: number, expose?: boolean }} err
  * @param {import('express').Request & { id?: string }} req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} _next
@@ -15,11 +15,11 @@ const log = logger.child({ module: 'http' });
 export function errorHandler(err, req, res, _next) {
   const correlationId = req.id ?? randomUUID();
   const status = Number.isInteger(err.status) ? /** @type {number} */ (err.status) : 500;
-  if (status >= 500) {
+  if (status >= 500 && !err.expose) {
     log.error({ err, method: req.method, path: req.path, correlationId }, 'Request failed');
   } else {
     log.warn({ method: req.method, path: req.path, status, message: err.message }, 'Request rejected');
   }
-  const message = status >= 500 ? 'Internal server error' : err.message;
+  const message = status >= 500 && !err.expose ? 'Internal server error' : err.message;
   res.status(status).json({ error: message, correlationId });
 }

@@ -145,9 +145,32 @@ manual: pan and tilt (with fine channels), speed, dimmer, strobe, and red, green
 are the light's built-in programs and its reset, so the app keeps them at 0; do not move them. The colour and
 brightness controls work as on other lights, and pan and tilt are on the per-channel faders.
 
-## 7. Fixtures: describe your own lights
+## 7. Fixtures: find or describe your lights
 
-If a light is not in the list, describe it yourself on **Fixtures**. You need the channel table from its manual.
+If a light is not in the list, find it online or describe it yourself on **Fixtures**.
+
+### Find a fixture online
+
+The **Find a fixture online** box searches the community-made [Open Fixture Library](https://open-fixture-library.org),
+which has the channel layouts of thousands of lights.
+
+1. Type a brand, a model or both (for example "uking gobo") and press **Search**. Punctuation does not matter.
+2. Press **View details** to see a light before you add it: who wrote the definition, its size, weight and power, links to
+   the manual and product page, and every mode with each channel's name, what it does, its resting value and what each
+   range of values does. You can add it from there too.
+3. Press **Add** next to your light. Its manufacturer, model and every mode are copied into **Your fixtures**, and the
+   description credits the library and the people who wrote the definition.
+4. In **Setup**, choose it and add it to your rig. Check that the mode matches the one set on the light's display.
+
+Only your search words are sent to the library (through this app's server), nothing from your show. If you are
+offline the box tells you so, and everything else keeps working; set `OFL_ENABLED=false` (see the install guide) to turn
+the box off completely. Modes that repeat channels for every pixel are not supported yet: they are marked in the details window and left out
+when you add the light (the description says which), and a light with only such modes is refused with a message.
+Some entries only point to another brand's identical light; the app follows these for you.
+
+### Describe a fixture by hand
+
+If it is not in the library, or you prefer to enter it yourself, you need the channel table from the light's manual.
 
 1. Choose **New fixture** (or open a built-in one and press **Make a copy**).
 2. Fill in **Manufacturer**, **Model** and **Description** (for example "U'King", "40W RGBW Moving Head Light",
