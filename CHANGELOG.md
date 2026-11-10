@@ -1,9 +1,14 @@
 # Changelog
 
 All notable changes are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
-the project follows [Semantic Versioning](https://semver.org/). Nothing has been released yet.
+the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-11-09
+
+First release. USB output (passive USB-DMX cables and the ENTTEC Pro driver) follows the published formats but has not
+been verified on real hardware; the simulator and Art-Net output have been checked.
 
 ### Added
 
@@ -40,3 +45,6 @@ the project follows [Semantic Versioning](https://semver.org/). Nothing has been
 ### Not verified
 
 - USB output has not been tested on real hardware yet.
+
+[Unreleased]: https://github.com/langecornu2027/open-dmx-stage/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/langecornu2027/open-dmx-stage/releases/tag/v0.1.0
