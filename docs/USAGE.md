@@ -162,7 +162,9 @@ Choosing the right **What it does** matters: colours and the dimmer respond to t
 while **Other (fixed)** channels are never scaled. Use **Other** for anything that must stay put, with a **Rests at** that is
 safe (for example 0 for a reset channel).
 
-The built-in **U'King 40W RGBW Moving Head Light** is a worked example: open it to see a real 13 channel layout, then
+The built-in fixtures come from maker manuals: the generic dimmer, RGB and RGBW pars, a 36 LED RGB par (7 channel), a
+mini spider light, mini gobo and beam moving heads, and the U'King head. Always check the channel count your light's
+display shows before choosing a mode. The built-in **U'King 40W RGBW Moving Head Light** is a worked example: open it to see a real 13 channel layout, then
 copy it to make changes. Built-in fixtures cannot be edited. Fixtures you make are saved in the show file (so Export
 show takes them along), cannot be deleted while a light in the rig uses them, and cannot lose a mode while in use.
 

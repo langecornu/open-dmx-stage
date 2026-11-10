@@ -84,6 +84,94 @@ export const BUILTIN_FIXTURE_TYPES = [
     ],
   },
   {
+    id: 'generic-led-par-36-7ch',
+    manufacturer: 'Generic',
+    name: '36 LED RGB par (7 channel)',
+    description:
+      'A 36 LED RGB par with 7 DMX channels, from a manual with an A-003 remote. Set the light to its 7 channel DMX mode on its display. Check the channel count your light shows before choosing this one.',
+    // Channel 6 selects the built-in programs; 0 to 10 means "manual", so it stays at 0 and is typed 'other' (never
+    // scaled by master). Channel 7 sets the speed or shade of whichever program channel 6 selected.
+    modes: [
+      {
+        name: '7 channel',
+        channels: [
+          ch('Dimmer', 'intensity', 255),
+          ch('Red', 'red'),
+          ch('Green', 'green'),
+          ch('Blue', 'blue'),
+          ch('Strobe', 'strobe'),
+          ch('Programs (keep at 0 for manual colour)', 'other'),
+          ch('Program speed', 'speed'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'generic-mini-spider-light',
+    manufacturer: 'Generic',
+    name: 'Mini Spider Light (8 x RGBW)',
+    description:
+      'A mini spider moving light: eight RGBW LEDs on two tilting arms. 7 channel DMX mode only (the 15 channel mode is not included). It has no separate red, green or blue channel in this mode, so colours come from its built-in effects.',
+    // Channel 5 picks one of 25 built-in effects (0 to 7 is none) and channel 7 resets the light, so both stay at 0.
+    modes: [
+      {
+        name: '7 channel',
+        channels: [
+          ch('Motor 1 (tilt, 0 to 135 degrees)', 'tilt', 128),
+          ch('Motor 2 (tilt, 0 to 135 degrees)', 'tilt', 128),
+          ch('Dimmer', 'intensity', 255),
+          ch('Strobe', 'strobe'),
+          ch('Effect (keep at 0 for none)', 'other'),
+          ch('Effect speed', 'speed'),
+          ch('Reset (keep at 0)', 'other'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'generic-mini-moving-head-gobo',
+    manufacturer: 'Generic',
+    name: 'Mini Moving Head Gobo Light',
+    description:
+      'A mini moving head with one white LED plus 12 RGB LEDs, a colour wheel of 7 colours, 7 gobos and a ring light. 12 and 10 channel DMX modes; pick the one set on the light (CHnd on its display).',
+    // Channel "Automatic mode" must stay at 0 to 59 so the other channels work; "Reset" must stay at 0 (250 and up resets
+    // the head). Both are typed 'other' so master and blackout never touch them.
+    modes: [
+      {
+        name: '12 channel',
+        channels: [
+          ch('Pan', 'pan', 128),
+          ch('Pan fine', 'other'),
+          ch('Tilt', 'tilt', 128),
+          ch('Tilt fine', 'other'),
+          ch('Colour wheel', 'color-wheel'),
+          ch('Gobo', 'gobo'),
+          ch('Strobe', 'strobe'),
+          ch('Dimmer', 'intensity', 255),
+          ch('Motor speed (0 fast, 255 slow)', 'speed'),
+          ch('Automatic mode (keep at 0)', 'other'),
+          ch('Reset (keep at 0)', 'other'),
+          ch('Light strips (5 to 109 colour, 110 and up auto)', 'other'),
+        ],
+      },
+      {
+        name: '10 channel',
+        channels: [
+          ch('Pan', 'pan', 128),
+          ch('Tilt', 'tilt', 128),
+          ch('Colour wheel', 'color-wheel'),
+          ch('Gobo', 'gobo'),
+          ch('Strobe', 'strobe'),
+          ch('Dimmer', 'intensity', 255),
+          ch('Motor speed (0 fast, 255 slow)', 'speed'),
+          ch('Automatic mode (keep at 0)', 'other'),
+          ch('Reset (keep at 0)', 'other'),
+          ch('Light strips (5 to 109 colour, 110 and up auto)', 'other'),
+        ],
+      },
+    ],
+  },
+  {
     id: 'generic-moving-head',
     manufacturer: 'Generic',
     name: 'Moving head (basic)',

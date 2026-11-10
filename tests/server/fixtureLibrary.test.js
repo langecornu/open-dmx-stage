@@ -101,3 +101,69 @@ describe('fixture descriptions', () => {
     assert.equal(fixtureTypeSchema.safeParse({ ...base, surprise: 1 }).success, false, 'unknown fields are refused');
   });
 });
+
+describe('built-in profiles from maker manuals', () => {
+  const byId = (id) => BUILTIN_FIXTURE_TYPES.find((type) => type.id === id);
+  const typesOf = (id, mode = 0) => byId(id).modes[mode].channels.map((channel) => channel.type);
+
+  it('has unique ids', () => {
+    const ids = BUILTIN_FIXTURE_TYPES.map((type) => type.id);
+    assert.equal(new Set(ids).size, ids.length, 'no two built-in fixtures share an id');
+  });
+
+  it('lays out the 36 LED par in 7 channels as its manual says', () => {
+    assert.deepEqual(
+      typesOf('generic-led-par-36-7ch'),
+      ['intensity', 'red', 'green', 'blue', 'strobe', 'other', 'speed'],
+      'dimmer, red, green, blue, strobe, programs, speed',
+    );
+  });
+
+  it('lays out the mini spider light in 7 channels as its manual says', () => {
+    assert.deepEqual(
+      typesOf('generic-mini-spider-light'),
+      ['tilt', 'tilt', 'intensity', 'strobe', 'other', 'speed', 'other'],
+      'two motors, dimmer, strobe, effect, effect speed, reset',
+    );
+  });
+
+  it('lays out the mini gobo head in 12 and 10 channels as its manual says', () => {
+    assert.equal(byId('generic-mini-moving-head-gobo').modes.length, 2, 'two modes');
+    assert.deepEqual(
+      typesOf('generic-mini-moving-head-gobo', 0),
+      [
+        'pan',
+        'other',
+        'tilt',
+        'other',
+        'color-wheel',
+        'gobo',
+        'strobe',
+        'intensity',
+        'speed',
+        'other',
+        'other',
+        'other',
+      ],
+      'the 12 channel layout',
+    );
+    assert.deepEqual(
+      typesOf('generic-mini-moving-head-gobo', 1),
+      ['pan', 'tilt', 'color-wheel', 'gobo', 'strobe', 'intensity', 'speed', 'other', 'other', 'other'],
+      'the 10 channel layout',
+    );
+  });
+
+  it('keeps every reset, program and automatic-mode channel at 0, typed other, so a light cannot reset or leave manual', () => {
+    for (const type of BUILTIN_FIXTURE_TYPES) {
+      for (const mode of type.modes) {
+        for (const channel of mode.channels) {
+          if (/reset|keep at 0|automatic mode|programs/i.test(channel.name)) {
+            assert.equal(channel.defaultValue, 0, `${type.name} ${mode.name}: ${channel.name} rests at 0`);
+            assert.equal(channel.type, 'other', `${type.name} ${mode.name}: ${channel.name} is never scaled`);
+          }
+        }
+      }
+    }
+  });
+});

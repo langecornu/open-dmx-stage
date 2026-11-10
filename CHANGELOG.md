@@ -15,6 +15,9 @@ the project follows [Semantic Versioning](https://semver.org/).
 - **Fixtures screen:** write your own fixture definitions by hand: manufacturer, model, description, and the channels of
   each mode (name, what it does, resting value; add, reorder and remove). Built-in fixtures are read-only examples you
   can copy. Your fixtures are saved in the show file. Fixtures have a new `description` field (optional in older shows).
+- **More built-in fixtures, from maker manuals:** 36 LED RGB par (7 channel), Mini Spider Light (7 channel) and Mini Moving
+  Head Gobo Light (12 and 10 channel). Reset and program channels rest at 0 and are never scaled by master. Not yet
+  tried on real lights.
 - **U`King 40W RGBW Moving Head Light** built-in fixture (13 channel mode, from the maker's manual) and the worked
   example for the Fixtures screen. Not yet tried on the real light.
 
