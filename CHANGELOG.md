@@ -7,11 +7,21 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **"Rests at" values were never applied.** A fixture's resting values (a moving head's pan and tilt at the centre, a
+  dimmer open) were shown on the Fixtures screen but the output used 0 for any channel a look did not set, sending a
+  pan and tilt to a corner. Lights now sit at their resting values until a look sets something else, a look that does
+  not mention a channel leaves it there, and saving a look keeps a deliberate 0 for channels that rest above 0. Looks
+  saved earlier simply leave such channels at rest when played.
+- **Art-Net and sACN did not blank the lights when closing:** the last frame, which sets every channel to zero, was lost
+  because the socket closed before it was sent, so lights kept their last look when the output was switched or the app
+  stopped. The drivers now wait for pending sends before closing (with a short limit).
 - The built app served by `npm start` could not open its live link with default settings, so it said "Server offline" and
   faders, blackout and the lights test did nothing. The server's own address is now always trusted.
 
 ### Added
 
+- **First light checklist** ([docs/FIRST_LIGHT.md](docs/FIRST_LIGHT.md)) with a starter show to import
+  ([docs/examples/my-rig.json](docs/examples/my-rig.json)), and `--channels` for `npm run dmx:ramp`.
 - **Find a fixture online:** search the Open Fixture Library from the Fixtures screen and copy a light's modes and
   channels into your fixtures, with credit to the library and its authors in the description. Only the search words
   are sent, to one fixed host; `OFL_ENABLED=false` turns it off. Entries that only redirect to another brand are

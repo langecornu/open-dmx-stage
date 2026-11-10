@@ -86,6 +86,9 @@ public Wi-Fi.
 
 ## 4. Connect real DMX lights
 
+> Connecting lights for the first time? Follow the [first light checklist](FIRST_LIGHT.md): it takes you from cables to
+> a working show, with a starter show to import and a list of what to try when something does not respond.
+
 > New to DMX? The [connection guide](CONNECTION.md) explains adapters (including passive vs active), wiring and addresses
 > from scratch, with diagrams. The same guide opens inside the app from **Output, How to connect**.
 

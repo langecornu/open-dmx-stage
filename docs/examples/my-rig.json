@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 3,
+  "name": "My rig (starter)",
+  "fixtureTypes": [],
+  "fixtures": [
+    {
+      "id": "par-1",
+      "name": "Par 1",
+      "typeId": "generic-led-par-36-7ch",
+      "mode": 0,
+      "address": 1
+    },
+    {
+      "id": "par-2",
+      "name": "Par 2",
+      "typeId": "generic-led-par-36-7ch",
+      "mode": 0,
+      "address": 8
+    },
+    {
+      "id": "head",
+      "name": "Moving head",
+      "typeId": "uking-40w-beam-moving-head",
+      "mode": 0,
+      "address": 20
+    }
+  ],
+  "scenes": [
+    {
+      "id": "look-warm",
+      "name": "Warm white",
+      "values": {
+        "1": 255,
+        "2": 255,
+        "3": 190,
+        "4": 120,
+        "8": 255,
+        "9": 255,
+        "10": 190,
+        "11": 120,
+        "20": 128,
+        "22": 128,
+        "25": 255,
+        "27": 255,
+        "28": 180,
+        "29": 100,
+        "30": 120
+      }
+    },
+    {
+      "id": "look-cool",
+      "name": "Cool blue",
+      "values": {
+        "1": 255,
+        "2": 20,
+        "3": 60,
+        "4": 255,
+        "8": 255,
+        "9": 20,
+        "10": 60,
+        "11": 255,
+        "20": 128,
+        "22": 128,
+        "25": 255,
+        "27": 20,
+        "28": 60,
+        "29": 255
+      }
+    },
+    {
+      "id": "look-red",
+      "name": "Red alert",
+      "values": {
+        "1": 255,
+        "2": 255,
+        "8": 255,
+        "9": 255,
+        "20": 128,
+        "22": 128,
+        "25": 255,
+        "27": 255
+      }
+    },
+    {
+      "id": "look-pars",
+      "name": "Pars only",
+      "values": {
+        "1": 255,
+        "2": 255,
+        "3": 190,
+        "4": 120,
+        "8": 255,
+        "9": 255,
+        "10": 190,
+        "11": 120,
+        "20": 128,
+        "22": 128
+      }
+    }
+  ],
+  "chases": [
+    {
+      "id": "chase-cycle",
+      "name": "Colour cycle",
+      "loop": true,
+      "timing": "beats",
+      "steps": [
+        {
+          "id": "s1",
+          "sceneId": "look-warm",
+          "fadeMs": 1000,
+          "holdMs": 2000,
+          "fadeBeats": 1,
+          "holdBeats": 3
+        },
+        {
+          "id": "s2",
+          "sceneId": "look-cool",
+          "fadeMs": 1000,
+          "holdMs": 2000,
+          "fadeBeats": 1,
+          "holdBeats": 3
+        },
+        {
+          "id": "s3",
+          "sceneId": "look-red",
+          "fadeMs": 1000,
+          "holdMs": 2000,
+          "fadeBeats": 1,
+          "holdBeats": 3
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "group-pars",
+      "name": "Pars",
+      "fixtureIds": ["par-1", "par-2"]
+    },
+    {
+      "id": "group-head",
+      "name": "Moving head",
+      "fixtureIds": ["head"]
+    }
+  ]
+}
