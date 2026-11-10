@@ -21,7 +21,13 @@ export function ChasesView({ project, patch, update, flush, live }) {
   };
 
   const handleCreate = () => {
-    const created = { id: crypto.randomUUID(), name: `Sequence ${project.chases.length + 1}`, loop: true, steps: [] };
+    const created = {
+      id: crypto.randomUUID(),
+      name: `Sequence ${project.chases.length + 1}`,
+      loop: true,
+      timing: 'seconds',
+      steps: [],
+    };
     update((current) => ({ ...current, chases: [...current.chases, created] }));
     setSelectedId(created.id);
   };
@@ -33,7 +39,10 @@ export function ChasesView({ project, patch, update, flush, live }) {
     const firstScene = project.scenes[0];
     if (firstScene) {
       patchChase(chase.id, {
-        steps: [...chase.steps, { id: crypto.randomUUID(), sceneId: firstScene.id, fadeMs: 1000, holdMs: 2000 }],
+        steps: [
+          ...chase.steps,
+          { id: crypto.randomUUID(), sceneId: firstScene.id, fadeMs: 1000, holdMs: 2000, fadeBeats: 2, holdBeats: 4 },
+        ],
       });
     }
   };
@@ -105,6 +114,17 @@ export function ChasesView({ project, patch, update, flush, live }) {
                   />
                   Loop
                 </label>
+                <label className="field">
+                  Timing
+                  <select
+                    className="select"
+                    value={chase.timing}
+                    onChange={(event) => patchChase(chase.id, { timing: event.target.value })}
+                  >
+                    <option value="seconds">Seconds</option>
+                    <option value="beats">Beats (follows the tempo)</option>
+                  </select>
+                </label>
                 {isPlaying ? (
                   <button type="button" className="btn" onClick={() => live.send({ type: 'chaseStop' })}>
                     <Icon name="stop" size={16} />
@@ -133,6 +153,7 @@ export function ChasesView({ project, patch, update, flush, live }) {
                   project={project}
                   patch={patch}
                   playingIndex={isPlaying ? live.engine.chaseStep : null}
+                  bpm={live.engine.bpm}
                 />
               ) : null}
               {chase.steps.length > 0 ? (
@@ -140,8 +161,8 @@ export function ChasesView({ project, patch, update, flush, live }) {
                   <span />
                   <span />
                   <span>Look</span>
-                  <span>Fade (s)</span>
-                  <span>Hold (s)</span>
+                  <span>{chase.timing === 'beats' ? 'Fade (beats)' : 'Fade (s)'}</span>
+                  <span>{chase.timing === 'beats' ? 'Hold (beats)' : 'Hold (s)'}</span>
                   <span />
                 </div>
               ) : null}
@@ -151,6 +172,7 @@ export function ChasesView({ project, patch, update, flush, live }) {
                   step={step}
                   index={index}
                   isPlaying={Boolean(isPlaying) && live.engine.chaseStep === index}
+                  timing={chase.timing}
                   scenes={project.scenes}
                   thumbnail={sceneGradient(
                     fixtureColors(

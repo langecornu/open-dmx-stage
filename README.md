@@ -19,6 +19,8 @@ fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a
   Art-Net and sACN, chosen from the app with no configuration files.
 - **Perform screen:** every look and sequence as a big button with keyboard shortcuts, and MIDI controller mapping
   (pads to looks, a knob to the master) in Chrome and Edge.
+- **Tempo, effects and groups:** tap a tempo, run pulse, sweep and rainbow effects on all lights or a group, and time
+  sequences in beats.
 - **Connection helpers:** detect whether a USB adapter is a passive cable or an adapter with its own processor, and a
   one-button test that cycles your lights through red, green, blue and white.
 - **Simulator mode:** try everything without lights or a dongle.

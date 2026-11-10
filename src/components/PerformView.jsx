@@ -16,11 +16,14 @@ import {
   shouldTrigger,
 } from '../utils/midi.js';
 import { assignKeys } from '../utils/performKeys.js';
-import { averageColor, fixtureColors, sceneGradient } from '../utils/sceneColors.js';
+import { buildPerformItems } from '../utils/performItems.js';
+import { useTapTempo } from '../hooks/useTapTempo.js';
+import { EffectsPanel } from './EffectsPanel.jsx';
 import { EmptyState } from './EmptyState.jsx';
-import { Icon } from './Icon.jsx';
 import { MidiPanel } from './MidiPanel.jsx';
+import { PerformControls } from './PerformControls.jsx';
 import { PerformTile } from './PerformTile.jsx';
+import { TempoPanel } from './TempoPanel.jsx';
 
 const FADES = [0, 250, 500, 1000, 2000];
 const MASTER_STEP = 0.1;
@@ -46,27 +49,7 @@ export function PerformView({ project, patch, live, flush }) {
   const [error, setError] = useState(null);
   const [midiMap, setMidiMap] = useState(loadMidiMap);
 
-  const items = useMemo(() => {
-    const colours = (values) => fixtureColors(project, patch, values);
-    const looks = project.scenes.map((scene) => ({
-      action: { type: 'look', id: scene.id },
-      name: scene.name,
-      kind: 'Look',
-      gradient: sceneGradient(colours(scene.values)),
-    }));
-    const sequences = project.chases.map((chase) => {
-      const stepColours = chase.steps.map((step) =>
-        averageColor(colours(project.scenes.find((scene) => scene.id === step.sceneId)?.values ?? {})),
-      );
-      return {
-        action: { type: 'sequence', id: chase.id },
-        name: chase.name,
-        kind: 'Sequence',
-        gradient: sceneGradient(stepColours),
-      };
-    });
-    return [...looks, ...sequences];
-  }, [project, patch]);
+  const items = useMemo(() => buildPerformItems(project, patch), [project, patch]);
   const keys = assignKeys(items.length);
 
   // Forget links to looks and sequences that were deleted.
@@ -140,6 +123,8 @@ export function PerformView({ project, patch, live, flush }) {
   };
   const midi = useMidi({ onMessage: handleMidi });
 
+  const tap = useTapTempo({ send: live.send, bpm: live.engine.bpm });
+
   const stepMaster = (delta) =>
     live.send({ type: 'master', level: Math.max(0, Math.min(1, live.engine.master + delta)) });
   usePerformKeys({
@@ -148,6 +133,7 @@ export function PerformView({ project, patch, live, flush }) {
     Escape: () => run({ type: 'stop' }),
     '[': () => stepMaster(-MASTER_STEP),
     ']': () => stepMaster(MASTER_STEP),
+    '.': tap,
   });
 
   const midiLabelOf = (action) => {
@@ -173,7 +159,8 @@ export function PerformView({ project, patch, live, flush }) {
             Perform
           </h1>
           <p className="view-sub">
-            Big buttons for your show. Keys: Space is blackout, Escape stops a sequence, [ and ] change the master.
+            Big buttons for your show. Keys: Space is blackout, Escape stops a sequence, [ and ] change the master, and
+            . taps the tempo.
           </p>
         </div>
         <label className="field">
@@ -194,48 +181,15 @@ export function PerformView({ project, patch, live, flush }) {
         </p>
       ) : null}
 
-      <div className="card card-pad perform-controls">
-        <label className="slider-row perform-master">
-          Master
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={Math.round(live.engine.master * 100)}
-            onChange={(event) => live.send({ type: 'master', level: Number(event.target.value) / 100 })}
-          />
-          <span className="slider-value">{Math.round(live.engine.master * 100)}%</span>
-        </label>
-        <button
-          type="button"
-          className="btn btn-blackout"
-          aria-pressed={live.engine.blackout}
-          data-armed={isArmed({ type: 'blackout' })}
-          onClick={() => handlePress({ type: 'blackout' })}
-        >
-          <Icon name="power" />
-          {withMidiLabel('Blackout', { type: 'blackout' })}
-        </button>
-        <button
-          type="button"
-          className="btn"
-          data-armed={isArmed({ type: 'stop' })}
-          onClick={() => handlePress({ type: 'stop' })}
-        >
-          <Icon name="stop" size={16} />
-          {withMidiLabel('Stop sequence', { type: 'stop' })}
-        </button>
-        {isLearning ? (
-          <button
-            type="button"
-            className="btn"
-            data-armed={isArmed({ type: 'master' })}
-            onClick={() => handlePress({ type: 'master' })}
-          >
-            {withMidiLabel('Link master to a knob', { type: 'master' })}
-          </button>
-        ) : null}
-      </div>
+      <PerformControls
+        master={live.engine.master}
+        isBlackout={live.engine.blackout}
+        isLearning={isLearning}
+        labelFor={withMidiLabel}
+        isArmed={isArmed}
+        onPress={handlePress}
+        onMaster={(level) => live.send({ type: 'master', level })}
+      />
 
       {items.length === 0 ? (
         <EmptyState title="Nothing to perform yet" hint="Save some looks first. They appear here as big buttons." />
@@ -256,6 +210,9 @@ export function PerformView({ project, patch, live, flush }) {
           ))}
         </div>
       )}
+
+      <TempoPanel bpm={live.engine.bpm} onTempo={(bpm) => live.send({ type: 'tempo', bpm, sync: false })} onTap={tap} />
+      <EffectsPanel groups={project.groups} live={live} />
 
       <MidiPanel
         midi={midi}

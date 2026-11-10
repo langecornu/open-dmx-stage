@@ -107,3 +107,32 @@ export function levelChannelsOf(patch) {
   }
   return levels;
 }
+
+/**
+ * @typedef {object} FixtureChannels
+ * @property {number} [red] absolute DMX channel of the red channel, when the fixture has one
+ * @property {number} [green]
+ * @property {number} [blue]
+ * @property {number[]} levels every brightness channel (see LEVEL_TYPES) of the fixture
+ */
+
+/**
+ * Groups the patch by fixture, in rig order, so effects can reach a fixture's colour and brightness channels.
+ * @param {Patch} patch
+ * @returns {Map<string, FixtureChannels>}
+ */
+export function channelsByFixture(patch) {
+  /** @type {Map<string, FixtureChannels>} */
+  const byFixture = new Map();
+  for (const [channel, info] of patch.channels) {
+    const entry = byFixture.get(info.fixtureId) ?? { levels: [] };
+    if (info.type === 'red' || info.type === 'green' || info.type === 'blue') {
+      entry[info.type] = channel;
+    }
+    if (LEVEL_TYPES.has(info.type)) {
+      entry.levels.push(channel);
+    }
+    byFixture.set(info.fixtureId, entry);
+  }
+  return byFixture;
+}

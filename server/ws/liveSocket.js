@@ -135,6 +135,25 @@ export function attachLiveSocket({
       case 'chaseStop':
         engine.stopChase();
         break;
+      case 'tempo':
+        engine.setTempo(message.bpm, message.sync);
+        break;
+      case 'effectStart': {
+        const group = message.groupId ? project.groups.find((candidate) => candidate.id === message.groupId) : null;
+        if (message.groupId && !group) {
+          break; // the group was deleted; do nothing rather than light every fixture
+        }
+        engine.startEffect({
+          type: message.effect,
+          beats: message.beats,
+          groupId: group?.id ?? null,
+          fixtureIds: group ? group.fixtureIds : null,
+        });
+        break;
+      }
+      case 'effectStop':
+        engine.stopEffect();
+        break;
       default:
         break;
     }

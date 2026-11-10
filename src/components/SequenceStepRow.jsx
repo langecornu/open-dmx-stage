@@ -3,8 +3,11 @@ import { Icon } from './Icon.jsx';
 
 const clampMs = (raw) => Math.max(0, Math.min(600000, Math.round(Number(raw) * 1000) || 0));
 
-export function SequenceStepRow({ step, index, isPlaying, scenes, thumbnail, onChange, onMove, onRemove }) {
+const clampBeats = (raw) => Math.max(0, Math.min(64, Math.round(Number(raw) * 4) / 4 || 0));
+
+export function SequenceStepRow({ step, index, isPlaying, timing, scenes, thumbnail, onChange, onMove, onRemove }) {
   const number = index + 1;
+  const isBeats = timing === 'beats';
   return (
     <div className="step-row" data-playing={isPlaying}>
       <span className="step-index">{number}</span>
@@ -22,27 +25,37 @@ export function SequenceStepRow({ step, index, isPlaying, scenes, thumbnail, onC
         ))}
       </select>
       <label className="field">
-        <span className="sr-only">Fade seconds</span>
+        <span className="sr-only">{isBeats ? 'Fade beats' : 'Fade seconds'}</span>
         <input
           className="input"
           type="number"
           min="0"
-          step="0.1"
-          aria-label={`Fade seconds for step ${number}`}
-          value={step.fadeMs / 1000}
-          onChange={(event) => onChange(index, { fadeMs: clampMs(event.target.value) })}
+          step={isBeats ? '0.25' : '0.1'}
+          aria-label={`${isBeats ? 'Fade beats' : 'Fade seconds'} for step ${number}`}
+          value={isBeats ? step.fadeBeats : step.fadeMs / 1000}
+          onChange={(event) =>
+            onChange(
+              index,
+              isBeats ? { fadeBeats: clampBeats(event.target.value) } : { fadeMs: clampMs(event.target.value) },
+            )
+          }
         />
       </label>
       <label className="field">
-        <span className="sr-only">Hold seconds</span>
+        <span className="sr-only">{isBeats ? 'Hold beats' : 'Hold seconds'}</span>
         <input
           className="input"
           type="number"
           min="0"
-          step="0.1"
-          aria-label={`Hold seconds for step ${number}`}
-          value={step.holdMs / 1000}
-          onChange={(event) => onChange(index, { holdMs: clampMs(event.target.value) })}
+          step={isBeats ? '0.25' : '0.1'}
+          aria-label={`${isBeats ? 'Hold beats' : 'Hold seconds'} for step ${number}`}
+          value={isBeats ? step.holdBeats : step.holdMs / 1000}
+          onChange={(event) =>
+            onChange(
+              index,
+              isBeats ? { holdBeats: clampBeats(event.target.value) } : { holdMs: clampMs(event.target.value) },
+            )
+          }
         />
       </label>
       <span className="row-actions">

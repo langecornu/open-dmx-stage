@@ -1,10 +1,13 @@
 // The lighting engine: layers a scene (with crossfades and chases) under a live programmer,
 // applies master and blackout to level channels, and pushes one 512-slot frame per tick to a driver.
+import { MAX_BPM, MIN_BPM, pulseGain, rainbowRgb, sweepGain } from '../../shared/effects.js';
 import { DMX_CHANNELS } from '../../shared/patch.js';
 
 /** @typedef {import('../../shared/types.js').Driver} Driver */
 /** @typedef {import('../../shared/types.js').Scene} Scene */
 /** @typedef {import('../../shared/types.js').Chase} Chase */
+/** @typedef {import('../../shared/patch.js').FixtureChannels} FixtureChannels */
+/** @typedef {{ type: 'pulse' | 'sweep' | 'rainbow', beats: number, groupId: string | null, fixtureIds: string[] | null }} Effect */
 /** @typedef {{ from: Float64Array, to: Float64Array, start: number, duration: number }} Fade */
 /**
  * @typedef {object} ChaseRun
@@ -12,11 +15,14 @@ import { DMX_CHANNELS } from '../../shared/patch.js';
  * @property {boolean} loop
  * @property {Chase['steps']} steps only the steps whose look still exists
  * @property {Map<string, Scene>} scenesById
+ * @property {'seconds' | 'beats'} timing
+ * @property {number} fadeMs this step's fade in milliseconds, worked out when the step begins (beats use the tempo then)
+ * @property {number} holdMs this step's hold in milliseconds
  * @property {number} index current step
  * @property {'fade' | 'hold'} phase
  * @property {number} phaseStart milliseconds on the engine clock
  */
-/** @typedef {{ master: number, blackout: boolean, activeSceneId: string | null, activeChaseId: string | null, chaseStep: number | null, programmerChannels: number[] }} EngineState */
+/** @typedef {{ master: number, blackout: boolean, bpm: number, effect: { type: string, beats: number, groupId: string | null } | null, activeSceneId: string | null, activeChaseId: string | null, chaseStep: number | null, programmerChannels: number[] }} EngineState */
 /** @typedef {{ type: 'frame', frame: Uint8Array } | { type: 'state', state: EngineState }} EngineEvent */
 
 export class DmxEngine {
@@ -47,6 +53,53 @@ export class DmxEngine {
     /** @type {ChaseRun | null} */
     this.chase = null;
     this.frame = new Uint8Array(DMX_CHANNELS);
+
+    this.bpm = 120;
+    this.tempoOrigin = 0; // the engine-clock time of beat 0; effects and beat-timed sequences measure from here
+    /** @type {Effect | null} */
+    this.effect = null;
+    /** @type {Map<string, FixtureChannels>} */
+    this.fixtureChannels = new Map();
+  }
+
+  /** @returns {number} milliseconds in one beat at the current tempo */
+  beatMs() {
+    return 60000 / this.bpm;
+  }
+
+  /**
+   * Sets the tempo. The beat position carries on from where it was, so an effect does not jump when the tempo changes,
+   * unless `sync` says this moment is a beat (tapping the tempo on the beat).
+   * @param {number} bpm
+   * @param {boolean} [sync]
+   * @param {number} [at]
+   */
+  setTempo(bpm, sync = false, at = this.now()) {
+    const beat = (at - this.tempoOrigin) / this.beatMs();
+    this.bpm = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
+    this.tempoOrigin = sync ? at : at - beat * this.beatMs();
+    this.emitState();
+  }
+
+  /** @param {Map<string, FixtureChannels>} fixtureChannels the colour and brightness channels of every fixture */
+  setFixtureChannels(fixtureChannels) {
+    this.fixtureChannels = fixtureChannels;
+  }
+
+  /**
+   * Starts a live effect. It lies over the current look, under the manual changes, and follows the tempo.
+   * @param {Effect} effect `fixtureIds` null means every fixture
+   */
+  startEffect(effect) {
+    this.effect = effect;
+    this.emitState();
+  }
+
+  stopEffect() {
+    if (this.effect) {
+      this.effect = null;
+      this.emitState();
+    }
   }
 
   /** Swaps the output driver at runtime; the caller closes the old one. @param {Driver} driver */
@@ -110,7 +163,18 @@ export class DmxEngine {
     }
     this.programmer.clear();
     /** @type {ChaseRun} */
-    const run = { id: chase.id, loop: chase.loop, steps, scenesById, index: 0, phase: 'fade', phaseStart: 0 };
+    const run = {
+      id: chase.id,
+      loop: chase.loop,
+      timing: chase.timing ?? 'seconds',
+      fadeMs: 0,
+      holdMs: 0,
+      steps,
+      scenesById,
+      index: 0,
+      phase: 'fade',
+      phaseStart: 0,
+    };
     this.chase = run;
     this.activeSceneId = null;
     this.beginChaseStep(run, this.now());
@@ -134,8 +198,15 @@ export class DmxEngine {
     const scene = run.scenesById.get(step.sceneId);
     run.phase = 'fade';
     run.phaseStart = at;
+    if (run.timing === 'beats') {
+      run.fadeMs = Math.round((step.fadeBeats ?? 0) * this.beatMs());
+      run.holdMs = Math.round((step.holdBeats ?? 1) * this.beatMs());
+    } else {
+      run.fadeMs = step.fadeMs;
+      run.holdMs = step.holdMs;
+    }
     this.activeSceneId = step.sceneId;
-    this.startFade(scene?.values ?? {}, step.fadeMs, at);
+    this.startFade(scene?.values ?? {}, run.fadeMs, at);
   }
 
   /**
@@ -178,12 +249,11 @@ export class DmxEngine {
    * @param {number} at
    */
   advanceChase(run, at) {
-    const step = run.steps[run.index];
     if (run.phase === 'fade' && !this.fade) {
       run.phase = 'hold';
-      run.phaseStart += step.fadeMs;
+      run.phaseStart += run.fadeMs;
     }
-    if (run.phase === 'hold' && at - run.phaseStart >= step.holdMs) {
+    if (run.phase === 'hold' && at - run.phaseStart >= run.holdMs) {
       const isLast = run.index === run.steps.length - 1;
       if (isLast && !run.loop) {
         this.chase = null;
@@ -207,6 +277,9 @@ export class DmxEngine {
     for (let i = 0; i < DMX_CHANNELS; i += 1) {
       frame[i] = Math.round(this.sceneLayer[i]);
     }
+    if (this.effect) {
+      this.applyEffect(frame, this.effect, at);
+    }
     for (const [channel, value] of this.programmer) {
       frame[channel - 1] = value;
     }
@@ -223,11 +296,46 @@ export class DmxEngine {
     return frame;
   }
 
+  /**
+   * Lays the running effect over the frame. Pulse and sweep scale a fixture's brightness channels; rainbow sets its red,
+   * green and blue. Fixtures that are not in the rig any more are skipped.
+   * @param {Uint8Array} frame
+   * @param {Effect} effect
+   * @param {number} at
+   */
+  applyEffect(frame, effect, at) {
+    const ids = (effect.fixtureIds ?? [...this.fixtureChannels.keys()]).filter((id) => this.fixtureChannels.has(id));
+    const phase = (((at - this.tempoOrigin) / this.beatMs()) % effect.beats) / effect.beats;
+    const wrapped = phase < 0 ? phase + 1 : phase;
+    ids.forEach((id, index) => {
+      const channels = /** @type {FixtureChannels} */ (this.fixtureChannels.get(id));
+      if (effect.type === 'rainbow') {
+        const [red, green, blue] = rainbowRgb(wrapped, index, ids.length);
+        if (channels.red !== undefined) {
+          frame[channels.red - 1] = red;
+        }
+        if (channels.green !== undefined) {
+          frame[channels.green - 1] = green;
+        }
+        if (channels.blue !== undefined) {
+          frame[channels.blue - 1] = blue;
+        }
+        return;
+      }
+      const gain = effect.type === 'pulse' ? pulseGain(wrapped) : sweepGain(wrapped, index, ids.length);
+      for (const channel of channels.levels) {
+        frame[channel - 1] = Math.round(frame[channel - 1] * gain);
+      }
+    });
+  }
+
   /** @returns {EngineState} */
   getState() {
     return {
       master: this.master,
       blackout: this.blackout,
+      bpm: this.bpm,
+      effect: this.effect ? { type: this.effect.type, beats: this.effect.beats, groupId: this.effect.groupId } : null,
       activeSceneId: this.activeSceneId,
       activeChaseId: this.chase?.id ?? null,
       chaseStep: this.chase?.index ?? null,

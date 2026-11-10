@@ -71,6 +71,10 @@ A sequence plays looks one after another.
 2. Choose **Add step** for each look you want, then pick the look for each step.
 3. Set the **Fade** (seconds to transition in) and **Hold** (seconds to stay) for each step.
 4. Turn **Loop** on to repeat forever, then press **Play**. Press **Stop** to end it.
+5. Optional: change **Timing** from **Seconds** to **Beats** to time steps in beats instead. The fields become **Fade
+   (beats)** and **Hold (beats)**, in quarter-beat steps, and the sequence speeds up or slows down with the tempo
+   (see Tempo in the Perform section). Switching starts from the same lengths at 120 beats per minute. The tempo is
+   read when each step begins, so a change takes effect from the next step.
 
 ![Sequences screen with timeline](images/06-sequences.jpg)
 
@@ -87,6 +91,19 @@ The step that is playing is highlighted. Use the arrow buttons to reorder steps 
   **Escape** stops a sequence, and **[** and **]** lower and raise the master by 10%. Shortcuts never fire while you are
   typing in a field.
 - **Master, blackout and stop** are always at the top of the screen.
+
+### Tempo and effects
+
+- **Tempo:** type the beats per minute, or press **Tap tempo** (or the **.** key) in time with the music. The first tap
+  lines the beat up, and from the second tap the tempo follows your taps; a pause of two seconds starts a new count.
+  **½×** and **2×** halve and double it. The tempo goes from 30 to 300.
+- **Effects:** **Pulse** (every light swells on the beat), **Sweep** (a bright spot runs along the lights, in the order
+  of your rig) and **Rainbow** (colours cycle through the spectrum, spread along the lights). Choose **All lights** or a
+  group, and how many beats one cycle lasts. Press an effect again, or **Stop effect**, to end it. Effects lie over
+  the look that is playing; master, blackout and any manual change still win. Pulse and sweep scale brightness, so
+  they work with any look; rainbow sets red, green and blue on lights that have them. If you edit a group while an
+  effect runs, press the effect again to pick up the change.
+- Tempo and effects are live controls and are not saved in the show file.
 
 ### MIDI controller
 
@@ -112,12 +129,20 @@ Use **Setup** to manage your fixtures.
   channel 512.
 - **Import fixture file:** load a fixture definition from a QLC+ `.qxf` file or an Open Fixture Library `.json` file.
   Imported fixtures then appear in the **Fixture** list. Only import files whose licence allows your use.
-- **Remove:** the bin icon takes a fixture out of the rig.
+- **Remove:** the bin icon takes a fixture out of the rig (and out of any group).
+- **Groups:** once you have lights, a **Groups** card lets you name sets of them, such as a front row, by ticking the
+  lights in each. Effects on the Perform screen can run on just one group.
 - **Your show file:** **Export show** downloads your whole show (fixtures, looks and sequences) as a file you can back up
   or move to another computer. **Import show** loads one back in, after asking you to confirm, because it replaces the
   current show. Files from older versions of the app are upgraded automatically.
 
 Make sure each fixture's real DMX address and mode match what is shown here.
+
+**U`King 40W Beam Moving Head:** choose **U`King 40W Beam Moving Head (RGBW)**, mode **13 channel**. On the light's
+display set **CH13** (13 channel mode) and its start address (**A001** and so on). The profile follows the maker's
+manual: pan and tilt (with fine channels), speed, dimmer, strobe, and red, green, blue and white. Channels 12 and 13
+are the light's built-in programs and its reset, so the app keeps them at 0; do not move them. The colour and
+brightness controls work as on other lights, and pan and tilt are on the per-channel faders.
 
 ## 7. Output: see what is sent
 

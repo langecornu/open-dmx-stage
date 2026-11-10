@@ -29,8 +29,35 @@ function addChaseStepIds(project) {
   };
 }
 
+/**
+ * Version 3 adds fixture groups, and lets a sequence keep its timing in beats. Existing sequences stay in seconds; their
+ * beat values are the same durations at 120 beats per minute, so switching to beats starts from familiar numbers.
+ * @param {Record<string, any>} project
+ * @returns {Record<string, any>}
+ */
+function addGroupsAndBeatTiming(project) {
+  const toBeats = (/** @type {unknown} */ ms) => Math.min(64, Math.round((Number(ms) / 500) * 4) / 4) || 0;
+  const chases = Array.isArray(project.chases) ? project.chases : [];
+  return {
+    ...project,
+    groups: Array.isArray(project.groups) ? project.groups : [],
+    chases: chases.map((/** @type {Record<string, any>} */ chase) => ({
+      ...chase,
+      timing: 'seconds',
+      steps: (Array.isArray(chase.steps) ? chase.steps : []).map((/** @type {Record<string, any>} */ step) => ({
+        ...step,
+        fadeBeats: toBeats(step.fadeMs),
+        holdBeats: toBeats(step.holdMs),
+      })),
+    })),
+  };
+}
+
 /** Ordered migrations: each takes a project at version `from` and returns one at version `to`. */
-const MIGRATIONS = [{ from: 1, to: 2, up: addChaseStepIds }];
+const MIGRATIONS = [
+  { from: 1, to: 2, up: addChaseStepIds },
+  { from: 2, to: 3, up: addGroupsAndBeatTiming },
+];
 
 /**
  * @param {unknown} raw a parsed show file of any supported version

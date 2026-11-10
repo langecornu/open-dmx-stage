@@ -49,6 +49,24 @@ describe('migrateProject', () => {
     assert.deepEqual(show, copy, 'the original object is untouched');
   });
 
+  it('upgrades a version 2 show: adds groups, and beat timing worked out at 120 beats per minute', () => {
+    const version2 = {
+      schemaVersion: 2,
+      name: 'Two',
+      fixtureTypes: [],
+      fixtures: [],
+      scenes: [],
+      chases: [{ id: 'c', name: 'C', loop: true, steps: [{ id: 's', sceneId: 'x', fadeMs: 1000, holdMs: 2000 }] }],
+    };
+    const migrated = migrateProject(version2);
+    assert.equal(migrated.schemaVersion, CURRENT_SCHEMA_VERSION, 'it is now current');
+    assert.deepEqual(migrated.groups, [], 'there are no groups yet');
+    assert.equal(migrated.chases[0].timing, 'seconds', 'the sequence still runs in seconds');
+    assert.equal(migrated.chases[0].steps[0].fadeBeats, 2, '1 s is 2 beats at 120 bpm');
+    assert.equal(migrated.chases[0].steps[0].holdBeats, 4, '2 s is 4 beats at 120 bpm');
+    assert.equal(migrated.chases[0].steps[0].fadeMs, 1000, 'the seconds are kept');
+  });
+
   it('is a no-op for a current show, and refuses newer or non-show input', () => {
     const current = { ...VERSION_1, schemaVersion: CURRENT_SCHEMA_VERSION };
     assert.equal(migrateProject(current).schemaVersion, CURRENT_SCHEMA_VERSION, 'current files pass through');

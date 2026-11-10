@@ -9,7 +9,7 @@ import { TEST_STEP_MS, useTestPattern } from '../../src/hooks/useTestPattern.js'
 import { BUILTIN_TYPES } from './fixtures.js';
 
 const project = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   name: 'Test',
   fixtureTypes: [],
   fixtures: [

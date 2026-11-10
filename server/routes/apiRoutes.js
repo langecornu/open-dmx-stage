@@ -1,7 +1,7 @@
 // HTTP API: project load/save, fixture library, fixture import and output status. Parsing only.
 import { Router } from 'express';
 
-import { buildPatch, levelChannelsOf } from '../../shared/patch.js';
+import { buildPatch, channelsByFixture, levelChannelsOf } from '../../shared/patch.js';
 import { validateBody } from '../middleware/validate.js';
 import { listSerialPorts } from '../clients/serial.js';
 import { detectAdapterSchema, importFixtureSchema, importQlcSchema, projectSchema } from '../schemas/projectSchema.js';
@@ -24,7 +24,9 @@ export function createApiRouter({ engine, projectService, outputManager }) {
 
   /** @param {import('../../shared/types.js').Project} project */
   const syncEngineWithProject = (project) => {
-    engine.setLevelChannels(levelChannelsOf(buildPatch(project, BUILTIN_FIXTURE_TYPES)));
+    const patch = buildPatch(project, BUILTIN_FIXTURE_TYPES);
+    engine.setLevelChannels(levelChannelsOf(patch));
+    engine.setFixtureChannels(channelsByFixture(patch));
   };
   syncEngineWithProject(projectService.get());
 

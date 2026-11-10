@@ -11,6 +11,8 @@ const BACKOFF_MAX_MS = 15000;
 const INITIAL_STATE = {
   master: 1,
   blackout: false,
+  bpm: 120,
+  effect: null,
   activeSceneId: null,
   activeChaseId: null,
   chaseStep: null,

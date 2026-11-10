@@ -1828,3 +1828,36 @@ input[type='range'] {
     grid-template-columns: repeat(16, 1fr);
   }
 }
+
+/* Tempo, effects and groups */
+.tempo-panel,
+.effects-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+
+.effects-panel {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.groups-card {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.group-row {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.group-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+}

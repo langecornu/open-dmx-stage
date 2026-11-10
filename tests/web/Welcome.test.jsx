@@ -9,7 +9,15 @@ import { BUILTIN_TYPES } from './fixtures.js';
 function renderWelcome() {
   const update = vi.fn();
   const onDone = vi.fn();
-  const project = { schemaVersion: 2, name: 'Test', fixtureTypes: [], fixtures: [], scenes: [], chases: [] };
+  const project = {
+    schemaVersion: 3,
+    name: 'Test',
+    fixtureTypes: [],
+    fixtures: [],
+    scenes: [],
+    chases: [],
+    groups: [],
+  };
   render(
     <Welcome
       project={project}
