@@ -238,3 +238,91 @@ describe('network driver status', () => {
     await driver.close();
   });
 });
+
+describe('closing a network driver', () => {
+  // Regression: closing the socket right after send() dropped the packet, so the blanking frame never left and lights
+  // kept the last look when the output was switched, the app was stopped, or the show ended.
+  async function lastPacketAfterBlankAndClose(createDriver, readSlot) {
+    const receiver = dgram.createSocket('udp4');
+    await new Promise((resolve) => receiver.bind(0, '127.0.0.1', resolve));
+    const slots = [];
+    receiver.on('message', (packet) => slots.push(readSlot(packet)));
+    const driver = createDriver(receiver.address().port);
+    await driver.open();
+    driver.send(frameWith(255));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    driver.send(new Uint8Array(512)); // blank, then close straight away, as the output manager does
+    await driver.close();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    receiver.close();
+    return slots;
+  }
+
+  it('still delivers the final Art-Net blanking frame', async () => {
+    const slots = await lastPacketAfterBlankAndClose(
+      (port) => new ArtNetDriver({ host: '127.0.0.1', universe: 0, port }),
+      (packet) => packet[18],
+    );
+    assert.deepEqual(slots, [255, 0], 'the full frame and then the blank one both arrived');
+  });
+
+  it('still delivers the final sACN blanking frame', async () => {
+    const slots = await lastPacketAfterBlankAndClose(
+      (port) => new SacnDriver({ host: '127.0.0.1', universe: 1, port }),
+      (packet) => packet[126],
+    );
+    assert.deepEqual(slots, [255, 0], 'the full frame and then the blank one both arrived');
+  });
+
+  it('waits for the socket to finish sending before it closes it', async () => {
+    const events = [];
+    const socket = {
+      on() {},
+      once() {},
+      off() {},
+      bind(_port, done) {
+        done();
+      },
+      setBroadcast() {},
+      send(_packet, _port, _host, done) {
+        events.push('send');
+        setTimeout(() => {
+          events.push('sent');
+          done(null);
+        }, 20);
+      },
+      close(done) {
+        events.push('close');
+        done();
+      },
+    };
+    const driver = new ArtNetDriver({ host: '127.0.0.1', createSocket: () => socket });
+    await driver.open();
+    driver.send(frameWith(1));
+    driver.send(frameWith(0));
+    await driver.close();
+    assert.deepEqual(events, ['send', 'send', 'sent', 'sent', 'close'], 'every send finished before the socket closed');
+  });
+
+  it('does not hang on close when the network never finishes a send', async () => {
+    const socket = {
+      on() {},
+      once() {},
+      off() {},
+      bind(_port, done) {
+        done();
+      },
+      setBroadcast() {},
+      send() {},
+      close(done) {
+        done();
+      },
+    };
+    const driver = new ArtNetDriver({ host: '127.0.0.1', createSocket: () => socket });
+    await driver.open();
+    driver.send(frameWith(1));
+    const started = Date.now();
+    await driver.close();
+    assert.ok(Date.now() - started < 2000, 'close gave up waiting after a short time');
+  });
+});

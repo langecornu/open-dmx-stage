@@ -136,3 +136,20 @@ export function channelsByFixture(patch) {
   }
   return byFixture;
 }
+
+/**
+ * The value each patched channel sits at when nothing sets it (a pan or tilt at the centre, a dimmer open). Channels that
+ * rest at 0 are left out, since 0 is what an unset channel already is.
+ * @param {Patch} patch
+ * @returns {Map<number, number>} resting value by 1-based channel, for channels that rest above 0
+ */
+export function restingValuesOf(patch) {
+  /** @type {Map<number, number>} */
+  const resting = new Map();
+  for (const [channel, info] of patch.channels) {
+    if (info.defaultValue > 0) {
+      resting.set(channel, info.defaultValue);
+    }
+  }
+  return resting;
+}

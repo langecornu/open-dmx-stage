@@ -2,6 +2,8 @@
 // public ArtDmx packet. Default destination is the broadcast address; set a host to unicast to one node.
 import dgram from 'node:dgram';
 
+import { PendingSends } from './pendingSends.js';
+
 const ART_NET_PORT = 6454;
 const OP_DMX = 0x5000;
 const PROTOCOL_VERSION = 14;
@@ -45,6 +47,7 @@ export class ArtNetDriver {
     this.sequence = 0;
     /** @type {string | null} */
     this.error = null;
+    this.pendingSends = new PendingSends();
   }
 
   async open() {
@@ -69,16 +72,23 @@ export class ArtNetDriver {
       return;
     }
     this.sequence = (this.sequence % 255) + 1;
-    this.socket.send(buildArtNetPacket(frame, this.universe, this.sequence), this.port, this.host, (error) => {
-      // Report send failures (no route, network down) in the status, and clear them once sending works again.
-      this.error = error ? error.message : null;
-    });
+    const socket = this.socket;
+    const packet = buildArtNetPacket(frame, this.universe, this.sequence);
+    this.pendingSends.track((done) =>
+      socket.send(packet, this.port, this.host, (error) => {
+        // Report send failures (no route, network down) in the status, and clear them once sending works again.
+        this.error = error ? error.message : null;
+        done();
+      }),
+    );
   }
 
   async close() {
     const socket = this.socket;
     if (socket) {
       this.socket = null;
+      // Let the last frames (the blanking frame, above all) leave before the socket goes away.
+      await this.pendingSends.settled();
       await new Promise((resolve) => socket.close(() => resolve(undefined)));
     }
   }

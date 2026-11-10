@@ -52,9 +52,11 @@ export function ScenesView({ project, patch, update, flush, live }) {
 
   const handleRecord = () => {
     const values = {};
-    for (const channel of patch.channels.keys()) {
+    for (const [channel, info] of patch.channels) {
       const value = frameStore.get()[channel - 1] ?? 0;
-      if (value > 0) {
+      // Channels at 0 are left out, except those that rest above 0 (a centred pan, an open dimmer): for them a 0 is a
+      // choice, and leaving it out would bring the channel back to its resting value when the look is played.
+      if (value > 0 || info.defaultValue > 0) {
         values[channel] = value;
       }
     }

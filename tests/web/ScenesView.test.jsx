@@ -62,6 +62,35 @@ describe('ScenesView', () => {
     expect(created.id).toBeTruthy();
   });
 
+  it('keeps a deliberate 0 for a channel that rests above 0, so playing the look does not bring it back to its resting value', async () => {
+    const user = userEvent.setup();
+    const resting = (name, type, defaultValue) => ({ name, type, defaultValue });
+    const head = {
+      id: 'mover',
+      manufacturer: '',
+      name: 'Mover',
+      description: '',
+      modes: [
+        {
+          name: 'm',
+          channels: [resting('Pan', 'pan', 128), resting('Dimmer', 'intensity', 255), resting('Red', 'red', 0)],
+        },
+      ],
+    };
+    const project = makeShow({
+      fixtureTypes: [head],
+      fixtures: [{ id: 'm', name: 'Mover', typeId: 'mover', mode: 0, address: 20 }],
+    });
+    const { last } = renderView({ project });
+    const frame = new Array(512).fill(0);
+    frame[19] = 0; // pan deliberately at 0 (channel 20)
+    frame[20] = 0; // dimmer deliberately closed (channel 21)
+    frame[21] = 0; // red at 0, which is also its resting value
+    act(() => frameStore.set(frame));
+    await user.click(screen.getByRole('button', { name: 'Save current look' }));
+    expect(last().scenes.at(-1).values).toEqual({ 20: 0, 21: 0 });
+  });
+
   it('uses the name you typed, trimmed, and clears the field afterwards', async () => {
     const user = userEvent.setup();
     const { last } = renderView();

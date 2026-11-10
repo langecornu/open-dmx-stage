@@ -40,6 +40,8 @@ export class DmxEngine {
     this.listeners = new Set();
 
     this.sceneLayer = new Float64Array(DMX_CHANNELS);
+    /** The value each channel sits at when a look does not set it: a pan at the centre, a dimmer open. */
+    this.restingLayer = new Float64Array(DMX_CHANNELS);
     /** @type {Map<number, number>} manual (programmer) values by 1-based channel */
     this.programmer = new Map();
     /** @type {Set<number>} channels that master and blackout scale (brightness, not position) */
@@ -105,6 +107,21 @@ export class DmxEngine {
   /** Swaps the output driver at runtime; the caller closes the old one. @param {Driver} driver */
   setDriver(driver) {
     this.driver = driver;
+  }
+
+  /**
+   * Sets the values channels rest at. Until a look or sequence takes over, the lights sit there, and a look that does not
+   * mention a channel returns it there instead of to 0 (which would send a pan or tilt to a corner).
+   * @param {Map<number, number>} resting value by 1-based channel, for channels that rest above 0
+   */
+  setRestingValues(resting) {
+    this.restingLayer = new Float64Array(DMX_CHANNELS);
+    for (const [channel, value] of resting) {
+      this.restingLayer[channel - 1] = value;
+    }
+    if (this.activeSceneId === null && !this.chase && !this.fade) {
+      this.sceneLayer = Float64Array.from(this.restingLayer);
+    }
   }
 
   /** @param {Set<number>} levelChannels */
@@ -215,7 +232,7 @@ export class DmxEngine {
    * @param {number} [at]
    */
   startFade(values, durationMs, at = this.now()) {
-    const target = new Float64Array(DMX_CHANNELS);
+    const target = Float64Array.from(this.restingLayer);
     for (const [channel, value] of Object.entries(values)) {
       target[Number(channel) - 1] = value;
     }
