@@ -1861,3 +1861,85 @@ input[type='range'] {
   border-radius: var(--radius-sm);
   padding: var(--space-3);
 }
+
+/* Fixtures screen */
+.fixture-lists {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
+
+.fixture-editor,
+.fixture-fields {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.fixture-fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.fixture-mode {
+  display: grid;
+  gap: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+}
+
+.channel-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1.4fr) minmax(0, 1.2fr) 84px auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.channel-head {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.fixture-description textarea {
+  font: inherit;
+  resize: vertical;
+}
+
+@media (max-width: 640px) {
+  /* On a phone each channel stacks: number, name and buttons on top, then the type, then the resting value. */
+  .channel-row {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+  }
+
+  .channel-row > :nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .channel-row > :nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .channel-row > :nth-child(5) {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .channel-row > :nth-child(3) {
+    grid-column: 2 / 4;
+    grid-row: 2;
+  }
+
+  .channel-row > :nth-child(4) {
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: start;
+  }
+
+  .channel-head {
+    display: none;
+  }
+}

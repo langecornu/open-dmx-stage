@@ -12,8 +12,14 @@ the project follows [Semantic Versioning](https://semver.org/).
 - **Effects:** pulse, sweep and rainbow, locked to the tempo, over all lights or one group. Live only; not saved.
 - **Fixture groups** in Setup, used to aim effects at part of the rig.
 - **Sequences in beats:** a sequence can time its steps in beats and follow the tempo.
-- **U`King 40W Beam Moving Head (RGBW)** built-in fixture, 13 channel mode, from the maker's manual. Not yet tried on
-  the real light.
+- **Fixtures screen:** write your own fixture definitions by hand: manufacturer, model, description, and the channels of
+  each mode (name, what it does, resting value; add, reorder and remove). Built-in fixtures are read-only examples you
+  can copy. Your fixtures are saved in the show file. Fixtures have a new `description` field (optional in older shows).
+- **More built-in fixtures, from maker manuals:** 36 LED RGB par (7 channel), Mini Spider Light (7 channel) and Mini Moving
+  Head Gobo Light (12 and 10 channel). Reset and program channels rest at 0 and are never scaled by master. Not yet
+  tried on real lights.
+- **U`King 40W RGBW Moving Head Light** built-in fixture (13 channel mode, from the maker's manual) and the worked
+  example for the Fixtures screen. Not yet tried on the real light.
 
 - **Perform screen:** big buttons for every look and sequence, keyboard shortcuts (Space blackout, Escape stop, [ and ]
   master), and MIDI controller mapping with learn mode (pads to looks and sequences, a knob to the master). MIDI

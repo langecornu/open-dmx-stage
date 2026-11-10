@@ -5,6 +5,7 @@ import { buildPatch } from '../shared/patch.js';
 import { ChasesView } from './components/ChasesView.jsx';
 import { ControlView } from './components/ControlView.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
+import { FixturesView } from './components/FixturesView.jsx';
 import { MonitorView } from './components/MonitorView.jsx';
 import { PatchView } from './components/PatchView.jsx';
 import { PerformView } from './components/PerformView.jsx';
@@ -108,6 +109,7 @@ export function App() {
           {view === 'chases' ? <ChasesView {...shared} /> : null}
           {view === 'perform' ? <PerformView {...shared} /> : null}
           {view === 'patch' ? <PatchView {...shared} /> : null}
+          {view === 'fixtures' ? <FixturesView {...shared} /> : null}
           {view === 'monitor' ? <MonitorView {...shared} /> : null}
         </ErrorBoundary>
       </main>
