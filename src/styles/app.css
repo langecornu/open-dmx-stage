@@ -1040,6 +1040,11 @@ input[type='range'] {
   gap: var(--space-2);
 }
 
+.detect-message {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 .iface-list {
   display: flex;
   flex-wrap: wrap;

@@ -4,7 +4,7 @@ import { Router } from 'express';
 import { buildPatch, levelChannelsOf } from '../../shared/patch.js';
 import { validateBody } from '../middleware/validate.js';
 import { listSerialPorts } from '../clients/serial.js';
-import { importFixtureSchema, importQlcSchema, projectSchema } from '../schemas/projectSchema.js';
+import { detectAdapterSchema, importFixtureSchema, importQlcSchema, projectSchema } from '../schemas/projectSchema.js';
 import { BUILTIN_FIXTURE_TYPES, convertOpenFixtureLibrary } from '../services/fixtureLibrary.js';
 import { convertQlcPlus } from '../services/qlcImporter.js';
 import { migrateProject } from '../services/projectMigrations.js';
@@ -82,6 +82,15 @@ export function createApiRouter({ engine, projectService, outputManager }) {
     '/output/settings',
     asyncHandler(async (req, res) => {
       res.json(await outputManager.apply(req.body));
+    }),
+  );
+
+  // Asks the adapter on a port what kind it is (passive cable or ENTTEC Pro style), so the right interface can be chosen.
+  router.post(
+    '/output/detect',
+    validateBody(detectAdapterSchema),
+    asyncHandler(async (req, res) => {
+      res.json(await outputManager.detect(req.body.serialPath));
     }),
   );
 

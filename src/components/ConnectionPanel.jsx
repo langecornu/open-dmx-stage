@@ -2,9 +2,11 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { api } from '../api.js';
+import { DetectAdapter } from './DetectAdapter.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
 import { TAB_FOR_DRIVER } from './guide/guideTabs.js';
 import { Icon } from './Icon.jsx';
+import { TestLights } from './TestLights.jsx';
 
 // The guide is large and rarely opened, so it loads on demand rather than with the app.
 const ConnectionHelp = lazy(() =>
@@ -34,7 +36,7 @@ const DRIVER_LABELS = Object.fromEntries(INTERFACES.map((entry) => [entry.id, en
 const isSerial = (driver) => driver === 'open-dmx' || driver === 'enttec-pro';
 const isNetwork = (driver) => driver === 'artnet' || driver === 'sacn';
 
-export function ConnectionPanel({ output }) {
+export function ConnectionPanel({ output, project, patch, live }) {
   const [form, setForm] = useState({ driver: 'mock', serialPath: '', host: '', universe: 0 });
   const [ports, setPorts] = useState([]);
   const [isBusy, setIsBusy] = useState(false);
@@ -77,6 +79,9 @@ export function ConnectionPanel({ output }) {
   const handleUniverse = (rawValue) => setForm({ ...form, universe: rawValue === '' ? '' : Number(rawValue) });
   const handleUniverseBlur = () => setForm({ ...form, universe: clampUniverse(form.universe) });
 
+  // Detection suggests an interface; select it for the person so they only need to press Connect.
+  const handleDetected = (result) => setForm((current) => ({ ...current, driver: result.suggestedInterface }));
+
   const handleConnect = async () => {
     setIsBusy(true);
     setMessage(null);
@@ -98,6 +103,7 @@ export function ConnectionPanel({ output }) {
       <div className="section-bar">
         <h2 className="section-title">Connection</h2>
         <div className="conn-actions">
+          <TestLights project={project} patch={patch} live={live} />
           <button type="button" className="btn" onClick={() => setIsHelpOpen(true)}>
             <Icon name="help" size={16} />
             How to connect
@@ -149,6 +155,7 @@ export function ConnectionPanel({ output }) {
             <button type="button" className="btn" onClick={refreshPorts}>
               Refresh
             </button>
+            <DetectAdapter serialPath={form.serialPath} onResult={handleDetected} />
           </>
         ) : null}
         {isNetwork(form.driver) ? (

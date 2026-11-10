@@ -80,6 +80,13 @@ export function PassiveOrActive() {
           type.
         </li>
         <li>
+          <strong>Ask the adapter.</strong> On the Output screen choose <strong>USB-DMX cable</strong>, pick the port
+          and press <strong>Detect adapter</strong>. The app asks the adapter to identify itself: an adapter with its
+          own processor (ENTTEC Pro style) answers, and a passive cable stays silent. The app then selects the matching
+          interface for you. Silence is a strong hint, not proof (a wrong port or a busy device is silent too), and this
+          check has not been tried on real hardware yet.
+        </li>
+        <li>
           <strong>Try it here.</strong> Choose one type and press Connect. If the lights stay dark, switch to the other
           type and try again. Only the right one works. A wrong choice is unlikely to cause harm, but it has not been
           tested, so unplug your lights from the cable while you experiment if you want to be careful.

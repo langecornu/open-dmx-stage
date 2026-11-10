@@ -84,7 +84,11 @@ tested on real equipment, so unplug your lights from the cable while you experim
 3. **Think about the price.** A very cheap adapter is almost always passive.
 4. **Check another program.** In QLC+ or similar software, the driver menu lists "Open DMX USB" and "DMX USB Pro"
    separately. Whichever one makes your lights respond tells you the type.
-5. **Try it here.** Choose one type and press **Connect**. If the lights stay dark, switch to the other type and try
+5. **Ask the adapter.** On the **Output** screen choose **USB-DMX cable**, pick the port and press **Detect adapter**.
+   The app asks the adapter to identify itself: an adapter with its own processor (ENTTEC Pro style) answers, and a
+   passive cable stays silent. The app then selects the matching interface for you. Silence is a strong hint, not
+   proof (a wrong port or a busy device is silent too), and this check has not been tried on real hardware yet.
+6. **Try it here.** Choose one type and press **Connect**. If the lights stay dark, switch to the other type and try
    again. Only the correct one works.
 
 > **Heads up:** in the port list, both kinds can show an **FTDI cable** label, because both use the same USB chip. The
@@ -121,9 +125,12 @@ Tick these off first. Most connection problems come from one of them.
 2. **Plug the USB end directly into the computer** (avoid hubs) and the XLR end into the first light's **DMX IN**.
 3. Open **Output** and choose **USB-DMX cable**.
 4. **Pick the Serial port.** Not sure which is yours? Press **Refresh**, unplug the cable, press Refresh again, plug it
-   back in and press Refresh once more. The entry that disappears and returns is your cable. FTDI cables are labelled.
+   back in and press Refresh once more. The entry that disappears and returns is your cable. FTDI cables are labelled. Not sure the interface type is right?
+   Press **Detect adapter** and the app will check and choose for you.
 5. Press **Connect**. The top bar should change to **DMX ready**.
-6. Go to **Lights**, pick a colour, and check the real light changes.
+6. Press **Test lights** on the same card. Every light you have added in Setup cycles through red, green, blue and
+   white; press **Stop test** when you are done. If a light does not follow, check its address and mode.
+7. Go to **Lights**, pick a colour, and check the real light changes.
 
 What the port is called:
 

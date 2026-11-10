@@ -12,6 +12,7 @@ import { OpenDmxDriver } from '../clients/openDmxDriver.js';
 import { SacnDriver } from '../clients/sacnDriver.js';
 import { listSerialPorts } from '../clients/serial.js';
 import { logger } from '../logger.js';
+import { probeAdapter } from './adapterProbe.js';
 import { outputSettingsSchema } from '../schemas/projectSchema.js';
 import { httpError } from '../utils/httpError.js';
 
@@ -79,13 +80,22 @@ export class OutputManager {
    *   defaults: OutputSettings,
    *   listPorts?: () => Promise<{ path: string }[]>,
    *   buildDriver?: (settings: ResolvedOutputSettings) => Driver,
-   * }} options `listPorts` and `buildDriver` are injectable so tests need no hardware.
+   *   probe?: typeof probeAdapter,
+   * }} options `listPorts`, `buildDriver` and `probe` are injectable so tests need no hardware.
    */
-  constructor({ engine, dataDir, defaults, listPorts = listSerialPorts, buildDriver = createDriver }) {
+  constructor({
+    engine,
+    dataDir,
+    defaults,
+    listPorts = listSerialPorts,
+    buildDriver = createDriver,
+    probe = probeAdapter,
+  }) {
     this.engine = engine;
     this.filePath = path.join(dataDir, 'output.json');
     this.listPorts = listPorts;
     this.buildDriver = buildDriver;
+    this.probe = probe;
     this.defaults = this.withDefaults(outputSettingsSchema.parse(defaults));
     this.settings = this.defaults;
     /** @type {string | null} */
@@ -143,6 +153,31 @@ export class OutputManager {
     if (!ports.some((port) => port.path === settings.serialPath)) {
       throw httpError(400, 'That serial port was not found. Plug the cable in and refresh the list.');
     }
+  }
+
+  /**
+   * Asks the adapter on a serial port what kind it is (see adapterProbe.js). The port must be one the system lists, and
+   * must not be in use by the current output, because a port can only be opened once.
+   * @param {string} serialPath
+   * @returns {Promise<import('./adapterProbe.js').ProbeResult>}
+   */
+  detect(serialPath) {
+    // Queued behind any output switch, so the port cannot be opened by a switch while it is being probed.
+    return this.enqueue(async () => {
+      await this.assertPortListed({ driver: 'open-dmx', serialPath, host: '', universe: 0 });
+      if (this.engine.driver.path === serialPath) {
+        throw httpError(
+          409,
+          'This cable is in use. Choose Simulator and press Use simulator first, then detect again.',
+        );
+      }
+      try {
+        return await this.probe(serialPath);
+      } catch (error) {
+        log.error({ err: error, serialPath }, 'Could not probe the adapter');
+        throw httpError(400, describeOpenError(error));
+      }
+    });
   }
 
   /**

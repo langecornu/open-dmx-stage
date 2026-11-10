@@ -100,6 +100,13 @@ Make sure each fixture's real DMX address and mode match what is shown here.
 are channels used by your fixtures. Hover a cell for the fixture and channel name. It is handy for checking addresses
 and for confirming that something is really being sent.
 
+The **Connection** card at the top has two helpers for checking your setup:
+
+- **Detect adapter** (for USB adapters): asks the adapter on the chosen port what kind it is and selects the matching
+  interface for you. A passive cable stays silent; an adapter with its own processor answers.
+- **Test lights:** cycles every light you have added through red, green, blue and white, so you can see at a glance
+  that the connection and the DMX addresses are right. Press **Stop test** to put the lights back.
+
 ![Output screen](images/08-output-dark.jpg)
 
 ### Connecting your lights

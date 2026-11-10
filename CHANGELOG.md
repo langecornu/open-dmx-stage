@@ -5,6 +5,12 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Detect adapter:** asks a USB adapter to identify itself (the ENTTEC Pro query) and selects the matching interface;
+  a passive cable stays silent. Not yet tried on real hardware.
+- **Test lights:** cycles every patched fixture through red, green, blue and white from the Connection card.
+
 ## [0.1.0] - 2026-11-09
 
 First release. USB output (passive USB-DMX cables and the ENTTEC Pro driver) follows the published formats but has not
