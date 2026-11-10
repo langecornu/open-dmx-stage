@@ -77,3 +77,27 @@ describe('built-in U`King moving head profile', () => {
     assert.equal(channels[5].defaultValue, 255, 'the dimmer defaults to open so colours show');
   });
 });
+
+describe('fixture descriptions', () => {
+  const example = BUILTIN_FIXTURE_TYPES.find((type) => type.id === 'uking-40w-beam-moving-head');
+
+  it('describes the U`King moving head with its manufacturer, model and description', () => {
+    assert.equal(example?.manufacturer, "U'King", 'the brand');
+    assert.equal(example?.name, '40W RGBW Moving Head Light', 'the model');
+    assert.equal(example?.description, '40W Beam Moving Head Light DMX512 RGBW Stage Light', 'the description');
+  });
+
+  it('gives every built-in fixture a description, and accepts them all under the schema', () => {
+    for (const type of BUILTIN_FIXTURE_TYPES) {
+      assert.ok(type.description.length > 0, `${type.name} has a description`);
+      assert.equal(fixtureTypeSchema.safeParse(type).success, true, `${type.name} is valid`);
+    }
+  });
+
+  it('defaults a missing description to empty (older shows) and refuses an oversized or unknown field', () => {
+    const base = { id: 'x', name: 'X', modes: [{ name: 'm', channels: [{ name: 'c', type: 'other' }] }] };
+    assert.equal(fixtureTypeSchema.parse(base).description, '', 'a show saved before descriptions still loads');
+    assert.equal(fixtureTypeSchema.safeParse({ ...base, description: 'x'.repeat(501) }).success, false, 'too long');
+    assert.equal(fixtureTypeSchema.safeParse({ ...base, surprise: 1 }).success, false, 'unknown fields are refused');
+  });
+});

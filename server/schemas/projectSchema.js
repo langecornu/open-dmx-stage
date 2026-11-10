@@ -21,7 +21,8 @@ export const fixtureTypeSchema = z
   .object({
     id,
     manufacturer: z.string().trim().max(80).default(''),
-    name: label,
+    name: label, // the model
+    description: z.string().trim().max(500).default(''),
     modes: z
       .array(z.object({ name: label, channels: z.array(channelSchema).min(1).max(DMX_CHANNELS) }).strict())
       .min(1)

@@ -2,16 +2,17 @@
 
 A quick tour of Open DMX Stage. If you have not installed it yet, start with the [install guide](INSTALL.md).
 
-The app has six screens, reached from the left rail (or the bottom bar on phones and tablets):
+The app has seven screens, reached from the left rail (or the bottom bar on phones and tablets):
 
-| Screen        | What it is for                                                  |
-| ------------- | --------------------------------------------------------------- |
-| **Lights**    | Pick colours and brightness and see your fixtures respond live. |
-| **Looks**     | Save what is on stage and bring it back with one tap.           |
-| **Sequences** | Chain looks into a show with timed fades.                       |
-| **Perform**   | Run a show with big buttons, keyboard shortcuts and MIDI.       |
-| **Setup**     | Tell the studio which lights you have and their DMX addresses.  |
-| **Output**    | See exactly what is being sent on the DMX line.                 |
+| Screen        | What it is for                                                     |
+| ------------- | ------------------------------------------------------------------ |
+| **Lights**    | Pick colours and brightness and see your fixtures respond live.    |
+| **Looks**     | Save what is on stage and bring it back with one tap.              |
+| **Sequences** | Chain looks into a show with timed fades.                          |
+| **Perform**   | Run a show with big buttons, keyboard shortcuts and MIDI.          |
+| **Setup**     | Tell the studio which lights you have and their DMX addresses.     |
+| **Fixtures**  | Describe your own lights: brand, model and what each channel does. |
+| **Output**    | See exactly what is being sent on the DMX line.                    |
 
 The top bar is always available: the show name (click to rename), the connection status, the **Master** brightness,
 the light/dark **theme switch**, and **Blackout**.
@@ -138,13 +139,34 @@ Use **Setup** to manage your fixtures.
 
 Make sure each fixture's real DMX address and mode match what is shown here.
 
-**U`King 40W Beam Moving Head:** choose **U`King 40W Beam Moving Head (RGBW)**, mode **13 channel**. On the light's
+**U`King 40W RGBW Moving Head Light:** choose **U'King 40W RGBW Moving Head Light**, mode **13 channel**. On the light's
 display set **CH13** (13 channel mode) and its start address (**A001** and so on). The profile follows the maker's
 manual: pan and tilt (with fine channels), speed, dimmer, strobe, and red, green, blue and white. Channels 12 and 13
 are the light's built-in programs and its reset, so the app keeps them at 0; do not move them. The colour and
 brightness controls work as on other lights, and pan and tilt are on the per-channel faders.
 
-## 7. Output: see what is sent
+## 7. Fixtures: describe your own lights
+
+If a light is not in the list, describe it yourself on **Fixtures**. You need the channel table from its manual.
+
+1. Choose **New fixture** (or open a built-in one and press **Make a copy**).
+2. Fill in **Manufacturer**, **Model** and **Description** (for example "U'King", "40W RGBW Moving Head Light",
+   "40W Beam Moving Head Light DMX512 RGBW Stage Light").
+3. Name the **mode** the way the light's display does (for example "13 channel"), then list its channels in order. For
+   each channel give a **Name**, choose **What it does** (dimmer, red, green, blue, white, pan, tilt, strobe, and so
+   on) and set **Rests at**, the value the channel sits at when you have not moved it. Use **Add channel**, the arrows
+   and the bin to build the list. **Add mode** is for lights with more than one channel layout.
+4. In **Setup**, choose your fixture and mode and add it to the rig.
+
+Choosing the right **What it does** matters: colours and the dimmer respond to the colour picker, master and blackout,
+while **Other (fixed)** channels are never scaled. Use **Other** for anything that must stay put, with a **Rests at** that is
+safe (for example 0 for a reset channel).
+
+The built-in **U'King 40W RGBW Moving Head Light** is a worked example: open it to see a real 13 channel layout, then
+copy it to make changes. Built-in fixtures cannot be edited. Fixtures you make are saved in the show file (so Export
+show takes them along), cannot be deleted while a light in the rig uses them, and cannot lose a mode while in use.
+
+## 8. Output: see what is sent
 
 **Output** shows all 512 DMX channels live, after Master and Blackout are applied. Each bar is a level; outlined cells
 are channels used by your fixtures. Hover a cell for the fixture and channel name. It is handy for checking addresses
@@ -168,7 +190,7 @@ press **Connect**. The status pill shows whether it is active, and any problem i
 Press **How to connect** in that card for a step-by-step guide with diagrams, including how to tell a passive USB cable
 from an active adapter. The same guide is in [Connecting your lights](CONNECTION.md).
 
-## 8. Master, Blackout, themes and devices
+## 9. Master, Blackout, themes and devices
 
 - **Master** scales the brightness of everything (dimmer and colour channels only; pan and tilt are unaffected).
 - **Blackout** switches all light output off at once; press it again to bring it back.
@@ -177,7 +199,7 @@ from an active adapter. The same guide is in [Connecting your lights](CONNECTION
   the show from a phone or tablet on the same network (the server must be set to listen beyond this computer: see the
   [install guide](INSTALL.md#control-it-from-a-phone-or-tablet)).
 
-## 9. Saving
+## 10. Saving
 
 Your show (fixtures, looks, sequences) saves automatically a moment after each change. The top bar shows
 _Unsaved_, _Saving…_ or _Saved_. The data lives in `server/data/project.json` on the machine running the server, and the previous save is kept as

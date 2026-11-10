@@ -3,6 +3,7 @@
 
 /** @typedef {import('zod').z.infer<typeof import('../server/schemas/projectSchema.js').projectSchema>} Project */
 /** @typedef {Project['fixtureTypes'][number]} FixtureType */
+/** @typedef {FixtureType['modes'][number]['channels'][number]} FixtureChannel */
 /** @typedef {Project['fixtures'][number]} Fixture */
 /** @typedef {Project['scenes'][number]} Scene */
 /** @typedef {Project['chases'][number]} Chase */

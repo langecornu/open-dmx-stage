@@ -18,12 +18,15 @@ export const BUILTIN_FIXTURE_TYPES = [
     id: 'generic-dimmer',
     manufacturer: 'Generic',
     name: 'Dimmer',
+    description: 'A single dimmer channel, for lamps and dimmer packs.',
     modes: [{ name: '1 channel', channels: [ch('Intensity', 'intensity')] }],
   },
   {
     id: 'generic-rgb-par',
     manufacturer: 'Generic',
     name: 'RGB LED par',
+    description:
+      'A colour-mixing LED par with 3 channels (red, green, blue) or 6 channels (adds dimmer, strobe, speed).',
     modes: [
       { name: '3 channel', channels: [ch('Red', 'red'), ch('Green', 'green'), ch('Blue', 'blue')] },
       {
@@ -43,6 +46,7 @@ export const BUILTIN_FIXTURE_TYPES = [
     id: 'generic-rgbw-par',
     manufacturer: 'Generic',
     name: 'RGBW LED par',
+    description: 'A colour-mixing LED par with red, green, blue and white.',
     modes: [
       {
         name: '4 channel',
@@ -53,7 +57,8 @@ export const BUILTIN_FIXTURE_TYPES = [
   {
     id: 'uking-40w-beam-moving-head',
     manufacturer: "U'King",
-    name: '40W Beam Moving Head (RGBW)',
+    name: '40W RGBW Moving Head Light',
+    description: '40W Beam Moving Head Light DMX512 RGBW Stage Light',
     // From the maker's user manual, "13channelmode". Channel 12 must stay below 31 (31 and up start the built-in
     // programs or sound mode) and channel 13 must stay at 0 (250 and up reset the head), so both default to 0 and are
     // typed 'other', which master and blackout never touch.
@@ -82,6 +87,7 @@ export const BUILTIN_FIXTURE_TYPES = [
     id: 'generic-moving-head',
     manufacturer: 'Generic',
     name: 'Moving head (basic)',
+    description: 'A simple 8 channel moving head: pan, tilt, colour wheel, gobo, strobe, dimmer, speed and control.',
     modes: [
       {
         name: '8 channel',
