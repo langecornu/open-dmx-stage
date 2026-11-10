@@ -9,11 +9,13 @@ import {
   detectAdapterSchema,
   importFixtureSchema,
   importQlcSchema,
+  oflDetailsSchema,
   oflImportSchema,
   oflSearchSchema,
   projectSchema,
 } from '../schemas/projectSchema.js';
 import { BUILTIN_FIXTURE_TYPES, convertOpenFixtureLibrary, oflFixtureId } from '../services/fixtureLibrary.js';
+import { summariseOflFixture } from '../services/oflDetails.js';
 import { convertQlcPlus } from '../services/qlcImporter.js';
 import { migrateProject } from '../services/projectMigrations.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -106,6 +108,31 @@ export function createApiRouter({ engine, projectService, outputManager, ofl = n
       res.json({
         total: found.total,
         results: found.results.map((result) => ({ ...result, fixtureId: oflFixtureId(result.key) })),
+      });
+    }),
+  );
+
+  router.get(
+    '/fixtures/ofl/details',
+    oflLimiter,
+    asyncHandler(async (req, res) => {
+      const client = requireOfl();
+      const parsed = oflDetailsSchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw httpError(400, 'That is not a valid fixture key.');
+      }
+      const { key } = parsed.data;
+      const [{ document, resolvedKey }, manufacturer] = await Promise.all([
+        client.getFixture(key),
+        client.manufacturerName(key.split('/')[0]),
+      ]);
+      res.json({
+        key,
+        resolvedKey,
+        fixtureId: oflFixtureId(key),
+        manufacturer,
+        url: `https://open-fixture-library.org/${resolvedKey}`,
+        ...summariseOflFixture(document),
       });
     }),
   );

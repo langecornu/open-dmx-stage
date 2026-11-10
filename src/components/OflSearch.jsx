@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { api } from '../api.js';
+import { OflDetails } from './OflDetails.jsx';
 
 export function OflSearch({ ownIds, onAdd }) {
   const [query, setQuery] = useState('');
@@ -10,6 +11,7 @@ export function OflSearch({ ownIds, onAdd }) {
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [addingKey, setAddingKey] = useState(null);
+  const [viewing, setViewing] = useState(null);
   const latest = useRef(0);
   const isMounted = useRef(true);
 
@@ -53,6 +55,7 @@ export function OflSearch({ ownIds, onAdd }) {
       const type = await api.importFromOpenFixtureLibrary(result.key);
       if (isMounted.current) {
         onAdd(type);
+        setViewing(null);
         setNotice(`Added ${result.name}. Find it under Your fixtures, then add it to your rig in Setup.`);
       }
     } catch (caught) {
@@ -118,15 +121,25 @@ export function OflSearch({ ownIds, onAdd }) {
               return (
                 <li key={result.key} className="ofl-result">
                   <span>{result.name}</span>
-                  <button
-                    type="button"
-                    className="btn"
-                    aria-label={isOwned ? `${result.name} is already added` : `Add ${result.name}`}
-                    disabled={isOwned || addingKey !== null}
-                    onClick={() => handleAdd(result)}
-                  >
-                    {addingKey === result.key ? 'Adding…' : isOwned ? 'Added' : 'Add'}
-                  </button>
+                  <span className="ofl-result-actions">
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      aria-label={`View details of ${result.name}`}
+                      onClick={() => setViewing(result)}
+                    >
+                      View details
+                    </button>
+                    <button
+                      type="button"
+                      className="btn"
+                      aria-label={isOwned ? `${result.name} is already added` : `Add ${result.name}`}
+                      disabled={isOwned || addingKey !== null}
+                      onClick={() => handleAdd(result)}
+                    >
+                      {addingKey === result.key ? 'Adding…' : isOwned ? 'Added' : 'Add'}
+                    </button>
+                  </span>
                 </li>
               );
             })}
@@ -137,6 +150,15 @@ export function OflSearch({ ownIds, onAdd }) {
             </p>
           ) : null}
         </>
+      ) : null}
+      {viewing ? (
+        <OflDetails
+          fixture={viewing}
+          isOwned={ownIds.has(viewing.fixtureId)}
+          isAdding={addingKey === viewing.key}
+          onAdd={handleAdd}
+          onClose={() => setViewing(null)}
+        />
       ) : null}
     </section>
   );

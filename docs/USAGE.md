@@ -155,13 +155,17 @@ The **Find a fixture online** box searches the community-made [Open Fixture Libr
 which has the channel layouts of thousands of lights.
 
 1. Type a brand, a model or both (for example "uking gobo") and press **Search**. Punctuation does not matter.
-2. Press **Add** next to your light. Its manufacturer, model and every mode are copied into **Your fixtures**, and the
+2. Press **View details** to see a light before you add it: who wrote the definition, its size, weight and power, links to
+   the manual and product page, and every mode with each channel's name, what it does, its resting value and what each
+   range of values does. You can add it from there too.
+3. Press **Add** next to your light. Its manufacturer, model and every mode are copied into **Your fixtures**, and the
    description credits the library and the people who wrote the definition.
-3. In **Setup**, choose it and add it to your rig. Check that the mode matches the one set on the light's display.
+4. In **Setup**, choose it and add it to your rig. Check that the mode matches the one set on the light's display.
 
 Only your search words are sent to the library (through this app's server), nothing from your show. If you are
 offline the box tells you so, and everything else keeps working; set `OFL_ENABLED=false` (see the install guide) to turn
-the box off completely. Fixtures that use pixel or matrix channels are not supported yet and are refused with a message.
+the box off completely. Modes that repeat channels for every pixel are not supported yet: they are marked in the details window and left out
+when you add the light (the description says which), and a light with only such modes is refused with a message.
 Some entries only point to another brand's identical light; the app follows these for you.
 
 ### Describe a fixture by hand

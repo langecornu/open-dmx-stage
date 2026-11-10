@@ -118,6 +118,24 @@ describe('online fixture search', () => {
     assert.match(type.description, /open-fixture-library\.org\/lixada\/mini-gobo/, 'the credit names the real source');
   });
 
+  it('returns the details of a fixture for the details window, without saving anything', async () => {
+    const response = await fetch(`${app.baseUrl}/fixtures/ofl/details?key=lixada/mini-gobo`);
+    assert.equal(response.status, 200, 'details load');
+    const details = await response.json();
+    assert.equal(details.manufacturer, 'Lixada', 'the manufacturer name');
+    assert.equal(details.fixtureId, 'ofl-lixada-mini-gobo', 'the id it would get when added');
+    assert.equal(details.url, 'https://open-fixture-library.org/lixada/mini-gobo', 'a link to the library page');
+    assert.deepEqual(details.authors, ['Freasy', 'edohard'], 'the authors');
+    assert.deepEqual(
+      details.modes[0].channels.map((channel) => channel.name),
+      ['Pan', 'Dimmer'],
+      'the mode channels',
+    );
+    assert.equal((await fetch(`${app.baseUrl}/fixtures/ofl/details?key=../x`)).status, 400, 'a bad key is refused');
+    assert.equal((await fetch(`${app.baseUrl}/fixtures/ofl/details`)).status, 400, 'a missing key is refused');
+    assert.equal((await fetch(`${app.baseUrl}/fixtures/ofl/details?key=a/b&x=1`)).status, 400, 'unknown parameters');
+  });
+
   it('refuses bad keys and unknown fields on import', async () => {
     const post = (body) =>
       fetch(`${app.baseUrl}/fixtures/ofl/import`, {
@@ -139,6 +157,7 @@ describe('online fixture search turned off', () => {
       const response = await fetch(`${app.baseUrl}/fixtures/ofl/search?q=gobo`);
       assert.equal(response.status, 503, 'service unavailable');
       assert.match((await response.json()).error, /turned off/, 'the message says why');
+      assert.equal((await fetch(`${app.baseUrl}/fixtures/ofl/details?key=a/b`)).status, 503, 'details are off too');
       const imported = await fetch(`${app.baseUrl}/fixtures/ofl/import`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },

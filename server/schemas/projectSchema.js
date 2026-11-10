@@ -127,6 +127,8 @@ export const FIXTURE_KEY_PATTERN = /^[a-z0-9][a-z0-9-]{0,80}\/[a-z0-9][a-z0-9-]{
 
 export const oflSearchSchema = z.object({ q: z.string().trim().min(2).max(80) }).strict();
 
+export const oflDetailsSchema = z.object({ key: z.string().regex(FIXTURE_KEY_PATTERN) }).strict();
+
 export const oflImportSchema = z.object({ key: z.string().regex(FIXTURE_KEY_PATTERN) }).strict();
 
 export const importQlcSchema = z.object({ xml: z.string().min(1).max(300_000) }).strict();

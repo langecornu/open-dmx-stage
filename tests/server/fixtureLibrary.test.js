@@ -6,6 +6,7 @@ import { fixtureTypeSchema } from '../../server/schemas/projectSchema.js';
 import {
   BUILTIN_FIXTURE_TYPES,
   convertOpenFixtureLibrary,
+  createChannelLookup,
   oflFixtureId,
 } from '../../server/services/fixtureLibrary.js';
 import { LEVEL_TYPES } from '../../shared/patch.js';
@@ -183,7 +184,28 @@ describe('Open Fixture Library conversion details', () => {
     assert.equal(convertOpenFixtureLibrary(document, 'Acme').description, '', 'a file import has no credit text');
   });
 
-  it('refuses a fixture whose modes use pixel or matrix inserts instead of guessing the channels', () => {
+  it('copies the normal modes of a fixture that also has a pixel mode, and says which were left out', () => {
+    const mixed = {
+      ...SAMPLE,
+      modes: [
+        { name: 'Basic', channels: ['Dimmer', 'Red'] },
+        { name: 'Pixels', channels: ['Dimmer', { insert: 'matrixChannels', repeatFor: 'eachPixelABC' }] },
+      ],
+    };
+    const converted = convertOpenFixtureLibrary(mixed, 'Acme', { key: 'acme/mixed' });
+    assert.deepEqual(
+      converted.modes.map((mode) => mode.name),
+      ['Basic'],
+      'only the normal mode is copied',
+    );
+    assert.match(
+      converted.description,
+      /Not copied \(pixel channels are not supported yet\): Pixels\./,
+      'the description says so',
+    );
+  });
+
+  it('refuses a fixture whose modes all use pixel or matrix inserts instead of guessing the channels', () => {
     const matrix = {
       ...SAMPLE,
       modes: [{ name: 'Pixels', channels: ['Dimmer', { insert: 'matrixChannels', repeatFor: 'eachPixelABC' }] }],
@@ -204,5 +226,69 @@ describe('oflFixtureId', () => {
     assert.ok(first.length <= 64 && second.length <= 64, 'within the id limit');
     assert.notEqual(first, second, 'different keys give different ids');
     assert.equal(first, oflFixtureId(long('one')), 'the same key always gives the same id');
+  });
+});
+
+describe('channels defined by pixel templates', () => {
+  const DOCUMENT = {
+    name: 'Matrix Light',
+    availableChannels: {
+      Pan: { fineChannelAliases: ['Pan fine'], capability: { type: 'Pan' } },
+      Dimmer: { capability: { type: 'Intensity' } },
+    },
+    templateChannels: {
+      'Red $pixelKey': {
+        fineChannelAliases: ['Red fine $pixelKey'],
+        capability: { type: 'ColorIntensity', color: 'Red' },
+      },
+      'Green $pixelKey': { capability: { type: 'ColorIntensity', color: 'Green' } },
+    },
+    modes: [
+      { name: 'Master', channels: ['Pan', 'Pan fine', 'Red Master', 'Red fine Master', 'Green Master', 'Dimmer'] },
+    ],
+  };
+
+  it('finds the definition of a channel whose name comes from a template', () => {
+    const lookup = createChannelLookup(DOCUMENT);
+    assert.equal(lookup.definitionOf('Red Master')?.capability.color, 'Red', 'a template name is matched');
+    assert.equal(lookup.definitionOf('Dimmer')?.capability.type, 'Intensity', 'a listed channel is found directly');
+    assert.equal(lookup.definitionOf('Nothing Master'), undefined, 'an unknown name has no definition');
+    assert.equal(lookup.isFine('Pan fine'), true, 'a fine alias is recognised');
+    assert.equal(lookup.isFine('Red fine Master'), true, 'a fine alias from a template is recognised');
+    assert.equal(lookup.isFine('Red Master'), false, 'a normal channel is not fine');
+  });
+
+  it('is not fooled by odd names or hostile templates', () => {
+    const lookup = createChannelLookup({
+      availableChannels: null,
+      templateChannels: {
+        ['x'.repeat(500) + ' $pixelKey']: {},
+        '$pixelKey $pixelKey $pixelKey $pixelKey': {},
+        'a(b $pixelKey': { capability: { type: 'Intensity' } },
+      },
+    });
+    assert.equal(lookup.definitionOf('__proto__'), undefined, 'prototype names are not channels');
+    assert.equal(lookup.definitionOf('constructor'), undefined);
+    assert.equal(
+      lookup.definitionOf('a(b Master')?.capability.type,
+      'Intensity',
+      'regular expression characters are literal',
+    );
+    assert.equal(lookup.definitionOf('x'.repeat(500) + ' Master'), undefined, 'a very long template is ignored');
+  });
+
+  it('imports template channels with the right type, so colours and master work on them', () => {
+    const type = convertOpenFixtureLibrary(DOCUMENT, 'Acme', { key: 'acme/matrix' });
+    assert.deepEqual(
+      type.modes[0].channels.map((channel) => [channel.name, channel.type]),
+      [
+        ['Pan', 'pan'],
+        ['Pan fine', 'other'],
+        ['Red Master', 'red'],
+        ['Red fine Master', 'other'],
+        ['Green Master', 'green'],
+        ['Dimmer', 'intensity'],
+      ],
+    );
   });
 });
