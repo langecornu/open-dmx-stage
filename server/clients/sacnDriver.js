@@ -2,6 +2,8 @@
 import crypto from 'node:crypto';
 import dgram from 'node:dgram';
 
+import { PendingSends } from './pendingSends.js';
+
 const SACN_PORT = 5568;
 const SOURCE_NAME = 'Open DMX Stage';
 const PRIORITY = 100;
@@ -78,6 +80,7 @@ export class SacnDriver {
     this.sequence = 0;
     /** @type {string | null} */
     this.error = null;
+    this.pendingSends = new PendingSends();
   }
 
   async open() {
@@ -103,14 +106,14 @@ export class SacnDriver {
     }
     this.sequence = (this.sequence + 1) % 256;
     const destination = this.host || multicastAddress(this.universe);
-    this.socket.send(
-      buildSacnPacket(frame, this.universe, this.sequence, this.cid),
-      this.port,
-      destination,
-      (error) => {
+    const socket = this.socket;
+    const packet = buildSacnPacket(frame, this.universe, this.sequence, this.cid);
+    this.pendingSends.track((done) =>
+      socket.send(packet, this.port, destination, (error) => {
         // Report send failures in the status, and clear them once sending works again.
         this.error = error ? error.message : null;
-      },
+        done();
+      }),
     );
   }
 
@@ -118,6 +121,8 @@ export class SacnDriver {
     const socket = this.socket;
     if (socket) {
       this.socket = null;
+      // Let the last frames (the blanking frame, above all) leave before the socket goes away.
+      await this.pendingSends.settled();
       await new Promise((resolve) => socket.close(() => resolve(undefined)));
     }
   }
