@@ -103,6 +103,17 @@ describe('probeAdapter', () => {
     assert.equal(result.kind, 'no-response', 'an echoing cable is still treated as silent');
   });
 
+  it('keeps only a bounded amount of what a noisy device sends', async () => {
+    const port = createMockPort({ reply: null });
+    const promise = probeAdapter('/dev/noisy', { createPort: async () => port, wait: fastWait, timeoutMs: 40 });
+    await fastWait();
+    for (let index = 0; index < 100; index += 1) {
+      port.state.listener(new Uint8Array(1024).fill(0x55));
+    }
+    const result = await promise;
+    assert.equal(result.kind, 'no-response', 'noise is not mistaken for an answer');
+  });
+
   it('passes through a failure to open the port', async () => {
     await assert.rejects(
       probeAdapter('/dev/x', {
@@ -149,6 +160,33 @@ describe('OutputManager.detect', () => {
     busy.path = '/dev/cable';
     engine.setDriver(busy);
     await assert.rejects(manager.detect('/dev/cable'), (error) => error.status === 409 && /in use/.test(error.message));
+    await cleanup();
+  });
+
+  it('waits for an output switch in progress before probing, so the port is never opened twice', async () => {
+    const order = [];
+    const { manager, cleanup } = await createManager({
+      probe: async () => {
+        order.push('probe');
+        return { kind: 'no-response', suggestedInterface: 'open-dmx', message: 'x' };
+      },
+    });
+    let releaseSwitch;
+    const switching = manager.enqueue(
+      () =>
+        new Promise((resolve) => {
+          releaseSwitch = () => {
+            order.push('switch done');
+            resolve(undefined);
+          };
+        }),
+    );
+    const detecting = manager.detect('/dev/cable');
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.deepEqual(order, [], 'the probe has not started while the switch is running');
+    releaseSwitch();
+    await Promise.all([switching, detecting]);
+    assert.deepEqual(order, ['switch done', 'probe'], 'the probe ran after the switch finished');
     await cleanup();
   });
 

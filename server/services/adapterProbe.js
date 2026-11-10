@@ -13,6 +13,7 @@ const log = logger.child({ module: 'adapter-probe' });
 const START_OF_MESSAGE = 0x7e;
 const END_OF_MESSAGE = 0xe7;
 const GET_WIDGET_PARAMETERS_LABEL = 3;
+const MAX_RECEIVED_BYTES = 256; // a real reply is 10 bytes; a noisy device must not grow memory while we wait
 const PARAMETERS_LENGTH = 5; // firmware LSB, firmware MSB, break time, mark-after-break time, refresh rate
 
 /** The request: label 3 with a 2-byte "user configuration size" of 0. */
@@ -81,7 +82,13 @@ export async function probeAdapter(
   const port = await createPort({ path, baudRate: 57600 });
   /** @type {number[]} */
   const received = [];
-  port.on('data', (/** @type {Uint8Array} */ chunk) => received.push(...chunk));
+  port.on('data', (/** @type {Uint8Array} */ chunk) => {
+    for (const byte of chunk) {
+      if (received.length < MAX_RECEIVED_BYTES) {
+        received.push(byte);
+      }
+    }
+  });
   try {
     port.write(WIDGET_PARAMETERS_REQUEST);
     // Poll so a quick answer returns quickly; give up after the timeout.
