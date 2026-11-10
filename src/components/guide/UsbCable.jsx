@@ -23,10 +23,16 @@ export function UsbCable() {
         <li>
           <strong>Pick the Serial port.</strong> Not sure which one is yours? Press <strong>Refresh</strong>, unplug the
           cable, press Refresh again, plug it back in and press Refresh once more. The entry that disappears and returns
-          is your cable. FTDI cables are labelled.
+          is your cable. FTDI cables are labelled. Not sure the interface type is right? Press{' '}
+          <strong>Detect adapter</strong> and the app will check and choose for you.
         </li>
         <li>
           Press <strong>Connect</strong>. The top bar should change to <strong>DMX ready</strong>.
+        </li>
+        <li>
+          Press <strong>Test lights</strong> on the same card. Every light you have added in Setup cycles through red,
+          green, blue and white. If a light does not follow, check its address and mode. Press{' '}
+          <strong>Stop test</strong> when you are done.
         </li>
         <li>
           Open <strong>Lights</strong>, pick a colour, and check the real light changes.

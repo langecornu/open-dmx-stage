@@ -10,6 +10,7 @@ vi.mock('../../src/api.js', () => ({
   api: {
     listOutputPorts: vi.fn(),
     saveOutputSettings: vi.fn(),
+    detectAdapter: vi.fn(),
   },
 }));
 
@@ -37,7 +38,7 @@ describe('ConnectionPanel', () => {
     const group = screen.getByRole('group', { name: 'Interface type' });
     expect(within(group).getAllByRole('button')).toHaveLength(5);
     expect(within(group).getByRole('button', { name: 'Simulator' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('status')).toHaveTextContent('Active: Simulator');
+    expect(screen.getByText('Active: Simulator')).toBeInTheDocument();
     await screen.findByRole('button', { name: /How to connect/ });
   });
 
@@ -109,5 +110,41 @@ describe('ConnectionPanel', () => {
     const { container } = render(<ConnectionPanel output={OUTPUT} />);
     await waitFor(() => expect(api.listOutputPorts).toHaveBeenCalled());
     expect(await accessibilityViolations(container)).toEqual([]);
+  });
+
+  it('detects the adapter kind for the chosen port and selects the matching interface', async () => {
+    const user = userEvent.setup();
+    api.detectAdapter.mockResolvedValue({
+      kind: 'active',
+      suggestedInterface: 'enttec-pro',
+      message: 'This adapter answered like an ENTTEC DMX USB Pro (firmware 1.44).',
+    });
+    render(<ConnectionPanel output={OUTPUT} />);
+    await user.click(screen.getByRole('button', { name: 'USB-DMX cable' }));
+    expect(screen.getByRole('button', { name: 'Detect adapter' })).toBeDisabled();
+    await user.selectOptions(await screen.findByRole('combobox', { name: 'Serial port' }), '/dev/tty.usbserial-A1');
+    await user.click(screen.getByRole('button', { name: 'Detect adapter' }));
+    expect(api.detectAdapter).toHaveBeenCalledWith('/dev/tty.usbserial-A1');
+    expect(await screen.findByText(/answered like an ENTTEC DMX USB Pro/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ENTTEC DMX USB Pro' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('suggests the USB-DMX cable when the adapter stays silent, and shows detection errors as alerts', async () => {
+    const user = userEvent.setup();
+    api.detectAdapter.mockResolvedValueOnce({
+      kind: 'no-response',
+      suggestedInterface: 'open-dmx',
+      message: 'The adapter did not answer.',
+    });
+    render(<ConnectionPanel output={OUTPUT} />);
+    await user.click(screen.getByRole('button', { name: 'ENTTEC DMX USB Pro' }));
+    await user.selectOptions(await screen.findByRole('combobox', { name: 'Serial port' }), '/dev/tty.usbserial-A1');
+    await user.click(screen.getByRole('button', { name: 'Detect adapter' }));
+    await screen.findByText('The adapter did not answer.');
+    expect(screen.getByRole('button', { name: 'USB-DMX cable' })).toHaveAttribute('aria-pressed', 'true');
+
+    api.detectAdapter.mockRejectedValueOnce(new Error('This cable is in use.'));
+    await user.click(screen.getByRole('button', { name: 'Detect adapter' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('This cable is in use.');
   });
 });

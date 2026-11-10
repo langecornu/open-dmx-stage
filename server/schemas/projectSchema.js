@@ -99,6 +99,8 @@ export const importFixtureSchema = z
   .object({ fixture: z.record(z.string(), z.unknown()), manufacturer: z.string().max(80).optional() })
   .strict();
 
+export const detectAdapterSchema = z.object({ serialPath: z.string().min(1).max(200) }).strict();
+
 export const importQlcSchema = z.object({ xml: z.string().min(1).max(300_000) }).strict();
 
 export const DRIVER_NAMES = ['mock', 'enttec-pro', 'open-dmx', 'artnet', 'sacn'];

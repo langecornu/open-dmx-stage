@@ -27,6 +27,7 @@ before(async () => {
     dataDir,
     defaults: { driver: 'mock' },
     listPorts: async () => [{ path: '/dev/test-cable', vendorId: '0403' }],
+    probe: async () => ({ kind: 'no-response', suggestedInterface: 'open-dmx', message: 'stub' }),
   });
   server = createServer(createApp({ config, engine, projectService, outputManager }));
   await new Promise((resolve) => server.listen(0, resolve));
@@ -200,5 +201,20 @@ describe('API', () => {
       413,
       'other routes keep the 1 MB limit',
     );
+  });
+
+  it('detects the adapter kind on a listed port, and validates the request', async () => {
+    const detect = (body) =>
+      fetch(`${baseUrl}/output/detect`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    const ok = await detect({ serialPath: '/dev/test-cable' });
+    assert.equal(ok.status, 200, 'a listed port can be probed');
+    assert.equal((await ok.json()).suggestedInterface, 'open-dmx', 'the suggestion is returned');
+    assert.equal((await detect({ serialPath: '/dev/not-listed' })).status, 400, 'an unlisted port is refused');
+    assert.equal((await detect({})).status, 400, 'a missing port is refused');
+    assert.equal((await detect({ serialPath: '/dev/test-cable', extra: 1 })).status, 400, 'unknown fields are refused');
   });
 });

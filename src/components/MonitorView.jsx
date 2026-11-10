@@ -3,7 +3,7 @@ import { useFrame } from '../hooks/frameStore.js';
 import { ConnectionPanel } from './ConnectionPanel.jsx';
 import { Icon } from './Icon.jsx';
 
-export function MonitorView({ patch, live }) {
+export function MonitorView({ project, patch, live }) {
   const frame = useFrame();
   const cells = [];
   for (let channel = 1; channel <= 512; channel += 1) {
@@ -32,7 +32,7 @@ export function MonitorView({ patch, live }) {
           Universe 1 · 512 channels
         </span>
       </div>
-      <ConnectionPanel output={live.output} />
+      <ConnectionPanel output={live.output} project={project} patch={patch} live={live} />
       <div className="card card-pad">
         <div className="universe" role="img" aria-label="Live view of all 512 DMX channel values">
           {cells}
