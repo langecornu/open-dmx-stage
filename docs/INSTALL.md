@@ -7,12 +7,12 @@ lighting hardware to try it: without a DMX interface it runs in **simulator mode
 
 ### Software
 
-| Dependency                    | Version                                 | Notes                                                                                                                             |
-| ----------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| [Node.js](https://nodejs.org) | 24 LTS (recommended)                    | The project pins `>=24` in `package.json` and `.nvmrc`. It also runs on Node 20 for development, but 24 is the supported version. |
-| npm                           | 10 or newer                             | Installed with Node.js.                                                                                                           |
-| A modern browser              | Current Chrome, Edge, Firefox or Safari | The app is a normal web page; nothing to install in the browser.                                                                  |
-| Git                           | Any recent version                      | Only needed to clone the repository.                                                                                              |
+| Dependency                    | Version                                 | Notes                                                                                                                                                               |
+| ----------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Node.js](https://nodejs.org) | 24.15 or newer (24 LTS)                 | The project pins `>=24.15.0` in `package.json` (`.nvmrc` says 24). The tests need it; the app itself may still start on older versions, but they are not supported. |
+| npm                           | 10 or newer                             | Installed with Node.js.                                                                                                                                             |
+| A modern browser              | Current Chrome, Edge, Firefox or Safari | The app is a normal web page; nothing to install in the browser.                                                                                                    |
+| Git                           | Any recent version                      | Only needed to clone the repository.                                                                                                                                |
 
 Check what you have:
 
@@ -183,7 +183,7 @@ The server also answers `GET /healthz` (is it up) and `GET /readyz` (and which o
 
 | Symptom                                             | Fix                                                                                                                                                                 |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `EBADENGINE` warning on `npm install`               | You are on Node older than 24. It still runs on Node 20; install Node 24 to remove the warning.                                                                     |
+| `EBADENGINE` warning on `npm install`               | You are on Node older than 24.15. Install Node 24 (`nvm install 24`) to remove the warning; the tests need it.                                                      |
 | Port 5173 is already in use                         | Run the web app on another port and allow it: `ALLOWED_ORIGINS=http://localhost:5180 npm run dev:api` in one terminal, `npm run dev:web -- --port 5180` in another. |
 | Top bar says **Server offline**                     | The API is not running or the browser origin is not in `ALLOWED_ORIGINS`. Check the terminal for errors.                                                            |
 | A phone or tablet cannot connect                    | The server listens on this computer only by default. See "Control it from a phone or tablet" above.                                                                 |

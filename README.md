@@ -36,7 +36,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173. Requires Node.js 24 LTS (Node 20 also works for development).
+Open http://localhost:5173. Requires Node.js 24.15 or newer (24 LTS). The tests need it; the app itself also starts on older versions.
 
 - **[Install guide](docs/INSTALL.md):** dependencies, connecting a DMX interface, configuration, troubleshooting.
 - **[Usage guide](docs/USAGE.md):** a tour of every screen, with screenshots.
