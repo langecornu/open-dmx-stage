@@ -7,6 +7,7 @@ import { ControlView } from './components/ControlView.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import { MonitorView } from './components/MonitorView.jsx';
 import { PatchView } from './components/PatchView.jsx';
+import { PerformView } from './components/PerformView.jsx';
 import { ScenesView } from './components/ScenesView.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
 import { TopBar } from './components/TopBar.jsx';
@@ -105,6 +106,7 @@ export function App() {
           {view === 'control' ? <ControlView {...shared} /> : null}
           {view === 'scenes' ? <ScenesView {...shared} /> : null}
           {view === 'chases' ? <ChasesView {...shared} /> : null}
+          {view === 'perform' ? <PerformView {...shared} /> : null}
           {view === 'patch' ? <PatchView {...shared} /> : null}
           {view === 'monitor' ? <MonitorView {...shared} /> : null}
         </ErrorBoundary>

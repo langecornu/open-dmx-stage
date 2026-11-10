@@ -5,6 +5,7 @@ export const VIEWS = [
   { id: 'control', label: 'Lights', icon: 'control' },
   { id: 'scenes', label: 'Looks', icon: 'scenes' },
   { id: 'chases', label: 'Sequences', icon: 'chases' },
+  { id: 'perform', label: 'Perform', icon: 'bolt' },
   { id: 'patch', label: 'Setup', icon: 'patch' },
   { id: 'monitor', label: 'Output', icon: 'monitor' },
 ];
