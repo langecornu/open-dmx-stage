@@ -9,7 +9,7 @@ import { accessibilityViolations } from './axe.js';
 import { BUILTIN_TYPES } from './fixtures.js';
 
 const project = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   name: 'Test',
   fixtureTypes: [],
   fixtures: [{ id: 'a', name: 'Par 1', typeId: 'generic-rgb-par', mode: 0, address: 1 }],
@@ -18,8 +18,15 @@ const project = {
     { id: 'cool', name: 'Cool wash', values: { 3: 255 } },
   ],
   chases: [
-    { id: 'show', name: 'Opening', loop: true, steps: [{ id: 's1', sceneId: 'warm', fadeMs: 0, holdMs: 1000 }] },
+    {
+      id: 'show',
+      name: 'Opening',
+      loop: true,
+      timing: 'seconds',
+      steps: [{ id: 's1', sceneId: 'warm', fadeMs: 0, holdMs: 1000, fadeBeats: 0, holdBeats: 2 }],
+    },
   ],
+  groups: [{ id: 'front', name: 'Front row', fixtureIds: ['a'] }],
 };
 const patch = buildPatch(project, BUILTIN_TYPES);
 
@@ -29,7 +36,16 @@ let flush;
 function renderView(engine = {}) {
   live = {
     send: vi.fn(),
-    engine: { master: 1, blackout: false, activeSceneId: null, activeChaseId: null, chaseStep: null, ...engine },
+    engine: {
+      master: 1,
+      blackout: false,
+      bpm: 120,
+      effect: null,
+      activeSceneId: null,
+      activeChaseId: null,
+      chaseStep: null,
+      ...engine,
+    },
   };
   flush = vi.fn().mockResolvedValue(undefined);
   return render(<PerformView project={project} patch={patch} live={live} flush={flush} />);
@@ -130,7 +146,17 @@ describe('PerformView', () => {
   });
 
   it('explains how to get started when there is nothing to perform', () => {
-    live = { send: vi.fn(), engine: { master: 1, blackout: false, activeSceneId: null, activeChaseId: null } };
+    live = {
+      send: vi.fn(),
+      engine: {
+        master: 1,
+        blackout: false,
+        bpm: 120,
+        effect: null,
+        activeSceneId: null,
+        activeChaseId: null,
+      },
+    };
     render(<PerformView project={{ ...project, scenes: [], chases: [] }} patch={patch} live={live} flush={vi.fn()} />);
     expect(screen.getByText('Nothing to perform yet')).toBeInTheDocument();
   });

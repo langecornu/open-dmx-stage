@@ -5,6 +5,7 @@ import { DMX_CHANNELS, indexFixtureTypes } from '../../shared/patch.js';
 import { api } from '../api.js';
 import { planFixtures } from '../utils/patchTools.js';
 import { EmptyState } from './EmptyState.jsx';
+import { GroupsCard } from './GroupsCard.jsx';
 import { ShowFileCard } from './ShowFileCard.jsx';
 import { Icon } from './Icon.jsx';
 
@@ -50,7 +51,15 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
   };
 
   const handleRemove = (id) =>
-    update((current) => ({ ...current, fixtures: current.fixtures.filter((fixture) => fixture.id !== id) }));
+    update((current) => ({
+      ...current,
+      fixtures: current.fixtures.filter((fixture) => fixture.id !== id),
+      // A removed light leaves its groups too, so no group points at a light that is gone.
+      groups: current.groups.map((group) => ({
+        ...group,
+        fixtureIds: group.fixtureIds.filter((fixtureId) => fixtureId !== id),
+      })),
+    }));
   const handleField = (id, changes) =>
     update((current) => ({
       ...current,
@@ -184,6 +193,7 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
           })}
         </div>
       )}
+      {project.fixtures.length > 0 ? <GroupsCard project={project} update={update} /> : null}
       <ShowFileCard onImported={replaceProject} />
     </section>
   );

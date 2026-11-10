@@ -40,12 +40,13 @@ after(async () => {
 });
 
 const validProject = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   name: 'Test',
   fixtureTypes: [],
   fixtures: [{ id: 'f1', name: 'Par 1', typeId: 'generic-rgb-par', mode: 0, address: 1 }],
   scenes: [{ id: 's1', name: 'Red', values: { 1: 255 } }],
   chases: [],
+  groups: [{ id: 'g1', name: 'Front', fixtureIds: ['f1'] }],
 };
 
 const putProject = (body) =>
@@ -119,7 +120,7 @@ describe('API', () => {
     assert.equal(response.status, 200, 'export succeeds');
     assert.match(response.headers.get('content-disposition') ?? '', /attachment; filename="open-dmx-stage-show\.json"/);
     const exported = await response.json();
-    assert.equal(exported.schemaVersion, 2, 'the file carries its schema version');
+    assert.equal(exported.schemaVersion, 3, 'the file carries its schema version');
     assert.equal(exported.fixtures[0].name, 'Par 1', 'the file contains the show');
   });
 
@@ -140,7 +141,9 @@ describe('API', () => {
     const ok = await importShow(oldShow);
     assert.equal(ok.status, 200, 'a version 1 show (no schemaVersion) is accepted');
     const imported = await ok.json();
-    assert.equal(imported.schemaVersion, 2, 'it was upgraded');
+    assert.equal(imported.schemaVersion, 3, 'it was upgraded');
+    assert.deepEqual(imported.groups, [], 'it gained an empty group list');
+    assert.equal(imported.chases[0].timing, 'seconds', 'its sequences keep their timing in seconds');
     assert.ok(imported.chases[0].steps[0].id, 'chase steps gained stable ids');
 
     assert.equal((await importShow('not a show')).status, 400, 'a string is not a show');

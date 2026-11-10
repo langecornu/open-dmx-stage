@@ -1,5 +1,5 @@
 // Component tests for the sequence editor: stable step ids, reordering, adding steps, and list semantics.
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -10,14 +10,15 @@ const SCENES = [
   { id: 's2', name: 'Cool', values: {} },
 ];
 
-function projectWith(steps) {
+function projectWith(steps, timing = 'seconds') {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'Test',
     fixtureTypes: [],
     fixtures: [],
     scenes: SCENES,
-    chases: [{ id: 'c1', name: 'Opening', loop: true, steps }],
+    chases: [{ id: 'c1', name: 'Opening', loop: true, timing, steps }],
+    groups: [],
   };
 }
 
@@ -29,15 +30,15 @@ function renderView(project) {
       patch={{ channels: new Map(), fixtures: [] }}
       update={update}
       flush={vi.fn().mockResolvedValue(undefined)}
-      live={{ engine: { activeChaseId: null, chaseStep: null }, send: vi.fn() }}
+      live={{ engine: { activeChaseId: null, chaseStep: null, bpm: 120 }, send: vi.fn() }}
     />,
   );
   return { update };
 }
 
 const STEPS = [
-  { id: 'step-a', sceneId: 's1', fadeMs: 1000, holdMs: 2000 },
-  { id: 'step-b', sceneId: 's2', fadeMs: 500, holdMs: 1500 },
+  { id: 'step-a', sceneId: 's1', fadeMs: 1000, holdMs: 2000, fadeBeats: 2, holdBeats: 4 },
+  { id: 'step-b', sceneId: 's2', fadeMs: 500, holdMs: 1500, fadeBeats: 1, holdBeats: 3 },
 ];
 
 describe('ChasesView', () => {
@@ -81,5 +82,25 @@ describe('ChasesView', () => {
   it('keeps Play disabled until the sequence has steps', () => {
     renderView(projectWith([]));
     expect(screen.getByRole('button', { name: 'Play' })).toBeDisabled();
+  });
+
+  it('switches a sequence to beats and edits the steps in beats, at quarter-beat steps', async () => {
+    const user = userEvent.setup();
+    const project = projectWith(STEPS);
+    const { update } = renderView(project);
+    await user.selectOptions(screen.getByLabelText('Timing'), 'beats');
+    expect(update.mock.calls[0][0](project).chases[0].timing).toBe('beats');
+  });
+
+  it('shows beat fields when the sequence is timed in beats, and writes beats back', () => {
+    const project = projectWith(STEPS, 'beats');
+    const { update } = renderView(project);
+    expect(screen.getByLabelText('Fade beats for step 2')).toHaveValue(1);
+    expect(screen.getByLabelText('Hold beats for step 2')).toHaveValue(3);
+    expect(screen.queryByLabelText('Fade seconds for step 2')).not.toBeInTheDocument();
+    const field = screen.getByLabelText('Hold beats for step 1');
+    fireEvent.change(field, { target: { value: '1.3' } });
+    const last = update.mock.calls.at(-1)[0](project);
+    expect(last.chases[0].steps[0].holdBeats).toBe(1.25);
   });
 });

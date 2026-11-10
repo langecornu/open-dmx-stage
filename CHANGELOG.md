@@ -7,12 +7,25 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Tempo and tap tempo:** a shared tempo (30 to 300 beats per minute) set by typing, tapping (button or the `.` key)
+  or halving and doubling it.
+- **Effects:** pulse, sweep and rainbow, locked to the tempo, over all lights or one group. Live only; not saved.
+- **Fixture groups** in Setup, used to aim effects at part of the rig.
+- **Sequences in beats:** a sequence can time its steps in beats and follow the tempo.
+- **U`King 40W Beam Moving Head (RGBW)** built-in fixture, 13 channel mode, from the maker's manual. Not yet tried on
+  the real light.
+
 - **Perform screen:** big buttons for every look and sequence, keyboard shortcuts (Space blackout, Escape stop, [ and ]
   master), and MIDI controller mapping with learn mode (pads to looks and sequences, a knob to the master). MIDI
   links are saved in the browser.
 - **Detect adapter:** asks a USB adapter to identify itself (the ENTTEC Pro query) and selects the matching interface;
   a passive cable stays silent. Not yet tried on real hardware.
 - **Test lights:** cycles every patched fixture through red, green, blue and white from the Connection card.
+
+### Changed
+
+- The show file is now `schemaVersion` 3 (adds `groups`, and `timing` plus beat fields on sequences). Older shows are
+  upgraded automatically; a show saved by this version cannot be opened by an older app.
 
 ## [0.1.0] - 2026-11-09
 

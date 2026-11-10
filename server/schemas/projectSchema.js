@@ -1,6 +1,7 @@
 // zod schemas for the project document, live socket messages and imports. Unknown keys are rejected.
 import { z } from 'zod';
 
+import { EFFECT_BEATS, EFFECT_TYPES, MAX_BPM, MIN_BPM } from '../../shared/effects.js';
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
 import { HOST_HELP, isAllowedHost } from '../utils/networkHost.js';
 
@@ -52,13 +53,15 @@ export const sceneSchema = z
   .strict();
 
 /** Bump with every change to the saved show format, and add a migration in server/services/projectMigrations.js. */
-export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (2);
+export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (3);
 
 export const chaseSchema = z
   .object({
     id,
     name: label,
     loop: z.boolean(),
+    // `seconds` uses each step's fadeMs and holdMs; `beats` uses fadeBeats and holdBeats, so the sequence follows the tempo.
+    timing: z.enum(['seconds', 'beats']),
     steps: z
       .array(
         z
@@ -67,12 +70,16 @@ export const chaseSchema = z
             sceneId: id,
             fadeMs: z.number().int().min(0).max(600000),
             holdMs: z.number().int().min(0).max(600000),
+            fadeBeats: z.number().min(0).max(64),
+            holdBeats: z.number().min(0).max(64),
           })
           .strict(),
       )
       .max(256),
   })
   .strict();
+
+export const groupSchema = z.object({ id, name: label, fixtureIds: z.array(id).max(256) }).strict();
 
 export const projectSchema = z
   .object({
@@ -82,6 +89,7 @@ export const projectSchema = z
     fixtures: z.array(fixtureSchema).max(256),
     scenes: z.array(sceneSchema).max(500),
     chases: z.array(chaseSchema).max(100),
+    groups: z.array(groupSchema).max(100),
   })
   .strict();
 
@@ -93,6 +101,18 @@ export const liveMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('recall'), sceneId: id, fadeMs: z.number().int().min(0).max(60000).default(0) }).strict(),
   z.object({ type: z.literal('chaseStart'), chaseId: id }).strict(),
   z.object({ type: z.literal('chaseStop') }).strict(),
+  z
+    .object({ type: z.literal('tempo'), bpm: z.number().min(MIN_BPM).max(MAX_BPM), sync: z.boolean().default(false) })
+    .strict(),
+  z
+    .object({
+      type: z.literal('effectStart'),
+      effect: z.enum(EFFECT_TYPES),
+      beats: z.number().refine((beats) => EFFECT_BEATS.includes(beats), 'Unsupported effect length'),
+      groupId: id.nullable().default(null),
+    })
+    .strict(),
+  z.object({ type: z.literal('effectStop') }).strict(),
 ]);
 
 export const importFixtureSchema = z
@@ -134,5 +154,6 @@ export function createEmptyProject() {
     fixtures: [],
     scenes: [],
     chases: [],
+    groups: [],
   };
 }

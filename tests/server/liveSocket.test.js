@@ -80,6 +80,29 @@ describe('live socket', () => {
     socket.close();
   });
 
+  it('sets the tempo and starts and stops an effect from control messages, and ignores bad ones', async () => {
+    const { socket, messages } = connect(ALLOWED_ORIGIN);
+    await waitFor(() => messages.some((m) => m.type === 'state'), 'the initial state');
+    const lastState = () => messages.filter((m) => m.type === 'state').at(-1).state;
+    socket.send(JSON.stringify({ type: 'tempo', bpm: 140, sync: true }));
+    await waitFor(() => lastState().bpm === 140, 'the new tempo');
+    socket.send(JSON.stringify({ type: 'effectStart', effect: 'pulse', beats: 2, groupId: null }));
+    await waitFor(() => lastState().effect?.type === 'pulse', 'the effect to start');
+    socket.send(JSON.stringify({ type: 'effectStart', effect: 'sweep', beats: 3, groupId: null }));
+    socket.send(JSON.stringify({ type: 'tempo', bpm: 9000 }));
+    socket.send(JSON.stringify({ type: 'effectStart', effect: 'sweep', beats: 1, groupId: 'no-such-group' }));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    assert.equal(lastState().bpm, 140, 'an out-of-range tempo is refused');
+    assert.equal(
+      lastState().effect.type,
+      'pulse',
+      'an unsupported length, or a group that does not exist, changes nothing',
+    );
+    socket.send(JSON.stringify({ type: 'effectStop' }));
+    await waitFor(() => lastState().effect === null, 'the effect to stop');
+    socket.close();
+  });
+
   it('rejects a browser origin that is not allowed', async () => {
     const { socket } = connect('http://evil.example');
     const outcome = await new Promise((resolve) => {
