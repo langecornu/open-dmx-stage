@@ -1,5 +1,11 @@
 // Pure patch maths shared by the server and the browser: resolves fixtures to absolute DMX channels.
 
+/** @typedef {import('./types.js').Project} Project */
+/** @typedef {import('./types.js').FixtureType} FixtureType */
+/** @typedef {import('./types.js').Patch} Patch */
+/** @typedef {import('./types.js').FixtureRange} FixtureRange */
+/** @typedef {import('./types.js').PatchChannel} PatchChannel */
+
 export const DMX_CHANNELS = 512;
 
 // Channel types that represent "how bright" a fixture is; the master and blackout act on these only.
@@ -22,7 +28,13 @@ export const CHANNEL_TYPES = [
   'other',
 ];
 
+/**
+ * @param {Pick<Project, 'fixtureTypes'>} project
+ * @param {FixtureType[]} builtinTypes the generic profiles shipped with the app
+ * @returns {Map<string, FixtureType>} every known fixture type by id; the project's own override the built-in ones
+ */
 export function indexFixtureTypes(project, builtinTypes) {
+  /** @type {Map<string, FixtureType>} */
   const byId = new Map();
   for (const type of builtinTypes) {
     byId.set(type.id, type);
@@ -33,10 +45,17 @@ export function indexFixtureTypes(project, builtinTypes) {
   return byId;
 }
 
-// Returns { channels: Map<number, info>, fixtures: [{ id, start, end, outOfRange, overlaps }] }.
+/**
+ * Resolves every fixture to absolute DMX channels and flags problems (running past 512, overlapping, missing type).
+ * @param {Pick<Project, 'fixtureTypes' | 'fixtures'>} project
+ * @param {FixtureType[]} builtinTypes
+ * @returns {Patch}
+ */
 export function buildPatch(project, builtinTypes) {
   const typesById = indexFixtureTypes(project, builtinTypes);
+  /** @type {Map<number, PatchChannel>} */
   const channels = new Map();
+  /** @type {FixtureRange[]} */
   const fixtures = [];
 
   for (const fixture of project.fixtures) {
@@ -48,6 +67,7 @@ export function buildPatch(project, builtinTypes) {
     }
     const start = fixture.address;
     const end = start + mode.channels.length - 1;
+    /** @type {FixtureRange & { overlaps: string[] }} */
     const entry = { id: fixture.id, start, end, outOfRange: end > DMX_CHANNELS, overlaps: [] };
     mode.channels.forEach((channel, offset) => {
       const absolute = start + offset;
@@ -73,7 +93,12 @@ export function buildPatch(project, builtinTypes) {
   return { channels, fixtures };
 }
 
+/**
+ * @param {Patch} patch
+ * @returns {Set<number>} the channels that master and blackout scale (brightness and colour, not position)
+ */
 export function levelChannelsOf(patch) {
+  /** @type {Set<number>} */
   const levels = new Set();
   for (const [channel, info] of patch.channels) {
     if (LEVEL_TYPES.has(info.type)) {

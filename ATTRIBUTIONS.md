@@ -30,6 +30,10 @@ Prettier (https://github.com/prettier/prettier), concurrently (https://github.co
 ## Specifications and formats
 
 - **DMX512 / ANSI E1.11** is the lighting control protocol this app outputs.
+- **Art-Net** is a trademark of Artistic Licence Holdings Ltd; `server/clients/artNetDriver.js` sends the public ArtDmx
+  packet. **sACN** is ANSI E1.31 (ESTA); `server/clients/sacnDriver.js` sends E1.31 data packets.
+- **Open DMX style USB cables**: `server/clients/openDmxDriver.js` follows the DMX512 serial format (250 kbaud, 8N2,
+  break then start code). "Open DMX USB" is an ENTTEC product name; DSD TECH and DMXKing are their owners' marks.
 - **ENTTEC DMX USB Pro API**: the "Send DMX Packet" framing in `server/clients/enttecProDriver.js` follows ENTTEC's
   published interface specification. ENTTEC is a trademark of its owner; this project is not affiliated with it.
 - **QLC+ fixture definitions (.qxf)**: `server/services/qlcImporter.js` reads this XML format, documented by the QLC+

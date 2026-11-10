@@ -1,10 +1,13 @@
 // Monitor: a live view of all 512 DMX slots, with patched slots outlined.
+import { useFrame } from '../hooks/frameStore.js';
+import { ConnectionPanel } from './ConnectionPanel.jsx';
 import { Icon } from './Icon.jsx';
 
 export function MonitorView({ patch, live }) {
+  const frame = useFrame();
   const cells = [];
   for (let channel = 1; channel <= 512; channel += 1) {
-    const value = live.frame[channel - 1] ?? 0;
+    const value = frame[channel - 1] ?? 0;
     const info = patch.channels.get(channel);
     const title = info
       ? `Ch ${channel} · ${info.fixtureName} · ${info.channelName} = ${value}`
@@ -29,6 +32,7 @@ export function MonitorView({ patch, live }) {
           Universe 1 · 512 channels
         </span>
       </div>
+      <ConnectionPanel output={live.output} />
       <div className="card card-pad">
         <div className="universe" role="img" aria-label="Live view of all 512 DMX channel values">
           {cells}

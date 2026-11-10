@@ -88,6 +88,9 @@ Use **Setup** to manage your fixtures.
 - **Import fixture file:** load a fixture definition from a QLC+ `.qxf` file or an Open Fixture Library `.json` file.
   Imported fixtures then appear in the **Fixture** list. Only import files whose licence allows your use.
 - **Remove:** the bin icon takes a fixture out of the rig.
+- **Your show file:** **Export show** downloads your whole show (fixtures, looks and sequences) as a file you can back up
+  or move to another computer. **Import show** loads one back in, after asking you to confirm, because it replaces the
+  current show. Files from older versions of the app are upgraded automatically.
 
 Make sure each fixture's real DMX address and mode match what is shown here.
 
@@ -99,21 +102,33 @@ and for confirming that something is really being sent.
 
 ![Output screen](images/08-output-dark.jpg)
 
+### Connecting your lights
+
+The **Connection** card at the top of **Output** chooses how DMX leaves the app: the simulator, a USB-DMX cable, an
+ENTTEC DMX USB Pro, Art-Net or sACN. Pick one, choose the serial port (or enter a network address and universe), and
+press **Connect**. The status pill shows whether it is active, and any problem is explained in plain words.
+
+Press **How to connect** in that card for a step-by-step guide with diagrams, including how to tell a passive USB cable
+from an active adapter. The same guide is in [Connecting your lights](CONNECTION.md).
+
 ## 7. Master, Blackout, themes and devices
 
 - **Master** scales the brightness of everything (dimmer and colour channels only; pan and tilt are unaffected).
 - **Blackout** switches all light output off at once; press it again to bring it back.
 - **Theme:** the sun/moon switch in the top bar changes between light and dark. The choice is remembered.
 - **Phone and tablet:** below 900 px wide the navigation moves to a bottom bar and the layout stacks, so you can run
-  the show from a phone or tablet on the same network.
+  the show from a phone or tablet on the same network (the server must be set to listen beyond this computer: see the
+  [install guide](INSTALL.md#control-it-from-a-phone-or-tablet)).
 
 ## 8. Saving
 
 Your show (fixtures, looks, sequences) saves automatically a moment after each change. The top bar shows
-_Unsaved_, _Saving…_ or _Saved_. The data lives in `server/data/project.json` on the machine running the server.
+_Unsaved_, _Saving…_ or _Saved_. The data lives in `server/data/project.json` on the machine running the server, and the previous save is kept as
+`project.json.bak`.
 
 ## Current limits
 
 - One DMX universe (512 channels).
 - Export to Engine DJ / SoundSwitch is not available yet.
-- Only the ENTTEC DMX USB Pro driver and the built-in simulator are included.
+- USB output has not been tested on real hardware yet. Network output (Art-Net and sACN) is the most predictable path.
+- SoundSwitch dongles are not supported.

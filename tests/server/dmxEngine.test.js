@@ -2,8 +2,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { MockDriver } from '../server/clients/mockDriver.js';
-import { DmxEngine } from '../server/services/dmxEngine.js';
+import { MockDriver } from '../../server/clients/mockDriver.js';
+import { DmxEngine } from '../../server/services/dmxEngine.js';
 
 function createEngine() {
   const driver = new MockDriver();

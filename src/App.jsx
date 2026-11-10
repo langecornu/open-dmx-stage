@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import { buildPatch } from '../shared/patch.js';
 import { ChasesView } from './components/ChasesView.jsx';
 import { ControlView } from './components/ControlView.jsx';
+import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import { MonitorView } from './components/MonitorView.jsx';
 import { PatchView } from './components/PatchView.jsx';
 import { ScenesView } from './components/ScenesView.jsx';
@@ -27,7 +28,7 @@ function hasSeenWelcome() {
 export function App() {
   const [view, setView] = useState('control');
   const [welcomed, setWelcomed] = useState(hasSeenWelcome);
-  const { project, library, update, flush, saveStatus, error } = useProject();
+  const { project, library, update, flush, replace, saveStatus, error } = useProject();
   const live = useLive();
   const { theme, toggle: toggleTheme } = useTheme();
 
@@ -64,7 +65,7 @@ export function App() {
     setView('control');
   };
 
-  const shared = { project, library, patch, update, flush, live };
+  const shared = { project, library, patch, update, flush, live, replaceProject: replace };
   return (
     <div className="shell">
       {!welcomed && startedEmpty.current ? (
@@ -95,11 +96,18 @@ export function App() {
             {error}
           </div>
         ) : null}
-        {view === 'control' ? <ControlView {...shared} /> : null}
-        {view === 'scenes' ? <ScenesView {...shared} /> : null}
-        {view === 'chases' ? <ChasesView {...shared} /> : null}
-        {view === 'patch' ? <PatchView {...shared} /> : null}
-        {view === 'monitor' ? <MonitorView {...shared} /> : null}
+        {live.isVersionMismatch ? (
+          <div className="error-banner" role="alert">
+            This page and the server are different versions. Reload the page to update.
+          </div>
+        ) : null}
+        <ErrorBoundary key={view} label="this screen">
+          {view === 'control' ? <ControlView {...shared} /> : null}
+          {view === 'scenes' ? <ScenesView {...shared} /> : null}
+          {view === 'chases' ? <ChasesView {...shared} /> : null}
+          {view === 'patch' ? <PatchView {...shared} /> : null}
+          {view === 'monitor' ? <MonitorView {...shared} /> : null}
+        </ErrorBoundary>
       </main>
     </div>
   );

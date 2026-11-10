@@ -1,6 +1,7 @@
 // Lights: choose a colour and brightness for all or selected fixtures; fine-tune single channels per fixture.
 import { useEffect, useState } from 'react';
 
+import { useFrame } from '../hooks/frameStore.js';
 import { applyColor } from '../utils/colorControl.js';
 import { averageColor, fixtureColor } from '../utils/sceneColors.js';
 import { ColorStudio } from './ColorStudio.jsx';
@@ -22,7 +23,8 @@ export function ControlView({ project, patch, live }) {
     }
   }, [overrideCount]);
 
-  const valueOf = (channel) => edits[channel] ?? live.frame[channel - 1] ?? 0;
+  const frame = useFrame();
+  const valueOf = (channel) => edits[channel] ?? frame[channel - 1] ?? 0;
 
   const patched = project.fixtures.filter((fixture) =>
     patch.fixtures.some((entry) => entry.id === fixture.id && !entry.missingType),

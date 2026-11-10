@@ -1,6 +1,6 @@
 // Single place for HTTP access to the server. Every call checks res.ok and throws a readable error.
 async function request(path, options) {
-  const res = await fetch(`/api${path}`, options);
+  const res = await fetch(`/api/v1${path}`, options);
   if (!res.ok) {
     let message = `Request failed (${res.status})`;
     try {
@@ -23,9 +23,12 @@ const jsonBody = (method, body) => ({
 export const api = {
   getProject: () => request('/project'),
   saveProject: (project) => request('/project', jsonBody('PUT', project)),
+  importProject: (project) => request('/project/import', jsonBody('POST', project)),
   getFixtureLibrary: () => request('/fixtures/library'),
   importOpenFixture: (fixture, manufacturer) =>
     request('/fixtures/import-ofl', jsonBody('POST', { fixture, manufacturer })),
   importQlcFixture: (xml) => request('/fixtures/import-qlc', jsonBody('POST', { xml })),
+  listOutputPorts: () => request('/output/ports'),
+  saveOutputSettings: (settings) => request('/output/settings', jsonBody('PUT', settings)),
   getOutput: () => request('/output'),
 };
