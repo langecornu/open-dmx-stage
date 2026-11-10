@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 
-import { buildPatch, channelsByFixture, levelChannelsOf } from '../../shared/patch.js';
+import { buildPatch, channelsByFixture, levelChannelsOf, restingValuesOf } from '../../shared/patch.js';
 import { validateBody } from '../middleware/validate.js';
 import { listSerialPorts } from '../clients/serial.js';
 import {
@@ -38,6 +38,7 @@ export function createApiRouter({ engine, projectService, outputManager, ofl = n
     const patch = buildPatch(project, BUILTIN_FIXTURE_TYPES);
     engine.setLevelChannels(levelChannelsOf(patch));
     engine.setFixtureChannels(channelsByFixture(patch));
+    engine.setRestingValues(restingValuesOf(patch));
   };
   syncEngineWithProject(projectService.get());
 
