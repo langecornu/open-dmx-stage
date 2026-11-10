@@ -2,13 +2,14 @@
 
 A quick tour of Open DMX Stage. If you have not installed it yet, start with the [install guide](INSTALL.md).
 
-The app has five screens, reached from the left rail (or the bottom bar on phones and tablets):
+The app has six screens, reached from the left rail (or the bottom bar on phones and tablets):
 
 | Screen        | What it is for                                                  |
 | ------------- | --------------------------------------------------------------- |
 | **Lights**    | Pick colours and brightness and see your fixtures respond live. |
 | **Looks**     | Save what is on stage and bring it back with one tap.           |
 | **Sequences** | Chain looks into a show with timed fades.                       |
+| **Perform**   | Run a show with big buttons, keyboard shortcuts and MIDI.       |
 | **Setup**     | Tell the studio which lights you have and their DMX addresses.  |
 | **Output**    | See exactly what is being sent on the DMX line.                 |
 
@@ -76,7 +77,31 @@ A sequence plays looks one after another.
 The **timeline** strip shows each look as a block sized by its fade plus hold time, with the fade drawn as a soft ramp.
 The step that is playing is highlighted. Use the arrow buttons to reorder steps and the bin to remove one.
 
-## 5. Setup: your rig
+## 5. Perform: run a show
+
+**Perform** turns every look and sequence into a big button, for running a show without hunting with the mouse.
+
+- **Tap a button** to play a look (with the fade chosen at the top) or to start a sequence. Tap a playing sequence
+  again to stop it.
+- **Keyboard shortcuts:** each button shows its key (1 to 0, then Q to P, then A to L). **Space** is blackout,
+  **Escape** stops a sequence, and **[** and **]** lower and raise the master by 10%. Shortcuts never fire while you are
+  typing in a field.
+- **Master, blackout and stop** are always at the top of the screen.
+
+### MIDI controller
+
+If you have a MIDI controller (pads, keys, knobs or faders), you can play looks from it:
+
+1. Use Chrome or Edge, plug in the controller, and press **Turn on MIDI**. The browser asks for permission.
+2. Press **Learn MIDI**, tap the button you want to link on the screen, then press a pad or key on the controller.
+   The control's name (for example "Note 36 (ch 1)") appears on the button.
+3. Press **Done learning**. Now the pad plays that look.
+4. To control the master from a knob or fader, turn on learn mode, press **Link master to a knob**, and move the knob.
+
+**Clear links** removes all links. Links are saved in this browser, not in the show file, and links to looks you delete
+are forgotten. Safari and Firefox do not support MIDI everywhere, so use Chrome or Edge.
+
+## 6. Setup: your rig
 
 Use **Setup** to manage your fixtures.
 
@@ -94,7 +119,7 @@ Use **Setup** to manage your fixtures.
 
 Make sure each fixture's real DMX address and mode match what is shown here.
 
-## 6. Output: see what is sent
+## 7. Output: see what is sent
 
 **Output** shows all 512 DMX channels live, after Master and Blackout are applied. Each bar is a level; outlined cells
 are channels used by your fixtures. Hover a cell for the fixture and channel name. It is handy for checking addresses
@@ -118,7 +143,7 @@ press **Connect**. The status pill shows whether it is active, and any problem i
 Press **How to connect** in that card for a step-by-step guide with diagrams, including how to tell a passive USB cable
 from an active adapter. The same guide is in [Connecting your lights](CONNECTION.md).
 
-## 7. Master, Blackout, themes and devices
+## 8. Master, Blackout, themes and devices
 
 - **Master** scales the brightness of everything (dimmer and colour channels only; pan and tilt are unaffected).
 - **Blackout** switches all light output off at once; press it again to bring it back.
@@ -127,7 +152,7 @@ from an active adapter. The same guide is in [Connecting your lights](CONNECTION
   the show from a phone or tablet on the same network (the server must be set to listen beyond this computer: see the
   [install guide](INSTALL.md#control-it-from-a-phone-or-tablet)).
 
-## 8. Saving
+## 9. Saving
 
 Your show (fixtures, looks, sequences) saves automatically a moment after each change. The top bar shows
 _Unsaved_, _Saving…_ or _Saved_. The data lives in `server/data/project.json` on the machine running the server, and the previous save is kept as

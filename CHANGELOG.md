@@ -7,6 +7,9 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Perform screen:** big buttons for every look and sequence, keyboard shortcuts (Space blackout, Escape stop, [ and ]
+  master), and MIDI controller mapping with learn mode (pads to looks and sequences, a knob to the master). MIDI
+  links are saved in the browser.
 - **Detect adapter:** asks a USB adapter to identify itself (the ENTTEC Pro query) and selects the matching interface;
   a passive cable stays silent. Not yet tried on real hardware.
 - **Test lights:** cycles every patched fixture through red, green, blue and white from the Connection card.
