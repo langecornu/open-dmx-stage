@@ -22,7 +22,7 @@ fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a
 ## Quick start
 
 ```bash
-git clone https://github.com/langecornu2027/open-dmx-stage.git
+git clone https://github.com/langecornu/open-dmx-stage.git
 cd open-dmx-stage
 npm install
 npm run dev
