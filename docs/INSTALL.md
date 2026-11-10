@@ -51,7 +51,7 @@ your machine, everything still works in simulator mode.
 ## 2. Get the code and install
 
 ```bash
-git clone https://github.com/langecornu2027/open-dmx-stage.git
+git clone https://github.com/langecornu/open-dmx-stage.git
 cd open-dmx-stage
 npm install
 ```

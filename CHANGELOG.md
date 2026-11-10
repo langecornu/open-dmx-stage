@@ -83,5 +83,5 @@ been verified on real hardware; the simulator and Art-Net output have been check
 
 - USB output has not been tested on real hardware yet.
 
-[Unreleased]: https://github.com/langecornu2027/open-dmx-stage/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/langecornu2027/open-dmx-stage/releases/tag/v0.1.0
+[Unreleased]: https://github.com/langecornu/open-dmx-stage/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/langecornu/open-dmx-stage/releases/tag/v0.1.0
