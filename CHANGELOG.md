@@ -7,6 +7,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Find a fixture online:** search the Open Fixture Library from the Fixtures screen and copy a light's modes and
+  channels into your fixtures, with credit to the library and its authors in the description. Only the search words
+  are sent, to one fixed host; `OFL_ENABLED=false` turns it off. Entries that only redirect to another brand are
+  followed; pixel and matrix fixtures are refused for now.
 - **Tempo and tap tempo:** a shared tempo (30 to 300 beats per minute) set by typing, tapping (button or the `.` key)
   or halving and doubling it.
 - **Effects:** pulse, sweep and rainbow, locked to the tempo, over all lights or one group. Live only; not saved.
@@ -30,6 +34,8 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Server errors (5xx) can now carry a message written for the person to read (for example that the online library is
+  unreachable); all other 5xx errors still show a generic message.
 - The show file is now `schemaVersion` 3 (adds `groups`, and `timing` plus beat fields on sequences). Older shows are
   upgraded automatically; a show saved by this version cannot be opened by an older app.
 

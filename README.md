@@ -19,8 +19,8 @@ fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a
   Art-Net and sACN, chosen from the app with no configuration files.
 - **Perform screen:** every look and sequence as a big button with keyboard shortcuts, and MIDI controller mapping
   (pads to looks, a knob to the master) in Chrome and Edge.
-- **Fixtures screen:** describe your own lights by hand (manufacturer, model, description and channel layout), with a
-  built-in worked example.
+- **Fixtures screen:** search the Open Fixture Library for your light and copy its channels, or describe it by hand
+  (manufacturer, model, description and channel layout). Built-in fixtures from maker manuals are included.
 - **Tempo, effects and groups:** tap a tempo, run pulse, sweep and rainbow effects on all lights or a group, and time
   sequences in beats.
 - **Connection helpers:** detect whether a USB adapter is a passive cable or an adapter with its own processor, and a

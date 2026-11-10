@@ -19,10 +19,11 @@ const SHOW_BODY_LIMIT = '8mb';
  *   engine: import('./services/dmxEngine.js').DmxEngine,
  *   projectService: import('./services/projectService.js').ProjectService,
  *   outputManager: import('./services/outputManager.js').OutputManager,
+ *   ofl?: ReturnType<typeof import('./clients/oflClient.js').createOflClient> | null,
  * }} options
  * @returns {import('express').Express}
  */
-export function createApp({ config, engine, projectService, outputManager }) {
+export function createApp({ config, engine, projectService, outputManager, ofl = null }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(requestId);
@@ -53,7 +54,7 @@ export function createApp({ config, engine, projectService, outputManager }) {
   });
 
   app.use('/api/v1', rateLimit({ windowMs: 60_000, limit: 600, standardHeaders: true, legacyHeaders: false }));
-  app.use('/api/v1', createApiRouter({ engine, projectService, outputManager }));
+  app.use('/api/v1', createApiRouter({ engine, projectService, outputManager, ofl }));
 
   if (existsSync(config.distDir)) {
     app.use(express.static(config.distDir));

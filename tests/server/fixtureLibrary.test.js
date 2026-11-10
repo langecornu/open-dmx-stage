@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { fixtureTypeSchema } from '../../server/schemas/projectSchema.js';
-import { BUILTIN_FIXTURE_TYPES, convertOpenFixtureLibrary } from '../../server/services/fixtureLibrary.js';
+import {
+  BUILTIN_FIXTURE_TYPES,
+  convertOpenFixtureLibrary,
+  oflFixtureId,
+} from '../../server/services/fixtureLibrary.js';
 import { LEVEL_TYPES } from '../../shared/patch.js';
 
 const SAMPLE = {
@@ -165,5 +169,40 @@ describe('built-in profiles from maker manuals', () => {
         }
       }
     }
+  });
+});
+
+describe('Open Fixture Library conversion details', () => {
+  it('credits the library and authors only when a source is given', () => {
+    const document = { ...SAMPLE, categories: ['Moving Head'], meta: { authors: ['Ann', 'Bob'] } };
+    const credited = convertOpenFixtureLibrary(document, 'Acme', { key: 'acme/test-par' });
+    assert.match(
+      credited.description,
+      /^Moving Head\. From the Open Fixture Library \(open-fixture-library\.org\/acme\/test-par\)\. Authors: Ann, Bob\.$/,
+    );
+    assert.equal(convertOpenFixtureLibrary(document, 'Acme').description, '', 'a file import has no credit text');
+  });
+
+  it('refuses a fixture whose modes use pixel or matrix inserts instead of guessing the channels', () => {
+    const matrix = {
+      ...SAMPLE,
+      modes: [{ name: 'Pixels', channels: ['Dimmer', { insert: 'matrixChannels', repeatFor: 'eachPixelABC' }] }],
+    };
+    assert.throws(
+      () => convertOpenFixtureLibrary(matrix, 'Acme'),
+      (error) => error.status === 400 && /pixel or matrix/.test(error.message),
+    );
+  });
+});
+
+describe('oflFixtureId', () => {
+  it('makes a readable id from a key, and keeps long different keys apart within 64 characters', () => {
+    assert.equal(oflFixtureId('uking/mini-gobo'), 'ofl-uking-mini-gobo');
+    const long = (suffix) => `a-very-long-manufacturer-name-indeed/${'fixture-name-'.repeat(8)}${suffix}`;
+    const first = oflFixtureId(long('one'));
+    const second = oflFixtureId(long('two'));
+    assert.ok(first.length <= 64 && second.length <= 64, 'within the id limit');
+    assert.notEqual(first, second, 'different keys give different ids');
+    assert.equal(first, oflFixtureId(long('one')), 'the same key always gives the same id');
   });
 });

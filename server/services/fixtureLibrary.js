@@ -1,6 +1,8 @@
 // Built-in fixture profiles plus a converter for Open Fixture Library (OFL) JSON files.
 // The OFL fixture format is described at https://github.com/OpenLightingProject/open-fixture-library
 // (docs/fixture-format.md). OFL warns the format is unstable, so all of it is isolated in this module.
+import { createHash } from 'node:crypto';
+
 import { httpError } from '../utils/httpError.js';
 import { slugify } from '../utils/slugify.js';
 
@@ -266,19 +268,64 @@ function parseDefault(value) {
   return 0;
 }
 
-// Converts one OFL fixture document into a validated fixture type. Throws a 400 for unusable input.
+/**
+ * A stable id for a fixture fetched from the library, so adding the same one twice is recognised. Ids are 64 characters
+ * at most, so a long key is cut and given a short hash to keep different keys apart.
+ * @param {string} key `manufacturer/fixture`
+ * @returns {string}
+ */
+export function oflFixtureId(key) {
+  const plain = `ofl-${key.replace('/', '-')}`;
+  if (plain.length <= 64) {
+    return plain;
+  }
+  return `${plain.slice(0, 55)}-${createHash('sha1').update(key).digest('hex').slice(0, 8)}`;
+}
+
+/**
+ * Credits the Open Fixture Library and its authors in the description of a fixture fetched from it.
+ * @param {Record<string, any>} document
+ * @param {{ key: string, creditKey?: string } | null} source
+ * @returns {string}
+ */
+function describeSource(document, source) {
+  if (!source) {
+    return '';
+  }
+  const text = (/** @type {unknown} */ list) =>
+    Array.isArray(list) ? list.filter((item) => typeof item === 'string').join(', ') : '';
+  const categories = text(document.categories);
+  const authors = text(document.meta?.authors);
+  const parts = [
+    categories ? `${categories}.` : '',
+    `From the Open Fixture Library (open-fixture-library.org/${source.creditKey ?? source.key}).`,
+    authors ? `Authors: ${authors}.` : '',
+  ];
+  return parts.filter(Boolean).join(' ').slice(0, 500);
+}
+
 /**
  * Converts one Open Fixture Library fixture document into a validated fixture type.
  * @param {Record<string, any>} document untrusted JSON from an OFL fixture file
  * @param {string} [manufacturer]
+ * @param {{ key: string, creditKey?: string } | null} [source] set when the fixture was fetched from the library: `key`
+ *   is what the person chose (it makes the id) and `creditKey` the entry the channels really came from, if different
  * @returns {import('../../shared/types.js').FixtureType}
  * @throws {Error & { status: number }} 400 when the document is not a usable fixture
  */
-export function convertOpenFixtureLibrary(document, manufacturer = '') {
+export function convertOpenFixtureLibrary(document, manufacturer = '', source = null) {
   const availableChannels = document.availableChannels;
   const modes = document.modes;
   if (typeof document.name !== 'string' || typeof availableChannels !== 'object' || !Array.isArray(modes)) {
     throw httpError(400, 'Not an Open Fixture Library fixture (missing name, availableChannels or modes)');
+  }
+
+  // A mode entry that is not a channel name or null (for example a pixel matrix insert) would be turned into one
+  // placeholder channel and shift every address after it, so refuse the fixture instead of guessing.
+  for (const mode of modes) {
+    if ((mode?.channels ?? []).some((/** @type {unknown} */ entry) => entry !== null && typeof entry !== 'string')) {
+      throw httpError(400, 'This fixture uses pixel or matrix channels, which are not supported yet.');
+    }
   }
 
   /** @type {Map<string, string>} */
@@ -303,9 +350,10 @@ export function convertOpenFixtureLibrary(document, manufacturer = '') {
   };
 
   const converted = {
-    id: `ofl-${slugify(manufacturer)}-${slugify(document.name)}`.replace(/-+$/, ''),
+    id: source ? oflFixtureId(source.key) : `ofl-${slugify(manufacturer)}-${slugify(document.name)}`.replace(/-+$/, ''),
     manufacturer,
     name: document.name,
+    description: describeSource(document, source),
     modes: modes.slice(0, 32).map((mode) => ({
       name: String(mode.name ?? 'Mode'),
       channels: (mode.channels ?? []).map((/** @type {string | null} */ name) => resolveChannel(name)),

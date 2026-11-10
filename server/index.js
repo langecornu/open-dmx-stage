@@ -2,6 +2,7 @@
 import { createServer } from 'node:http';
 
 import { MockDriver } from './clients/mockDriver.js';
+import { createOflClient } from './clients/oflClient.js';
 import { createApp } from './app.js';
 import { loadConfig } from './config.js';
 import { configureLogger, logger } from './logger.js';
@@ -29,7 +30,13 @@ const outputManager = new OutputManager({
 });
 await outputManager.init();
 
-const app = createApp({ config, engine, projectService, outputManager });
+const app = createApp({
+  config,
+  engine,
+  projectService,
+  outputManager,
+  ofl: config.isOflEnabled ? createOflClient() : null,
+});
 const server = createServer(app);
 const liveSocket = attachLiveSocket({
   server,

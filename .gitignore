@@ -4,3 +4,4 @@ dist
 server/data/*.json
 .DS_Store
 coverage
+server/data/*.bak

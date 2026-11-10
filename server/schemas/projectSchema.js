@@ -122,6 +122,13 @@ export const importFixtureSchema = z
 
 export const detectAdapterSchema = z.object({ serialPath: z.string().min(1).max(200) }).strict();
 
+/** An Open Fixture Library key is `manufacturer/fixture`, both lower-case slugs. */
+export const FIXTURE_KEY_PATTERN = /^[a-z0-9][a-z0-9-]{0,80}\/[a-z0-9][a-z0-9-]{0,120}$/;
+
+export const oflSearchSchema = z.object({ q: z.string().trim().min(2).max(80) }).strict();
+
+export const oflImportSchema = z.object({ key: z.string().regex(FIXTURE_KEY_PATTERN) }).strict();
+
 export const importQlcSchema = z.object({ xml: z.string().min(1).max(300_000) }).strict();
 
 export const DRIVER_NAMES = ['mock', 'enttec-pro', 'open-dmx', 'artnet', 'sacn'];

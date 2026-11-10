@@ -1943,3 +1943,16 @@ input[type='range'] {
     display: none;
   }
 }
+
+.ofl-search {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.list .ofl-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+}

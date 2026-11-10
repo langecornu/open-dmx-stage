@@ -27,6 +27,8 @@ export const api = {
   getFixtureLibrary: () => request('/fixtures/library'),
   importOpenFixture: (fixture, manufacturer) =>
     request('/fixtures/import-ofl', jsonBody('POST', { fixture, manufacturer })),
+  searchOpenFixtureLibrary: (query) => request(`/fixtures/ofl/search?q=${encodeURIComponent(query)}`),
+  importFromOpenFixtureLibrary: (key) => request('/fixtures/ofl/import', jsonBody('POST', { key })),
   importQlcFixture: (xml) => request('/fixtures/import-qlc', jsonBody('POST', { xml })),
   detectAdapter: (serialPath) => request('/output/detect', jsonBody('POST', { serialPath })),
   listOutputPorts: () => request('/output/ports'),
