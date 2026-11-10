@@ -51,6 +51,34 @@ export const BUILTIN_FIXTURE_TYPES = [
     ],
   },
   {
+    id: 'uking-40w-beam-moving-head',
+    manufacturer: "U'King",
+    name: '40W Beam Moving Head (RGBW)',
+    // From the maker's user manual, "13channelmode". Channel 12 must stay below 31 (31 and up start the built-in
+    // programs or sound mode) and channel 13 must stay at 0 (250 and up reset the head), so both default to 0 and are
+    // typed 'other', which master and blackout never touch.
+    modes: [
+      {
+        name: '13 channel',
+        channels: [
+          ch('Pan', 'pan', 128),
+          ch('Pan fine', 'other'),
+          ch('Tilt', 'tilt', 128),
+          ch('Tilt fine', 'other'),
+          ch('Speed', 'speed'),
+          ch('Dimmer', 'intensity', 255),
+          ch('Strobe', 'strobe'),
+          ch('Red', 'red'),
+          ch('Green', 'green'),
+          ch('Blue', 'blue'),
+          ch('White', 'white'),
+          ch('Programs and sound (keep at 0)', 'other'),
+          ch('Reset (keep at 0)', 'other'),
+        ],
+      },
+    ],
+  },
+  {
     id: 'generic-moving-head',
     manufacturer: 'Generic',
     name: 'Moving head (basic)',
