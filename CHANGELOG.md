@@ -5,6 +5,11 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- The built app served by `npm start` could not open its live link with default settings, so it said "Server offline" and
+  faders, blackout and the lights test did nothing. The server's own address is now always trusted.
+
 ### Added
 
 - **Find a fixture online:** search the Open Fixture Library from the Fixtures screen and copy a light's modes and

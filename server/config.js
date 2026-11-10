@@ -26,6 +26,23 @@ const envSchema = z.object({
   OFL_ENABLED: z.enum(['true', 'false']).default('true'),
 });
 
+/**
+ * The browser pages allowed to talk to the API and the live socket: the ones you list in ALLOWED_ORIGINS, plus this
+ * server's own address. The built app is served from the server's own port, so without its own address in the list the
+ * live link is refused and the app says "Server offline".
+ * @param {string} listed comma-separated origins from ALLOWED_ORIGINS
+ * @param {number} port the port this server listens on
+ * @returns {string[]}
+ */
+function trustedOrigins(listed, port) {
+  const configured = listed
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const own = [`http://localhost:${port}`, `http://127.0.0.1:${port}`, `http://[::1]:${port}`];
+  return [...new Set([...configured, ...own])];
+}
+
 export function loadConfig(env = process.env) {
   const parsed = envSchema.safeParse(env);
   if (!parsed.success) {
@@ -38,7 +55,7 @@ export function loadConfig(env = process.env) {
     nodeEnv: values.NODE_ENV,
     logLevel: values.LOG_LEVEL,
     logFormat: values.LOG_FORMAT ?? (values.NODE_ENV === 'production' ? 'json' : 'text'),
-    allowedOrigins: values.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()),
+    allowedOrigins: trustedOrigins(values.ALLOWED_ORIGINS, values.PORT),
     dmxDriver: values.DMX_DRIVER,
     dmxSerialPath: values.DMX_SERIAL_PATH,
     dmxNetHost: values.DMX_NET_HOST,
