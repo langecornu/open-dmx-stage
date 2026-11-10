@@ -161,17 +161,23 @@ export class OutputManager {
    * @param {string} serialPath
    * @returns {Promise<import('./adapterProbe.js').ProbeResult>}
    */
-  async detect(serialPath) {
-    await this.assertPortListed({ driver: 'open-dmx', serialPath, host: '', universe: 0 });
-    if (this.engine.driver.path === serialPath) {
-      throw httpError(409, 'This cable is in use. Choose Simulator and press Use simulator first, then detect again.');
-    }
-    try {
-      return await this.probe(serialPath);
-    } catch (error) {
-      log.error({ err: error, serialPath }, 'Could not probe the adapter');
-      throw httpError(400, describeOpenError(error));
-    }
+  detect(serialPath) {
+    // Queued behind any output switch, so the port cannot be opened by a switch while it is being probed.
+    return this.enqueue(async () => {
+      await this.assertPortListed({ driver: 'open-dmx', serialPath, host: '', universe: 0 });
+      if (this.engine.driver.path === serialPath) {
+        throw httpError(
+          409,
+          'This cable is in use. Choose Simulator and press Use simulator first, then detect again.',
+        );
+      }
+      try {
+        return await this.probe(serialPath);
+      } catch (error) {
+        log.error({ err: error, serialPath }, 'Could not probe the adapter');
+        throw httpError(400, describeOpenError(error));
+      }
+    });
   }
 
   /**
