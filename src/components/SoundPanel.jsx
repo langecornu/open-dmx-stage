@@ -1,11 +1,12 @@
 // "Follow the music": listen to the microphone or a browser tab's sound, find the beat, and set the tempo from it, so
-// the effects and the sequences timed in beats keep time with the music.
+// the effects and the sequences timed in beats keep time with the music. The follower lives in the Perform screen, so its
+// status strip can show whether the page is listening.
 import { useState } from 'react';
 
-import { SOURCES, useBeatFollower } from '../hooks/useBeatFollower.js';
+import { SOURCES } from '../hooks/useBeatFollower.js';
 
-export function SoundPanel({ send }) {
-  const follower = useBeatFollower({ send });
+/** @param {{ follower: ReturnType<typeof import('../hooks/useBeatFollower.js').useBeatFollower>, id?: string }} props */
+export function SoundPanel({ follower, id }) {
   const [source, setSource] = useState(SOURCES.MICROPHONE);
   const [deviceId, setDeviceId] = useState('');
   const isOn = follower.status !== 'off';
@@ -28,7 +29,7 @@ export function SoundPanel({ send }) {
   }
 
   return (
-    <section className="card card-pad sound-panel" aria-label="Follow the music">
+    <section id={id} tabIndex={-1} className="card card-pad sound-panel" aria-label="Follow the music">
       <div className="section-bar">
         <h2 className="section-title">Follow the music</h2>
         {follower.isLocked ? <span className="pill">{follower.bpm} bpm</span> : null}
