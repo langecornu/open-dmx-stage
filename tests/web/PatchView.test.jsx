@@ -33,6 +33,10 @@ beforeEach(() => {
   vi.resetAllMocks();
 });
 
+// A full universe renders 512 rig rows in jsdom: about 1.5 s alone, but past the 5 s default when the whole suite runs
+// in parallel, so the two full-universe tests get more room.
+const FULL_UNIVERSE_TIMEOUT_MS = 20_000;
+
 describe('PatchView', () => {
   it('invites you to add the first fixture when the rig is empty', () => {
     renderView(makeShow({ fixtures: [] }));
@@ -87,7 +91,7 @@ describe('PatchView', () => {
     await user.click(screen.getByRole('button', { name: 'Add to rig' }));
     expect(screen.getByRole('status')).toHaveTextContent('No free DMX address range');
     expect(update).not.toHaveBeenCalled();
-  });
+  }, FULL_UNIVERSE_TIMEOUT_MS);
 
   it('adds as many as fit and says how many did not', async () => {
     const user = userEvent.setup();
@@ -104,7 +108,7 @@ describe('PatchView', () => {
     await user.click(screen.getByRole('button', { name: 'Add to rig' }));
     expect(last().fixtures).toHaveLength(512);
     expect(screen.getByRole('status')).toHaveTextContent('Only 2 of 5 fixtures fit in the universe.');
-  });
+  }, FULL_UNIVERSE_TIMEOUT_MS);
 
   it('renames a fixture, keeps the old name when emptied, and limits the address to 1 to 512', () => {
     const { update, project } = renderView();

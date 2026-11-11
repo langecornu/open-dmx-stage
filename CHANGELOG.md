@@ -47,6 +47,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **The server could hang while stopping and keep port 4000 busy.** With the app open in a browser, Ctrl+C or a
+  restart during development waited forever ("Waiting for graceful termination"), so the next start could not use the
+  port. Stopping now disconnects the browsers (they reconnect when the server is back), always ends within 3 seconds
+  even if the USB output hangs, and a second Ctrl+C quits at once.
 - **Follow the music did not lock on real music** ("waiting for a steady beat"). It counted bass hits, which fails when a
   bass line is held under the kick, when snares and hi-hats add hits, or when a laptop microphone hears little bass. It
   now measures how hard the sound hits in the low band and the whole sound, and finds the tempo from how that pattern
