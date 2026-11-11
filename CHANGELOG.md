@@ -7,6 +7,8 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Setup: live lamps and the next free address**: each light in your rig glows in the colour it is really sending, and
+  the add bar says which DMX address is free next for the chosen light and quantity.
 - **Sequences: faster building**: Add step carries on with the next look and the same timing as the last step, steps
   can be duplicated, and a whole sequence can be duplicated.
 - **Looks: a live capture strip** shows a swatch of what the lights are doing right now beside the name field, and each

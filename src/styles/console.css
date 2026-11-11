@@ -1132,3 +1132,17 @@ kbd {
   gap: 2px;
   min-width: 0;
 }
+
+/* ---------- Setup: live lamp in each rig row ---------- */
+.rig-lamp[data-lit='true'] {
+  background: color-mix(in srgb, var(--lamp) calc(var(--level) * 100%), var(--surface-3));
+  color: #fff;
+  box-shadow: 0 0 calc(var(--level) * 18px) var(--lamp);
+  transition:
+    background 120ms linear,
+    box-shadow 120ms linear;
+}
+
+.free-address {
+  margin: 0;
+}

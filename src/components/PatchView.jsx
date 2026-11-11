@@ -3,12 +3,31 @@ import { useMemo, useState } from 'react';
 
 import { DMX_CHANNELS, indexFixtureTypes } from '../../shared/patch.js';
 import { api } from '../api.js';
-import { planFixtures } from '../utils/patchTools.js';
+import { useFrame } from '../hooks/frameStore.js';
+import { nextFreeAddress, planFixtures } from '../utils/patchTools.js';
+import { fixtureColor } from '../utils/sceneColors.js';
 import { EmptyState } from './EmptyState.jsx';
 import { DmxMap } from './DmxMap.jsx';
 import { GroupsCard } from './GroupsCard.jsx';
 import { ShowFileCard } from './ShowFileCard.jsx';
 import { Icon } from './Icon.jsx';
+
+// A small lamp in each rig row, in the colour the light is really sending, so a row is recognisable at a glance.
+function RigLamp({ range, patch }) {
+  const frame = useFrame();
+  const color = range && !range.missingType ? fixtureColor(range, patch, (channel) => frame[channel - 1] ?? 0) : null;
+  const isLit = color !== null && color.level > 0.02;
+  return (
+    <span
+      className="rig-icon rig-lamp"
+      data-lit={isLit}
+      style={isLit ? { '--lamp': color.css, '--level': color.level.toFixed(3) } : undefined}
+      aria-hidden="true"
+    >
+      <Icon name="control" />
+    </span>
+  );
+}
 
 export function PatchView({ project, library, patch, update, replaceProject }) {
   const typesById = useMemo(() => indexFixtureTypes(project, library), [project, library]);
@@ -19,6 +38,8 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
   const [message, setMessage] = useState(null);
 
   const selectedType = typesById.get(typeId);
+  const footprint = selectedType?.modes[modeIndex]?.channels.length ?? 1;
+  const freeAddress = nextFreeAddress(patch, footprint * quantity);
 
   const handleAdd = () => {
     const { additions, notice } = planFixtures({ project, patch, type: selectedType, modeIndex, quantity });
@@ -128,6 +149,11 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
           <input className="sr-only" type="file" accept=".json,.qxf" onChange={handleImport} />
         </label>
       </div>
+      <p className="view-sub free-address">
+        {freeAddress === null
+          ? 'The DMX line is full: there is no room for that many lights.'
+          : `Next free DMX address for this choice: ${freeAddress}.`}
+      </p>
       {message ? (
         <p className="view-sub" role="status">
           {message}
@@ -149,9 +175,7 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
             const type = typesById.get(fixture.typeId);
             return (
               <div key={fixture.id} className="card rig-row">
-                <span className="rig-icon" aria-hidden="true">
-                  <Icon name="control" />
-                </span>
+                <RigLamp range={range} patch={patch} />
                 <input
                   className="input"
                   value={fixture.name}
