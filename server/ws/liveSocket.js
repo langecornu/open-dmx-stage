@@ -157,6 +157,15 @@ export function attachLiveSocket({
       case 'effectStop':
         engine.stopEffect();
         break;
+      case 'mute':
+        engine.setMute(message.fixtureId, message.muted);
+        break;
+      case 'solo':
+        engine.setSolo(message.fixtureId, message.soloed);
+        break;
+      case 'clearMuteSolo':
+        engine.clearMuteSolo();
+        break;
       case 'autoStart':
         engine.startAuto(message, project);
         break;

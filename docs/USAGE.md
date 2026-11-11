@@ -141,6 +141,20 @@ The **Auto show** card plays your show by itself, with no music and no one at th
   show carries on underneath.
 - The server runs it, so it keeps going if you close the page.
 
+### Mute and solo
+
+The **Mute and solo** card lists every light in your rig, with a **Mute** and a **Solo** button each.
+
+- **Mute** keeps a light dark whatever plays: a look, a sequence, an effect or a manual change. Its pan and tilt still
+  move. Press **Mute** again to let it play.
+- **Solo** lights only the soloed lights; every other light stays dark. Solo several to light just those. Handy for
+  checking one light, or for a spotlight moment.
+- Each light says whether it is **Lit**, **Lit (solo)**, **Muted**, or **Dark** because another light is solo.
+- While any light is muted or soloed, the **On stage** bar says so (for example "Muted: Par 2") with **Clear**, so a
+  light is never left dark by mistake. **Clear all** on the card, and **Clear mute and solo** in the search palette,
+  do the same.
+- Mute and solo are live, like manual changes: they are not saved with the show, and restarting the server clears them.
+
 ### Tempo and effects
 
 - **Tempo:** type the beats per minute, or press **Tap tempo** (or the **.** key) in time with the music. The first tap

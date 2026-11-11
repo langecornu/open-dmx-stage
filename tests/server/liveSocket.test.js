@@ -124,6 +124,22 @@ describe('live socket', () => {
     }
   });
 
+  it('mutes, solos and clears lights from control messages', async () => {
+    const { socket, messages } = connect(ALLOWED_ORIGIN);
+    try {
+      await waitFor(() => messages.some((m) => m.type === 'state'), 'the initial state');
+      const lastState = () => messages.filter((m) => m.type === 'state').at(-1).state;
+      socket.send(JSON.stringify({ type: 'mute', fixtureId: 'par-1', muted: true }));
+      socket.send(JSON.stringify({ type: 'solo', fixtureId: 'par-2', soloed: true }));
+      await waitFor(() => lastState().soloed.length === 1, 'the solo');
+      assert.deepEqual(lastState().muted, ['par-1']);
+      socket.send(JSON.stringify({ type: 'clearMuteSolo' }));
+      await waitFor(() => lastState().muted.length === 0 && lastState().soloed.length === 0, 'everything cleared');
+    } finally {
+      socket.close();
+    }
+  });
+
   it('takes a recalled look off stage with a release message', async () => {
     const sceneId = 'look-red';
     await projectService.save({

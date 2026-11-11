@@ -18,6 +18,8 @@ const INITIAL_STATE = {
   chaseStep: null,
   programmerChannels: [],
   auto: null,
+  muted: [],
+  soloed: [],
 };
 
 /**

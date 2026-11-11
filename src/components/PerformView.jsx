@@ -23,6 +23,7 @@ import { AutoShowPanel } from './AutoShowPanel.jsx';
 import { EffectsPanel } from './EffectsPanel.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { MidiPanel } from './MidiPanel.jsx';
+import { MuteSoloPanel } from './MuteSoloPanel.jsx';
 import { PerformLearnLinks } from './PerformLearnLinks.jsx';
 import { PerformStatus } from './PerformStatus.jsx';
 import { PerformTile } from './PerformTile.jsx';
@@ -287,6 +288,7 @@ export function PerformView({ project, patch, live, flush }) {
         />
         <AutoShowPanel project={project} live={live} flush={flush} />
         <EffectsPanel groups={project.groups} live={live} />
+        <MuteSoloPanel project={project} live={live} />
         <SoundPanel id={PANEL_IDS.sound} follower={follower} />
         <MidiPanel
           id={PANEL_IDS.midi}

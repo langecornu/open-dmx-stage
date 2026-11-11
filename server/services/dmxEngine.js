@@ -34,7 +34,7 @@ import { DMX_CHANNELS } from '../../shared/patch.js';
  * @property {number} changedAt milliseconds on the engine clock when the item came on
  */
 /** @typedef {{ source: 'looks' | 'sequences', beats: number, order: 'order' | 'shuffle', itemId: string }} AutoState */
-/** @typedef {{ master: number, blackout: boolean, bpm: number, effect: { type: string, beats: number, groupId: string | null } | null, activeSceneId: string | null, activeChaseId: string | null, chaseStep: number | null, programmerChannels: number[], auto: AutoState | null }} EngineState */
+/** @typedef {{ master: number, blackout: boolean, bpm: number, effect: { type: string, beats: number, groupId: string | null } | null, activeSceneId: string | null, activeChaseId: string | null, chaseStep: number | null, programmerChannels: number[], muted: string[], soloed: string[], auto: AutoState | null }} EngineState */
 /** @typedef {{ type: 'frame', frame: Uint8Array } | { type: 'state', state: EngineState }} EngineEvent */
 
 export class DmxEngine {
@@ -59,6 +59,10 @@ export class DmxEngine {
     this.programmer = new Map();
     /** @type {Set<number>} channels that master and blackout scale (brightness, not position) */
     this.levelChannels = new Set();
+    /** @type {Set<string>} fixtures kept dark whatever plays (live only, not saved with the show) */
+    this.muted = new Set();
+    /** @type {Set<string>} while any is set, only these fixtures are lit */
+    this.soloed = new Set();
     this.master = 1;
     this.blackout = false;
     /** @type {string | null} */
@@ -161,6 +165,50 @@ export class DmxEngine {
   setMaster(level) {
     this.master = Math.max(0, Math.min(1, level));
     this.emitState();
+  }
+
+  /**
+   * @param {string} fixtureId
+   * @param {boolean} muted
+   */
+  setMute(fixtureId, muted) {
+    if (muted) {
+      this.muted.add(fixtureId);
+    } else {
+      this.muted.delete(fixtureId);
+    }
+    this.emitState();
+  }
+
+  /**
+   * @param {string} fixtureId
+   * @param {boolean} soloed
+   */
+  setSolo(fixtureId, soloed) {
+    if (soloed) {
+      this.soloed.add(fixtureId);
+    } else {
+      this.soloed.delete(fixtureId);
+    }
+    this.emitState();
+  }
+
+  clearMuteSolo() {
+    this.muted.clear();
+    this.soloed.clear();
+    this.emitState();
+  }
+
+  /**
+   * The fixtures kept dark right now: the muted ones, and while a fixture in the rig is soloed, every other one. A solo
+   * on a fixture that has left the rig is ignored, so it cannot darken everything.
+   * @returns {string[]}
+   */
+  silencedFixtures() {
+    const soloInRig = [...this.soloed].filter((id) => this.fixtureChannels.has(id));
+    return [...this.fixtureChannels.keys()].filter(
+      (id) => this.muted.has(id) || (soloInRig.length > 0 && !this.soloed.has(id)),
+    );
   }
 
   /** @param {boolean} enabled */
@@ -429,6 +477,14 @@ export class DmxEngine {
         frame[channel - 1] = Math.round(frame[channel - 1] * scale);
       }
     }
+    if (this.muted.size > 0 || this.soloed.size > 0) {
+      // Last, so nothing (a look, an effect or a manual change) can light a muted fixture. Position stays as it is.
+      for (const id of this.silencedFixtures()) {
+        for (const channel of /** @type {FixtureChannels} */ (this.fixtureChannels.get(id)).levels) {
+          frame[channel - 1] = 0;
+        }
+      }
+    }
     this.driver.send(frame);
     for (const listener of this.listeners) {
       listener({ type: 'frame', frame });
@@ -480,6 +536,8 @@ export class DmxEngine {
       activeChaseId: this.chase?.id ?? null,
       chaseStep: this.chase?.index ?? null,
       programmerChannels: [...this.programmer.keys()],
+      muted: [...this.muted],
+      soloed: [...this.soloed],
       auto: this.auto
         ? {
             source: this.auto.source,

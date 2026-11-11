@@ -125,6 +125,9 @@ export const liveMessageSchema = z.discriminatedUnion('type', [
     })
     .strict(),
   z.object({ type: z.literal('autoStop') }).strict(),
+  z.object({ type: z.literal('mute'), fixtureId: id, muted: z.boolean() }).strict(),
+  z.object({ type: z.literal('solo'), fixtureId: id, soloed: z.boolean() }).strict(),
+  z.object({ type: z.literal('clearMuteSolo') }).strict(),
 ]);
 
 export const importFixtureSchema = z

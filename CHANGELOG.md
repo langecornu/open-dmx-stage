@@ -11,6 +11,9 @@ the project follows [Semantic Versioning](https://semver.org/).
   or shuffled, until you stop it. No music needed. Looks cross-fade over one beat and looks that leave every light off
   are skipped. Start it from the new card on Perform or from the search palette; the On stage bar shows it with
   **Stop**, and pressing a pad takes over.
+- **Mute and solo for each light**: a card on Perform mutes a light (dark whatever plays, position still moves) or solos
+  it (only soloed lights are lit). The On stage bar reminds you with **Clear** while any is set, and the search palette
+  can clear them. Live only, not saved with the show.
 - **Setup: live lamps and the next free address**: each light in your rig glows in the colour it is really sending, and
   the add bar says which DMX address is free next for the chosen light and quantity.
 - **Sequences: faster building**: Add step carries on with the next look and the same timing as the last step, steps
