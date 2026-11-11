@@ -137,12 +137,35 @@ describe('PerformView', () => {
     expect(live.send).not.toHaveBeenCalled();
   });
 
-  it('keeps the master and blackout controls on screen', async () => {
-    const user = userEvent.setup();
+  it('groups the pads into Looks and Sequences, with how many of each', () => {
+    renderView();
+    const looks = screen.getByRole('region', { name: /Looks/ });
+    const sequences = screen.getByRole('region', { name: /Sequences/ });
+    expect(within(looks).getByRole('button', { name: /Warm wash/ })).toBeInTheDocument();
+    expect(within(looks).queryByRole('button', { name: /Opening/ })).not.toBeInTheDocument();
+    expect(within(sequences).getByRole('button', { name: /Opening/ })).toBeInTheDocument();
+    expect(within(looks).getByText('2', { selector: '.section-count' })).toBeInTheDocument();
+    expect(within(sequences).getByText('1', { selector: '.section-count' })).toBeInTheDocument();
+  });
+
+  it('says On stage on the pad that is playing', () => {
+    renderView({ activeChaseId: 'show' });
+    expect(within(screen.getByRole('button', { name: /Opening/ })).getByText('On stage')).toBeInTheDocument();
+    expect(within(screen.getByRole('button', { name: /Warm wash/ })).queryByText('On stage')).not.toBeInTheDocument();
+  });
+
+  it('lists the keyboard shortcuts on screen', () => {
+    renderView();
+    const hints = screen.getByRole('list', { name: 'Keyboard shortcuts' });
+    expect(hints).toHaveTextContent('Space Blackout');
+    expect(hints).toHaveTextContent('Esc Stop');
+  });
+
+  it('leaves master, blackout and stop to the top bar and the On stage bar', () => {
     renderView({ master: 0.8 });
-    expect(screen.getByRole('slider')).toHaveValue('80');
-    await user.click(screen.getByRole('button', { name: /Blackout/ }));
-    expect(live.send).toHaveBeenCalledWith({ type: 'blackout', enabled: true });
+    expect(screen.queryByRole('slider')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Blackout/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /sequence$/ })).not.toBeInTheDocument();
   });
 
   it('explains how to get started when there is nothing to perform', () => {
@@ -239,26 +262,17 @@ describe('PerformView MIDI', () => {
     expect(within(screen.getByRole('button', { name: /Warm wash/ })).queryByText(/Note/)).not.toBeInTheDocument();
   });
 
-  it('has one play and stop button: Play sequence starts the first sequence when nothing is playing', async () => {
+  it('only offers to link blackout and stop to a controller while learning', async () => {
     const user = userEvent.setup();
+    installFakeMidi();
     renderView();
-    expect(screen.queryByRole('button', { name: 'Stop sequence' })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Play sequence' }));
-    expect(live.send).toHaveBeenCalledWith({ type: 'chaseStart', chaseId: 'show' });
-  });
-
-  it('shows Stop sequence while a sequence plays, names it, and stops it', async () => {
-    const user = userEvent.setup();
-    renderView({ activeChaseId: 'show' });
-    expect(screen.getByText('Playing: Opening.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Play sequence' })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Stop sequence' }));
-    expect(live.send).toHaveBeenCalledWith({ type: 'chaseStop' });
-  });
-
-  it('says in words that blackout is on', () => {
-    renderView({ blackout: true });
-    expect(screen.getByRole('button', { name: /Blackout is on/ })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText(/the lights are dark/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Link blackout to a pad' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Turn on MIDI' }));
+    await screen.findByText('Test Pad');
+    await user.click(screen.getByRole('button', { name: 'Learn MIDI' }));
+    expect(screen.getByRole('button', { name: 'Link blackout to a pad' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Link stop to a pad' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Done learning' }));
+    expect(screen.queryByRole('button', { name: 'Link stop to a pad' })).not.toBeInTheDocument();
   });
 });
