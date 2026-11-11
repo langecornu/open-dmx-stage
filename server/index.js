@@ -5,6 +5,7 @@ import { MockDriver } from './clients/mockDriver.js';
 import { createOflClient } from './clients/oflClient.js';
 import { createApp } from './app.js';
 import { loadConfig } from './config.js';
+import { createShutdown } from './lifecycle.js';
 import { configureLogger, logger } from './logger.js';
 import { DmxEngine } from './services/dmxEngine.js';
 import { OutputManager } from './services/outputManager.js';
@@ -58,14 +59,7 @@ server.listen(config.port, config.host, () => {
   }
 });
 
-/** @param {string} signal */
-async function shutdown(signal) {
-  log.info({ signal }, 'Shutting down');
-  outputManager.stopWatchdog();
-  liveSocket.close();
-  await engine.stop();
-  server.close(() => process.exit(0));
-}
+const shutdown = createShutdown({ server, liveSocket, engine, outputManager, log });
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));

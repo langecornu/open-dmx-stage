@@ -193,6 +193,11 @@ export function attachLiveSocket({
       unsubscribeOutput();
       clearInterval(statusTimer);
       clearInterval(heartbeatTimer);
+      // wss.close() alone leaves connected browsers open, and they would hold the HTTP server open on shutdown. The
+      // browser reconnects with backoff when the server is back.
+      for (const client of wss.clients) {
+        client.terminate();
+      }
       wss.close();
     },
   };
