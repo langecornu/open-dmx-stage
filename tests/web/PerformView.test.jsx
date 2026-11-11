@@ -238,4 +238,27 @@ describe('PerformView MIDI', () => {
     expect(JSON.parse(localStorage.getItem('odmx-midi-map'))).toEqual({});
     expect(within(screen.getByRole('button', { name: /Warm wash/ })).queryByText(/Note/)).not.toBeInTheDocument();
   });
+
+  it('has one play and stop button: Play sequence starts the first sequence when nothing is playing', async () => {
+    const user = userEvent.setup();
+    renderView();
+    expect(screen.queryByRole('button', { name: 'Stop sequence' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Play sequence' }));
+    expect(live.send).toHaveBeenCalledWith({ type: 'chaseStart', chaseId: 'show' });
+  });
+
+  it('shows Stop sequence while a sequence plays, names it, and stops it', async () => {
+    const user = userEvent.setup();
+    renderView({ activeChaseId: 'show' });
+    expect(screen.getByText('Playing: Opening.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Play sequence' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Stop sequence' }));
+    expect(live.send).toHaveBeenCalledWith({ type: 'chaseStop' });
+  });
+
+  it('says in words that blackout is on', () => {
+    renderView({ blackout: true });
+    expect(screen.getByRole('button', { name: /Blackout is on/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(/the lights are dark/)).toBeInTheDocument();
+  });
 });

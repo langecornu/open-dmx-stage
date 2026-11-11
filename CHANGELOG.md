@@ -7,6 +7,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Stop sequence did nothing when no sequence was playing, and gave no hint why.** The Perform screen now has one button
+  that says **Play sequence** when nothing plays and becomes **Stop sequence** while a sequence runs, a line that says what
+  is playing, and a **Blackout is on** label (with a note that the lights are dark) so a blackout is not mistaken for a
+  stopped show. While learning MIDI, a separate **Link stop to a pad** button keeps stop linkable.
 - **"Rests at" values were never applied.** A fixture's resting values (a moving head's pan and tilt at the centre, a
   dimmer open) were shown on the Fixtures screen but the output used 0 for any channel a look did not set, sending a
   pan and tilt to a corner. Lights now sit at their resting values until a look sets something else, a look that does

@@ -51,6 +51,17 @@ export function PerformView({ project, patch, live, flush }) {
   const [midiMap, setMidiMap] = useState(loadMidiMap);
 
   const items = useMemo(() => buildPerformItems(project, patch), [project, patch]);
+
+  // Which sequence "Play sequence" starts: the one that played last, else the first.
+  const [lastSequenceId, setLastSequenceId] = useState(null);
+  const playingId = live.engine.activeChaseId;
+  useEffect(() => {
+    if (playingId) {
+      setLastSequenceId(playingId);
+    }
+  }, [playingId]);
+  const playingName = playingId ? (project.chases.find((chase) => chase.id === playingId)?.name ?? 'a sequence') : null;
+  const playTarget = project.chases.find((chase) => chase.id === lastSequenceId) ?? project.chases[0] ?? null;
   const keys = assignKeys(items.length);
 
   // Forget links to looks and sequences that were deleted.
@@ -186,6 +197,8 @@ export function PerformView({ project, patch, live, flush }) {
         master={live.engine.master}
         isBlackout={live.engine.blackout}
         isLearning={isLearning}
+        playingName={playingName}
+        playTarget={playTarget}
         labelFor={withMidiLabel}
         isArmed={isArmed}
         onPress={handlePress}
