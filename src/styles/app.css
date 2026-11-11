@@ -2457,4 +2457,30 @@ kbd {
 .sound-panel .field {
   min-width: 0;
   flex: 1 1 100%;
+
+@media (max-width: 900px) {
+  .nav-group {
+    flex-direction: row;
+    flex: 1;
+    justify-content: space-around;
+  }
+
+  .nav-group + .nav-group {
+    margin-top: 0;
+  }
+
+  .nav-heading {
+    display: none;
+  }
+
+  .nav-live {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    margin: 0;
+  }
+
+  .nav-item {
+    position: relative;
+  }
 }
