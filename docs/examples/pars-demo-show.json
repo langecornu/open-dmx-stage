@@ -1,0 +1,374 @@
+{
+  "schemaVersion": 3,
+  "name": "Demo light show",
+  "fixtureTypes": [],
+  "fixtures": [
+    {
+      "id": "par-1",
+      "name": "Par 1",
+      "typeId": "generic-led-par-36-7ch",
+      "mode": 0,
+      "address": 1
+    },
+    {
+      "id": "par-2",
+      "name": "Par 2",
+      "typeId": "generic-led-par-36-7ch",
+      "mode": 0,
+      "address": 8
+    }
+  ],
+  "scenes": [
+    {
+      "id": "look-warm",
+      "name": "Warm glow",
+      "values": {
+        "1": 255,
+        "2": 255,
+        "3": 170,
+        "4": 90,
+        "8": 255,
+        "9": 255,
+        "10": 170,
+        "11": 90
+      }
+    },
+    {
+      "id": "look-sunset",
+      "name": "Sunset",
+      "values": {
+        "1": 255,
+        "2": 255,
+        "3": 80,
+        "8": 255,
+        "9": 255,
+        "11": 60
+      }
+    },
+    {
+      "id": "look-ocean",
+      "name": "Ocean",
+      "values": {
+        "1": 255,
+        "3": 120,
+        "4": 255,
+        "8": 255,
+        "10": 255,
+        "11": 180
+      }
+    },
+    {
+      "id": "look-forest",
+      "name": "Forest",
+      "values": {
+        "1": 255,
+        "2": 20,
+        "3": 255,
+        "4": 40,
+        "8": 255,
+        "10": 180,
+        "11": 20
+      }
+    },
+    {
+      "id": "look-purple",
+      "name": "Purple haze",
+      "values": {
+        "1": 255,
+        "2": 160,
+        "4": 255,
+        "8": 255,
+        "9": 255,
+        "11": 200
+      }
+    },
+    {
+      "id": "look-fire",
+      "name": "Fire",
+      "values": {
+        "1": 255,
+        "2": 255,
+        "3": 60,
+        "8": 255,
+        "9": 255
+      }
+    },
+    {
+      "id": "look-ice",
+      "name": "Ice",
+      "values": {
+        "1": 255,
+        "2": 120,
+        "3": 200,
+        "4": 255,
+        "8": 255,
+        "9": 120,
+        "10": 200,
+        "11": 255
+      }
+    },
+    {
+      "id": "look-police-red",
+      "name": "Police red",
+      "values": {
+        "1": 255,
+        "2": 255,
+        "8": 255,
+        "11": 255
+      }
+    },
+    {
+      "id": "look-police-blue",
+      "name": "Police blue",
+      "values": {
+        "1": 255,
+        "4": 255,
+        "8": 255,
+        "9": 255
+      }
+    },
+    {
+      "id": "look-disco",
+      "name": "Disco pink",
+      "values": {
+        "1": 255,
+        "2": 255,
+        "4": 150,
+        "8": 255,
+        "9": 255,
+        "11": 150
+      }
+    },
+    {
+      "id": "look-strobe-white",
+      "name": "Strobe white",
+      "values": {
+        "1": 255,
+        "2": 255,
+        "3": 255,
+        "4": 255,
+        "5": 200,
+        "8": 255,
+        "9": 255,
+        "10": 255,
+        "11": 255,
+        "12": 200
+      }
+    },
+    {
+      "id": "look-strobe-colours",
+      "name": "Strobe colours",
+      "values": {
+        "1": 255,
+        "2": 255,
+        "5": 90,
+        "8": 255,
+        "11": 255,
+        "12": 90
+      }
+    },
+    {
+      "id": "look-dark",
+      "name": "Dark",
+      "values": {
+        "1": 0,
+        "8": 0
+      }
+    }
+  ],
+  "chases": [
+    {
+      "id": "seq-sunrise",
+      "name": "Slow sunrise",
+      "loop": false,
+      "timing": "seconds",
+      "steps": [
+        {
+          "id": "a1",
+          "sceneId": "look-dark",
+          "fadeMs": 0,
+          "holdMs": 1000,
+          "fadeBeats": 0,
+          "holdBeats": 1
+        },
+        {
+          "id": "a2",
+          "sceneId": "look-sunset",
+          "fadeMs": 2000,
+          "holdMs": 2000,
+          "fadeBeats": 4,
+          "holdBeats": 4
+        },
+        {
+          "id": "a3",
+          "sceneId": "look-warm",
+          "fadeMs": 2000,
+          "holdMs": 2000,
+          "fadeBeats": 4,
+          "holdBeats": 4
+        },
+        {
+          "id": "a4",
+          "sceneId": "look-ice",
+          "fadeMs": 2000,
+          "holdMs": 2000,
+          "fadeBeats": 4,
+          "holdBeats": 4
+        },
+        {
+          "id": "a5",
+          "sceneId": "look-ocean",
+          "fadeMs": 2000,
+          "holdMs": 2000,
+          "fadeBeats": 4,
+          "holdBeats": 4
+        }
+      ]
+    },
+    {
+      "id": "seq-cycle",
+      "name": "Colour cycle",
+      "loop": true,
+      "timing": "beats",
+      "steps": [
+        {
+          "id": "b1",
+          "sceneId": "look-fire",
+          "fadeMs": 500,
+          "holdMs": 1500,
+          "fadeBeats": 1,
+          "holdBeats": 3
+        },
+        {
+          "id": "b2",
+          "sceneId": "look-sunset",
+          "fadeMs": 500,
+          "holdMs": 1500,
+          "fadeBeats": 1,
+          "holdBeats": 3
+        },
+        {
+          "id": "b3",
+          "sceneId": "look-purple",
+          "fadeMs": 500,
+          "holdMs": 1500,
+          "fadeBeats": 1,
+          "holdBeats": 3
+        },
+        {
+          "id": "b4",
+          "sceneId": "look-ocean",
+          "fadeMs": 500,
+          "holdMs": 1500,
+          "fadeBeats": 1,
+          "holdBeats": 3
+        },
+        {
+          "id": "b5",
+          "sceneId": "look-forest",
+          "fadeMs": 500,
+          "holdMs": 1500,
+          "fadeBeats": 1,
+          "holdBeats": 3
+        },
+        {
+          "id": "b6",
+          "sceneId": "look-ice",
+          "fadeMs": 500,
+          "holdMs": 1500,
+          "fadeBeats": 1,
+          "holdBeats": 3
+        }
+      ]
+    },
+    {
+      "id": "seq-police",
+      "name": "Police",
+      "loop": true,
+      "timing": "beats",
+      "steps": [
+        {
+          "id": "c1",
+          "sceneId": "look-police-red",
+          "fadeMs": 0,
+          "holdMs": 500,
+          "fadeBeats": 0,
+          "holdBeats": 1
+        },
+        {
+          "id": "c2",
+          "sceneId": "look-police-blue",
+          "fadeMs": 0,
+          "holdMs": 500,
+          "fadeBeats": 0,
+          "holdBeats": 1
+        }
+      ]
+    },
+    {
+      "id": "seq-strobe",
+      "name": "Strobe finale",
+      "loop": true,
+      "timing": "beats",
+      "steps": [
+        {
+          "id": "d1",
+          "sceneId": "look-disco",
+          "fadeMs": 0,
+          "holdMs": 1000,
+          "fadeBeats": 0,
+          "holdBeats": 2
+        },
+        {
+          "id": "d2",
+          "sceneId": "look-strobe-white",
+          "fadeMs": 0,
+          "holdMs": 1000,
+          "fadeBeats": 0,
+          "holdBeats": 2
+        },
+        {
+          "id": "d3",
+          "sceneId": "look-strobe-colours",
+          "fadeMs": 0,
+          "holdMs": 1000,
+          "fadeBeats": 0,
+          "holdBeats": 2
+        },
+        {
+          "id": "d4",
+          "sceneId": "look-disco",
+          "fadeMs": 0,
+          "holdMs": 500,
+          "fadeBeats": 0,
+          "holdBeats": 1
+        },
+        {
+          "id": "d5",
+          "sceneId": "look-strobe-white",
+          "fadeMs": 0,
+          "holdMs": 500,
+          "fadeBeats": 0,
+          "holdBeats": 1
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "group-par-1",
+      "name": "Par 1 only",
+      "fixtureIds": ["par-1"]
+    },
+    {
+      "id": "group-par-2",
+      "name": "Par 2 only",
+      "fixtureIds": ["par-2"]
+    },
+    {
+      "id": "group-both",
+      "name": "Both pars",
+      "fixtureIds": ["par-1", "par-2"]
+    }
+  ]
+}

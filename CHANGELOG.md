@@ -18,6 +18,14 @@ the project follows [Semantic Versioning](https://semver.org/).
 - The built app served by `npm start` could not open its live link with default settings, so it said "Server offline" and
   faders, blackout and the lights test did nothing. The server's own address is now always trusted.
 
+### Added
+
+- **Demo light show** for two 36 LED pars: a show file with 13 looks, 4 sequences (one in seconds, three in beats) and 3
+  groups ([docs/examples/pars-demo-show.json](docs/examples/pars-demo-show.json)), and `npm run demo:show`, which plays a
+  two-minute routine through the live link using looks with fades, hand-mixed colours, master dimming, the pulse, sweep
+  and rainbow effects on all lights and on one group, tempo changes, sequences in seconds and in beats, strobe and
+  blackout. `--no-strobe` leaves out the flashing, `--dry-run` prints the plan, `--load` loads the show first.
+
 ### Verified
 
 - **USB output on real lights:** a DSD TECH SH-RS09B passive cable on a Mac (macOS 26, Apple silicon, Node 24) drove two
