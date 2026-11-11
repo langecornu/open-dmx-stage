@@ -159,6 +159,24 @@ describe('live socket', () => {
     }
   });
 
+  it('plays a timeline from a timelineStart message, and stops it', async () => {
+    await projectService.save({
+      ...projectService.get(),
+      timelines: [{ id: 'tl-1', name: 'Groove', beats: 16, blocks: [] }],
+    });
+    const { socket, messages } = connect(ALLOWED_ORIGIN);
+    try {
+      await waitFor(() => messages.some((m) => m.type === 'state'), 'the initial state');
+      const lastState = () => messages.filter((m) => m.type === 'state').at(-1).state;
+      socket.send(JSON.stringify({ type: 'timelineStart', timelineId: 'tl-1' }));
+      await waitFor(() => lastState().activeTimelineId === 'tl-1', 'the timeline to play');
+      socket.send(JSON.stringify({ type: 'chaseStop' }));
+      await waitFor(() => lastState().activeTimelineId === null, 'the timeline to stop');
+    } finally {
+      socket.close();
+    }
+  });
+
   it('rejects a browser origin that is not allowed', async () => {
     const { socket } = connect('http://evil.example');
     const outcome = await new Promise((resolve) => {

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "name": "My rig (starter)",
   "fixtureTypes": [],
   "fixtures": [
@@ -143,5 +143,6 @@
       "name": "Moving head",
       "fixtureIds": ["head"]
     }
-  ]
+  ],
+  "timelines": []
 }

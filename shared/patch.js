@@ -114,6 +114,7 @@ export function levelChannelsOf(patch) {
  * @property {number} [green]
  * @property {number} [blue]
  * @property {number[]} levels every brightness channel (see LEVEL_TYPES) of the fixture
+ * @property {number[]} dimmers its intensity (dimmer) channels, which a timeline sets apart from the colour
  */
 
 /**
@@ -125,12 +126,15 @@ export function channelsByFixture(patch) {
   /** @type {Map<string, FixtureChannels>} */
   const byFixture = new Map();
   for (const [channel, info] of patch.channels) {
-    const entry = byFixture.get(info.fixtureId) ?? { levels: [] };
+    const entry = byFixture.get(info.fixtureId) ?? { levels: [], dimmers: [] };
     if (info.type === 'red' || info.type === 'green' || info.type === 'blue') {
       entry[info.type] = channel;
     }
     if (LEVEL_TYPES.has(info.type)) {
       entry.levels.push(channel);
+    }
+    if (info.type === 'intensity') {
+      entry.dimmers.push(channel);
     }
     byFixture.set(info.fixtureId, entry);
   }

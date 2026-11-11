@@ -4,6 +4,7 @@ import { DRIVER_LABELS } from '../utils/drivers.js';
 import { Icon } from './Icon.jsx';
 import { PerformTile } from './PerformTile.jsx';
 import { buildPerformItems } from '../utils/performItems.js';
+import { isActionPlaying, playAction } from '../utils/playActions.js';
 
 const QUICK_LAUNCH_LIMIT = 12;
 const FADE_MS = 500;
@@ -61,21 +62,8 @@ export function HomeView({ project, patch, live, flush, navigate }) {
   const isOutputReady = live.connected && Boolean(output?.connected);
   const outputName = output?.driver ? (DRIVER_LABELS[output.driver] ?? output.driver) : 'No output';
 
-  const isPlaying = (item) =>
-    item.action.type === 'look'
-      ? engine.activeSceneId === item.action.id && engine.activeChaseId === null
-      : engine.activeChaseId === item.action.id;
-  const handlePlay = async (item) => {
-    if (item.action.type === 'look') {
-      await flush();
-      live.send({ type: 'recall', sceneId: item.action.id, fadeMs: FADE_MS });
-    } else if (engine.activeChaseId === item.action.id) {
-      live.send({ type: 'chaseStop' });
-    } else {
-      await flush();
-      live.send({ type: 'chaseStart', chaseId: item.action.id });
-    }
-  };
+  const isPlaying = (item) => isActionPlaying(item.action, engine);
+  const handlePlay = (item) => playAction({ action: item.action, engine, send: live.send, flush, fadeMs: FADE_MS });
 
   const checklist = nextStep ? (
     <section className="card card-pad checklist" aria-label="Getting started">

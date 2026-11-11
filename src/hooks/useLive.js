@@ -20,6 +20,7 @@ const INITIAL_STATE = {
   auto: null,
   muted: [],
   soloed: [],
+  activeTimelineId: null,
 };
 
 /**

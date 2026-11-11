@@ -18,6 +18,7 @@ import {
 } from '../utils/midi.js';
 import { assignKeys } from '../utils/performKeys.js';
 import { buildPerformItems } from '../utils/performItems.js';
+import { isActionPlaying, playAction } from '../utils/playActions.js';
 import { useTapTempo } from '../hooks/useTapTempo.js';
 import { AutoShowPanel } from './AutoShowPanel.jsx';
 import { EffectsPanel } from './EffectsPanel.jsx';
@@ -84,16 +85,8 @@ export function PerformView({ project, patch, live, flush }) {
   }, [items]);
 
   const perform = async (action, value) => {
-    if (action.type === 'look') {
-      await flush();
-      live.send({ type: 'recall', sceneId: action.id, fadeMs });
-    } else if (action.type === 'sequence') {
-      if (live.engine.activeChaseId === action.id) {
-        live.send({ type: 'chaseStop' });
-      } else {
-        await flush();
-        live.send({ type: 'chaseStart', chaseId: action.id });
-      }
+    if (action.type === 'look' || action.type === 'sequence' || action.type === 'timeline') {
+      await playAction({ action, engine: live.engine, send: live.send, flush, fadeMs });
     } else if (action.type === 'blackout') {
       live.send({ type: 'blackout', enabled: !live.engine.blackout });
     } else if (action.type === 'stop') {
@@ -166,10 +159,7 @@ export function PerformView({ project, patch, live, flush }) {
     return label ? `${text} · ${label}` : text;
   };
   const isArmed = (action) => armed !== null && actionId(armed) === actionId(action);
-  const isPlaying = (item) =>
-    item.action.type === 'look'
-      ? live.engine.activeSceneId === item.action.id && live.engine.activeChaseId === null
-      : live.engine.activeChaseId === item.action.id;
+  const isPlaying = (item) => isActionPlaying(item.action, live.engine);
 
   const renderTile = (item, index) => (
     <PerformTile

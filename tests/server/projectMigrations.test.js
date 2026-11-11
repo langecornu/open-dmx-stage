@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
-import { CURRENT_SCHEMA_VERSION } from '../../server/schemas/projectSchema.js';
+import { CURRENT_SCHEMA_VERSION, projectSchema } from '../../server/schemas/projectSchema.js';
 import { migrateProject } from '../../server/services/projectMigrations.js';
 import { ProjectService } from '../../server/services/projectService.js';
 
@@ -65,6 +65,16 @@ describe('migrateProject', () => {
     assert.equal(migrated.chases[0].steps[0].fadeBeats, 2, '1 s is 2 beats at 120 bpm');
     assert.equal(migrated.chases[0].steps[0].holdBeats, 4, '2 s is 4 beats at 120 bpm');
     assert.equal(migrated.chases[0].steps[0].fadeMs, 1000, 'the seconds are kept');
+  });
+
+  it('upgrades a version 3 show: adds an empty list of timelines, and keeps everything else', () => {
+    const version3 = { ...migrateProject(VERSION_1), schemaVersion: 3 };
+    delete version3.timelines;
+    const migrated = migrateProject(version3);
+    assert.equal(migrated.schemaVersion, CURRENT_SCHEMA_VERSION);
+    assert.deepEqual(migrated.timelines, [], 'no timelines yet');
+    assert.deepEqual(migrated.chases, version3.chases, 'sequences are untouched');
+    assert.doesNotThrow(() => projectSchema.parse(migrated), 'the result is a valid show');
   });
 
   it('is a no-op for a current show, and refuses newer or non-show input', () => {
