@@ -148,15 +148,15 @@ connection guide can state what has been verified instead of what is expected.
 **Recorded 2026-11-10.** Computer: a Mac (macOS 26.6, Apple silicon), Node 24.22. Cable: a DSD TECH SH-RS09B passive USB-DMX
 cable (FTDI FT232R, USB 0403:6001), connected with the app's **USB-DMX cable** interface. Lights: two 36 LED RGB par lights.
 
-| Question                  | Result                                                                                                  |
-| ------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Detect adapter said       | It did not answer, as a passive cable does.                                                             |
-| Connected and "DMX ready" | Yes, at the first try.                                                                                  |
-| Serial settings           | 250000 baud, 8 data bits, no parity, 2 stop bits (read back from the port).                             |
-| Colours, brightness       | All colours and the brightness slider worked on both pars, steady, once the pars were set up correctly. |
-| Flicker                   | None once each par had its own addresses. It flickered when the addresses overlapped.                   |
-| Par layout at `d001`      | Channel 1 dimmer, 2 red, 3 green, 4 blue (channels 5 to 7 not tested).                                  |
-| Moving head               | Not tried yet (not delivered).                                                                          |
+| Question                  | Result                                                                                                                      |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Detect adapter said       | It did not answer, as a passive cable does.                                                                                 |
+| Connected and "DMX ready" | Yes, at the first try.                                                                                                      |
+| Serial settings           | 250000 baud, 8 data bits, no parity, 2 stop bits (read back from the port).                                                 |
+| Colours, brightness       | All colours and the brightness slider worked on both pars, steady, once the pars were set up correctly.                     |
+| Flicker                   | None once each par had its own addresses. It flickered when the addresses overlapped.                                       |
+| Par layout at `d001`      | Channel 1 dimmer, 2 red, 3 green, 4 blue, 5 strobe (tested at 0, 40, 128 and 220 and reported working); 6 and 7 not tested. |
+| Moving head               | Not tried yet (not delivered).                                                                                              |
 
 What went wrong along the way, so it is quicker next time:
 
@@ -165,4 +165,4 @@ What went wrong along the way, so it is quicker next time:
   put on the same address and tested one channel at a time.
 - The "flicker" and the odd colours were address overlap and wrong layouts, not the timing of the cable. A different
   way of making the DMX break was tried and made no difference, and the long serial break in the driver stays.
-- Not tried: other computers and operating systems, long sessions, ENTTEC Pro adapters, network output on real lights.
+- Not tried: the pars' channels 6 (programs) and 7 (speed), other computers and operating systems, long sessions, ENTTEC Pro adapters, network output on real lights.
