@@ -111,7 +111,7 @@ export function ConnectionPanel({ output, project, patch, live }) {
           <span className="pill" role="status">
             <span className={`dot ${output?.connected ? 'dot-ok' : 'dot-bad'}`} />
             {output?.connected
-              ? `Active: ${DRIVER_LABELS[output.driver] ?? output.driver}`
+              ? `Using: ${DRIVER_LABELS[output.driver] ?? output.driver}`
               : (output?.error ?? 'Not connected')}
           </span>
         </div>

@@ -11,6 +11,7 @@ import { PatchView } from './components/PatchView.jsx';
 import { PerformView } from './components/PerformView.jsx';
 import { ScenesView } from './components/ScenesView.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
+import { StageBar } from './components/StageBar.jsx';
 import { TopBar } from './components/TopBar.jsx';
 import { Welcome } from './components/Welcome.jsx';
 import { useLive } from './hooks/useLive.js';
@@ -113,6 +114,7 @@ export function App() {
           {view === 'monitor' ? <MonitorView {...shared} /> : null}
         </ErrorBoundary>
       </main>
+      <StageBar engine={live.engine} project={project} send={live.send} onNavigate={setView} />
     </div>
   );
 }
