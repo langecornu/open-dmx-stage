@@ -188,6 +188,37 @@ describe('PerformView', () => {
     const { container } = renderView();
     expect(await accessibilityViolations(container)).toEqual([]);
   });
+
+  it('shows the output, MIDI, music and tempo in a status strip', () => {
+    renderView({ bpm: 128 });
+    const status = screen.getByRole('list', { name: 'Status' });
+    expect(within(status).getByText('Server offline')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'MIDI: Not in this browser. Show its settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Music: Not listening. Show its settings' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Tempo: 128 BPM' })).toBeInTheDocument();
+  });
+
+  it('jumps to the music settings from its status chip', async () => {
+    const user = userEvent.setup();
+    renderView();
+    await user.click(screen.getByRole('button', { name: /^Music: / }));
+    expect(screen.getByRole('region', { name: 'Follow the music' })).toHaveFocus();
+  });
+
+  it('describes each pad, and shows the step on stage on a playing sequence', () => {
+    renderView({ activeChaseId: 'show', chaseStep: 0 });
+    const sequence = screen.getByRole('button', { name: 'Opening, Sequence, key 3' });
+    expect(sequence).toHaveAttribute('aria-pressed', 'true');
+    expect(within(sequence).getByText('On stage · step 1 of 1')).toBeInTheDocument();
+    expect(within(screen.getByRole('button', { name: /^Warm wash/ })).getByText('Look')).toBeInTheDocument();
+  });
+
+  it('describes a sequence that is not playing by its steps', () => {
+    renderView();
+    expect(
+      within(screen.getByRole('button', { name: 'Opening, Sequence, key 3' })).getByText('1 step · loops'),
+    ).toBeInTheDocument();
+  });
 });
 
 describe('PerformView MIDI', () => {
@@ -214,7 +245,9 @@ describe('PerformView MIDI', () => {
     const { input } = installFakeMidi();
     renderView();
     await user.click(screen.getByRole('button', { name: 'Turn on MIDI' }));
-    expect(await screen.findByText('Test Pad')).toBeInTheDocument();
+    const midiPanel = screen.getByRole('region', { name: 'MIDI' });
+    expect(await within(midiPanel).findByText('Test Pad')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'MIDI: Test Pad. Show its settings' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Learn MIDI' }));
     await user.click(screen.getByRole('button', { name: /Cool wash/ }));
@@ -234,7 +267,7 @@ describe('PerformView MIDI', () => {
     const { input } = installFakeMidi();
     renderView();
     await user.click(screen.getByRole('button', { name: 'Turn on MIDI' }));
-    await screen.findByText('Test Pad');
+    await within(screen.getByRole('region', { name: 'MIDI' })).findByText('Test Pad');
     await user.click(screen.getByRole('button', { name: 'Learn MIDI' }));
     await user.click(screen.getByRole('button', { name: /Link master to a knob/ }));
     await press(input, 36); // a pad is not a knob: ignored while linking the master
@@ -256,7 +289,7 @@ describe('PerformView MIDI', () => {
     renderView();
     expect(JSON.parse(localStorage.getItem('odmx-midi-map'))).toEqual({ 'note:1:2': { type: 'look', id: 'warm' } });
     await user.click(screen.getByRole('button', { name: 'Turn on MIDI' }));
-    await screen.findByText('Test Pad');
+    await within(screen.getByRole('region', { name: 'MIDI' })).findByText('Test Pad');
     await user.click(screen.getByRole('button', { name: 'Clear links' }));
     expect(JSON.parse(localStorage.getItem('odmx-midi-map'))).toEqual({});
     expect(within(screen.getByRole('button', { name: /Warm wash/ })).queryByText(/Note/)).not.toBeInTheDocument();
@@ -268,7 +301,7 @@ describe('PerformView MIDI', () => {
     renderView();
     expect(screen.queryByRole('button', { name: 'Link blackout to a pad' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Turn on MIDI' }));
-    await screen.findByText('Test Pad');
+    await within(screen.getByRole('region', { name: 'MIDI' })).findByText('Test Pad');
     await user.click(screen.getByRole('button', { name: 'Learn MIDI' }));
     expect(screen.getByRole('button', { name: 'Link blackout to a pad' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Link stop to a pad' })).toBeInTheDocument();
