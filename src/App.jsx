@@ -28,6 +28,20 @@ function hasSeenWelcome() {
   }
 }
 
+// Which screens have something running: shown as a dot in the navigation.
+function liveViews(engine) {
+  const views = [];
+  if (engine.activeChaseId) {
+    views.push('chases', 'perform');
+  } else if (engine.activeSceneId) {
+    views.push('scenes');
+  }
+  if (engine.programmerChannels.length > 0) {
+    views.push('control');
+  }
+  return views;
+}
+
 export function App() {
   const [view, setView] = useState('control');
   const [welcomed, setWelcomed] = useState(hasSeenWelcome);
@@ -81,7 +95,7 @@ export function App() {
           onDone={handleWelcomeDone}
         />
       ) : null}
-      <Sidebar current={view} onSelect={setView} />
+      <Sidebar current={view} onSelect={setView} liveViews={liveViews(live.engine)} />
       <TopBar
         projectName={project.name}
         onRename={(name) => update((current) => ({ ...current, name: name.trim() === '' ? 'Untitled show' : name }))}
@@ -90,6 +104,7 @@ export function App() {
         output={live.output}
         engine={live.engine}
         send={live.send}
+        onOpenOutput={() => setView('monitor')}
         theme={theme}
         onToggleTheme={toggleTheme}
       />

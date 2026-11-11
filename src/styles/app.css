@@ -2234,3 +2234,83 @@ input[type='range'] {
     margin: 0 var(--space-3) var(--space-2);
   }
 }
+
+/* ---------- Navigation groups, live dots, top bar details ---------- */
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.nav-group + .nav-group {
+  margin-top: var(--space-4);
+}
+
+.nav-heading {
+  padding: 0 14px var(--space-1);
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.nav-live {
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 var(--accent);
+  animation: nav-live-pulse 2s ease-out infinite;
+}
+
+@keyframes nav-live-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 var(--accent-soft),
+      0 0 0 0 var(--accent-soft);
+  }
+  100% {
+    box-shadow:
+      0 0 0 8px transparent,
+      0 0 0 8px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-live {
+    animation: none;
+  }
+}
+
+.pill-action {
+  padding: 2px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--primary-bg);
+  color: var(--primary-ink);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pill-save {
+  gap: 6px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-faint);
+}
+
+.pill-save-pending,
+.pill-save-saving {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+}
+
+.pill-save-error {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}

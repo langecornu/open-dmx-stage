@@ -13,6 +13,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Calmer, more guided shell.** The navigation is grouped under **Show** (Lights, Looks, Sequences, Perform) and
+  **Rig** (Setup, Fixtures, Output), and a pulsing dot marks the screens that have something running. The top bar shows
+  a **Fix** button that opens Output when the lights are not connected, and the Saved note is quiet until there is
+  something to worry about.
 - The Output screen says **Using: Open DMX (simple USB cable)** rather than "Active", which read like the cable type.
 
 ### Fixed
