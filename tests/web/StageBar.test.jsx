@@ -62,6 +62,13 @@ describe('StageBar', () => {
     expect(send).toHaveBeenCalledWith({ type: 'autoStop' });
   });
 
+  it('stops a look left on stage, such as the last step of a sequence that played once', async () => {
+    const { send } = renderBar({ activeSceneId: 's1' });
+    expect(screen.getByText('Ocean')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
+    expect(send).toHaveBeenCalledWith({ type: 'release' });
+  });
+
   it('jumps to the screen the sequence lives on', async () => {
     const { onNavigate } = renderBar({ activeChaseId: 'c1', chaseStep: 0 });
     await userEvent.click(screen.getByRole('button', { name: 'Open Sequences' }));

@@ -100,9 +100,9 @@ export function describeStage(engine, project) {
     return {
       kind: 'look',
       title: scene?.name ?? 'A look',
-      detail: 'Look · stays on until you pick something else',
+      detail: 'Look · stays on until you stop it or pick something else',
       view: 'scenes',
-      action: null,
+      action: { label: 'Stop', message: { type: 'release' } },
       layers,
     };
   }

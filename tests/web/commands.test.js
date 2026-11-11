@@ -10,7 +10,7 @@ const project = {
   ],
   chases: [{ id: 'c1', name: 'Colour cycle', steps: [{}, {}] }],
 };
-const idle = { blackout: false, effect: null, activeChaseId: null, programmerChannels: [] };
+const idle = { blackout: false, effect: null, activeSceneId: null, activeChaseId: null, programmerChannels: [] };
 
 function context() {
   return {
@@ -43,6 +43,15 @@ describe('buildCommands', () => {
       theme: 'dark',
     }).map((command) => command.id);
     expect(busy).toEqual(expect.arrayContaining(['action-stop', 'action-stop-effect', 'action-reset']));
+    expect(busy).not.toContain('action-release');
+  });
+
+  it('offers to stop a look that stays on stage after a sequence or a recall', async () => {
+    const ctx = context();
+    const commands = buildCommands({ project, engine: { ...idle, activeSceneId: 's1' }, theme: 'dark' });
+    expect(find(commands, 'action-stop')).toBeUndefined();
+    await find(commands, 'action-release').run(ctx);
+    expect(ctx.send).toHaveBeenLastCalledWith({ type: 'release' });
   });
 
   it('starts the auto show after saving, and stops it while it runs', async () => {

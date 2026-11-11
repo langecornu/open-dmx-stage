@@ -314,6 +314,19 @@ export class DmxEngine {
   }
 
   /**
+   * Takes the look (or sequence) off stage: the lights fade back to where they rest, as before anything was played.
+   * Manual changes and a running effect are separate layers with their own stop, so they stay.
+   * @param {number} [fadeMs]
+   */
+  releaseScene(fadeMs = 0) {
+    this.auto = null; // otherwise the auto show would bring a look back at its next change
+    this.chase = null;
+    this.activeSceneId = null;
+    this.startFade({}, fadeMs);
+    this.emitState();
+  }
+
+  /**
    * @param {ChaseRun} run
    * @param {number} at milliseconds on the engine clock
    */
@@ -473,7 +486,9 @@ export class DmxEngine {
             beats: this.auto.beats,
             order: this.auto.order,
             itemId:
-              this.auto.source === 'looks' ? this.auto.scenes[this.auto.index].id : this.auto.chases[this.auto.index].id,
+              this.auto.source === 'looks'
+                ? this.auto.scenes[this.auto.index].id
+                : this.auto.chases[this.auto.index].id,
           }
         : null,
     };

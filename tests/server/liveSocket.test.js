@@ -124,6 +124,25 @@ describe('live socket', () => {
     }
   });
 
+  it('takes a recalled look off stage with a release message', async () => {
+    const sceneId = 'look-red';
+    await projectService.save({
+      ...projectService.get(),
+      scenes: [{ id: sceneId, name: 'Red', values: { 1: 255 } }],
+    });
+    const { socket, messages } = connect(ALLOWED_ORIGIN);
+    try {
+      await waitFor(() => messages.some((m) => m.type === 'state'), 'the initial state');
+      const lastState = () => messages.filter((m) => m.type === 'state').at(-1).state;
+      socket.send(JSON.stringify({ type: 'recall', sceneId }));
+      await waitFor(() => lastState().activeSceneId === sceneId, 'the look to be on stage');
+      socket.send(JSON.stringify({ type: 'release' }));
+      await waitFor(() => lastState().activeSceneId === null, 'the look to be taken off stage');
+    } finally {
+      socket.close();
+    }
+  });
+
   it('rejects a browser origin that is not allowed', async () => {
     const { socket } = connect('http://evil.example');
     const outcome = await new Promise((resolve) => {

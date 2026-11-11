@@ -38,6 +38,15 @@ export function buildCommands({ project, engine, theme }) {
       keywords: 'halt end',
       run: ({ send }) => send({ type: 'chaseStop' }),
     });
+  } else if (engine.activeSceneId) {
+    commands.push({
+      id: 'action-release',
+      group: 'Actions',
+      label: 'Stop the look',
+      hint: 'Take it off stage; the lights go back to rest',
+      keywords: 'halt end clear release',
+      run: ({ send }) => send({ type: 'release' }),
+    });
   }
   if (engine.effect) {
     commands.push({
