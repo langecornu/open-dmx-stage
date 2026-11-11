@@ -62,7 +62,7 @@ the project follows [Semantic Versioning](https://semver.org/).
   can copy. Your fixtures are saved in the show file. Fixtures have a new `description` field (optional in older shows).
 - **More built-in fixtures, from maker manuals:** 36 LED RGB par (7 channel), Mini Spider Light (7 channel) and Mini Moving
   Head Gobo Light (12 and 10 channel). Reset and program channels rest at 0 and are never scaled by master. Tried on real
-  lights: the 36 LED par profile works (channels 1 to 4 checked); the others have not been tried yet.
+  lights: the 36 LED par profile works (channels 1 to 5 checked: dimmer, red, green, blue and strobe); the others have not been tried yet.
 - **U`King 40W RGBW Moving Head Light** built-in fixture (13 channel mode, from the maker's manual) and the worked
   example for the Fixtures screen. Not yet tried on the real light.
 
