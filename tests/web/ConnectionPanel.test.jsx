@@ -42,6 +42,14 @@ describe('ConnectionPanel', () => {
     await screen.findByRole('button', { name: /How to connect/ });
   });
 
+  it('shows what each interface is for on its card, and reads it out as its description', async () => {
+    render(<ConnectionPanel output={OUTPUT} />);
+    const card = screen.getByRole('button', { name: 'USB-DMX cable' });
+    expect(card).toHaveAccessibleDescription(/Passive FTDI cables/);
+    expect(screen.getByRole('button', { name: 'sACN (E1.31)' })).toHaveAccessibleDescription(/multicast/);
+    await screen.findByRole('button', { name: /How to connect/ });
+  });
+
   it('keeps Connect disabled for a USB cable until a serial port is chosen, and labels FTDI cables', async () => {
     const user = userEvent.setup();
     render(<ConnectionPanel output={OUTPUT} />);

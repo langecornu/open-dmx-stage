@@ -15,19 +15,26 @@ const ConnectionHelp = lazy(() =>
 );
 
 const INTERFACES = [
-  { id: 'mock', label: DRIVER_LABELS.mock, hint: 'No hardware needed. Good for trying things out.' },
+  { id: 'mock', label: DRIVER_LABELS.mock, icon: 'flask', hint: 'No hardware needed. Good for trying things out.' },
   {
     id: 'open-dmx',
     label: DRIVER_LABELS['open-dmx'],
+    icon: 'usb',
     hint: 'Passive FTDI cables, such as the DSD TECH SH-RS09B and the ENTTEC Open DMX USB.',
   },
   {
     id: 'enttec-pro',
     label: DRIVER_LABELS['enttec-pro'],
+    icon: 'chip',
     hint: 'Interfaces with a built-in processor, including DMXKing ultraDMX.',
   },
-  { id: 'artnet', label: DRIVER_LABELS.artnet, hint: 'DMX over your network to an Art-Net node or lighting app.' },
-  { id: 'sacn', label: DRIVER_LABELS.sacn, hint: 'DMX over your network, multicast or to one device.' },
+  {
+    id: 'artnet',
+    label: DRIVER_LABELS.artnet,
+    icon: 'network',
+    hint: 'DMX over your network to an Art-Net node or lighting app.',
+  },
+  { id: 'sacn', label: DRIVER_LABELS.sacn, icon: 'radio', hint: 'DMX over your network, multicast or to one device.' },
 ];
 
 const DEFAULT_UNIVERSE = { artnet: 0, sacn: 1 };
@@ -95,7 +102,6 @@ export function ConnectionPanel({ output, project, patch, live }) {
     }
   };
 
-  const hint = INTERFACES.find((entry) => entry.id === form.driver)?.hint;
   const universeRange = form.driver === 'artnet' ? '0 to 32767' : '1 to 63999';
 
   return (
@@ -117,20 +123,29 @@ export function ConnectionPanel({ output, project, patch, live }) {
         </div>
       </div>
 
-      <div className="iface-list" role="group" aria-label="Interface type">
+      <div className="iface-grid" role="group" aria-label="Interface type">
         {INTERFACES.map((entry) => (
           <button
             key={entry.id}
             type="button"
-            className="iface"
+            className="iface-card"
             aria-pressed={form.driver === entry.id}
+            aria-label={entry.label}
+            aria-describedby={`iface-hint-${entry.id}`}
             onClick={() => handleDriver(entry.id)}
           >
-            {entry.label}
+            <span className="iface-icon" aria-hidden="true">
+              <Icon name={entry.icon} size={20} />
+            </span>
+            <span className="iface-title" aria-hidden="true">
+              {entry.label}
+            </span>
+            <span className="iface-hint" id={`iface-hint-${entry.id}`}>
+              {entry.hint}
+            </span>
           </button>
         ))}
       </div>
-      <p className="view-sub">{hint}</p>
 
       <div className="toolbar">
         {isSerial(form.driver) ? (

@@ -7,6 +7,8 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Output: choose how the signal leaves** with cards for the simulator, USB-DMX cable, ENTTEC Pro, Art-Net and sACN, each
+  with an icon and a one-line explanation, instead of plain pills.
 - **A live stage view on every screen**, beside the On stage bar: each light is drawn as a lamp with a cone of light in the
   colour it is really sending, updated with the DMX frame.
 - **A DMX map on Setup**: the 512 channels with a block for each light, an outline where lights overlap, and the next free
