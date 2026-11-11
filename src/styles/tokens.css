@@ -3,18 +3,18 @@
 :root {
   color-scheme: light;
 
-  --bg: #f6f1e9;
-  --bg-glow-1: #ffe3cc;
-  --bg-glow-2: #efe0ff;
+  --bg: #f2f3f6;
+  --bg-glow-1: #fff0e4;
+  --bg-glow-2: #edf0ff;
   --surface: #ffffff;
-  --surface-2: #fbf7f1;
-  --surface-3: #f1e9de;
-  --border: #e8dfd2;
-  --border-strong: #d4c8b6;
+  --surface-2: #f7f8fa;
+  --surface-3: #eceef3;
+  --border: #e1e4ea;
+  --border-strong: #cdd2dc;
 
-  --text: #211a13;
-  --text-dim: #655a4d;
-  --text-faint: #75695b;
+  --text: #12141a;
+  --text-dim: #4a5262;
+  --text-faint: #5d6575;
 
   --primary-bg: linear-gradient(135deg, #c2410c, #be185d);
   --primary-ink: #ffffff;
@@ -36,13 +36,15 @@
   --ch-position: #0891b2;
   --ch-other: #8a8174;
 
-  --shadow-sm: 0 1px 2px rgba(70, 45, 10, 0.06), 0 2px 10px rgba(70, 45, 10, 0.05);
-  --shadow: 0 12px 34px rgba(70, 45, 10, 0.14);
+  --shadow-sm: 0 1px 2px rgba(20, 24, 40, 0.05), 0 1px 6px rgba(20, 24, 40, 0.04);
+  --shadow: 0 10px 30px rgba(20, 24, 40, 0.12);
   --glass: rgba(255, 255, 255, 0.72);
 
-  --radius-sm: 10px;
-  --radius: 14px;
-  --radius-lg: 22px;
+  --radius-sm: 8px;
+  --radius: 11px;
+  --radius-lg: 16px;
+  --control-height: 38px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -55,25 +57,25 @@
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   --ring: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent);
-  --rail-width: 232px;
-  --topbar-height: 76px;
+  --rail-width: 224px;
+  --topbar-height: 64px;
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #0d0c12;
-  --bg-glow-1: #2a1a2e;
-  --bg-glow-2: #16213f;
-  --surface: #17151f;
-  --surface-2: #1e1b28;
-  --surface-3: #282435;
-  --border: #2c2839;
-  --border-strong: #433d56;
+  --bg: #090a0e;
+  --bg-glow-1: #1b1220;
+  --bg-glow-2: #0f1626;
+  --surface: #12141a;
+  --surface-2: #181b23;
+  --surface-3: #212531;
+  --border: #232733;
+  --border-strong: #353b4c;
 
-  --text: #f5f2fa;
-  --text-dim: #b4adc4;
-  --text-faint: #8c859e;
+  --text: #eef0f6;
+  --text-dim: #a8afc0;
+  --text-faint: #8a92a6;
 
   --primary-bg: linear-gradient(135deg, #ffb020, #ff6b6b);
   --primary-ink: #1c1000;
@@ -95,7 +97,7 @@
   --ch-position: #4fd1d9;
   --ch-other: #8a94a8;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(0, 0, 0, 0.25);
-  --shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
-  --glass: rgba(23, 21, 31, 0.72);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 8px rgba(0, 0, 0, 0.25);
+  --shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+  --glass: rgba(18, 20, 26, 0.78);
 }

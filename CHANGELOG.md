@@ -7,6 +7,12 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **A redesign of the whole app.** A refreshed design language for both themes (graphite or paper, one accent, hairline
+  borders, calmer type, soft motion) and a new structure:
+  - **Home**, the new first screen: output, rig and tempo cards, a getting-started checklist, and quick-launch pads.
+  - **Search (Ctrl or Command + K)**: jump to a screen, play a look, start or stop a sequence, or run an action.
+  - A navigation rail with the output status at the bottom, and a top bar with Search, Master and Blackout.
+  - **Lights** has big fixture cards, **Select all**, and a colour and brightness inspector beside them.
 - **An "On stage" bar on every screen.** It says what is playing and where it came from (a sequence with its step, a
   look, or manual changes), shows an effect or manual changes running underneath, and has one obvious **Stop** (or
   **Reset**) button. During a blackout the bar turns red, says the lights are off, and has a **Lights on** button.

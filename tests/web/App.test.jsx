@@ -54,7 +54,7 @@ async function renderApp() {
 }
 
 describe('App', () => {
-  it('shows a loading message, then the Lights screen', async () => {
+  it('shows a loading message, then the Home screen', async () => {
     let finish;
     api.getProject.mockReturnValue(new Promise((resolve) => (finish = resolve)));
     render(<App />);
@@ -63,7 +63,7 @@ describe('App', () => {
       finish(makeShow());
       await Promise.resolve();
     });
-    expect(await screen.findByRole('heading', { name: 'Lights' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Test show' })).toBeInTheDocument();
   });
 
   it('explains when the show cannot be loaded', async () => {
@@ -72,15 +72,16 @@ describe('App', () => {
     expect(screen.getByText(/Could not load the project: Server offline/)).toBeInTheDocument();
   });
 
-  it('opens on the Lights screen with the top bar and navigation', async () => {
+  it('opens on the Home screen with the top bar and navigation', async () => {
     await renderApp();
-    expect(screen.getByRole('heading', { name: 'Lights' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Test show' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument();
     expect(screen.getByLabelText('Show name')).toHaveValue('Test show');
-    expect(screen.getByRole('button', { name: 'Lights' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
   });
 
   it.each([
+    ['Home', 'Test show'],
     ['Looks', 'Looks'],
     ['Sequences', 'Sequences'],
     ['Perform', 'Perform'],
@@ -94,6 +95,20 @@ describe('App', () => {
     await user.click(within(screen.getByRole('navigation', { name: 'Main' })).getByRole('button', { name: button }));
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: button })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('opens the search with Ctrl+K from anywhere, jumps to a screen, and closes it with Escape', async () => {
+    const user = userEvent.setup();
+    await renderApp();
+    await user.keyboard('{Control>}k{/Control}');
+    const box = await screen.findByRole('combobox');
+    await user.type(box, 'perform{Enter}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Perform' })).toBeInTheDocument();
+    await user.keyboard('{Control>}k{/Control}');
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('renames the show from the top bar and shows it as unsaved until it is saved', async () => {
@@ -129,14 +144,14 @@ describe('App', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('lets someone skip the welcome, remembers it, and lands on the Lights screen', async () => {
+  it('lets someone skip the welcome, remembers it, and lands on the Home screen', async () => {
     const user = userEvent.setup();
     api.getProject.mockResolvedValue(makeShow({ fixtures: [] }));
     await renderApp();
     await user.click(await screen.findByRole('button', { name: 'Skip for now' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(localStorage.getItem('odmx-welcomed')).toBe('1');
-    expect(screen.getByRole('heading', { level: 1, name: 'Lights' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Test show' })).toBeInTheDocument();
   });
 
   it('does not welcome someone who already has lights', async () => {

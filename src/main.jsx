@@ -6,6 +6,7 @@ import '@fontsource-variable/manrope';
 import { App } from './App.jsx';
 import './styles/tokens.css';
 import './styles/app.css';
+import './styles/console.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

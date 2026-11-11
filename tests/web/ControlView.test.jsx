@@ -76,6 +76,15 @@ describe('ControlView', () => {
     expect(screen.getByText('Tap fixtures to pick which ones to colour')).toBeInTheDocument();
   });
 
+  it('selects every fixture at once, and hides Select all when all are selected', async () => {
+    const user = userEvent.setup();
+    renderView();
+    await user.click(screen.getByRole('button', { name: 'Select all' }));
+    expect(screen.getByText(/Applies to: \d+ selected/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Select all' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear selection' })).toBeInTheDocument();
+  });
+
   it('scales the colour with the brightness slider', () => {
     const { live } = renderView();
     fireEvent.change(screen.getByRole('slider', { name: /^Brightness/ }), { target: { value: '50' } });

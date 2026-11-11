@@ -57,6 +57,16 @@ describe('TopBar', () => {
     expect(screen.queryByRole('button', { name: 'Fix' })).not.toBeInTheDocument();
   });
 
+  it('has a search button that opens the palette, and shows its shortcut', async () => {
+    const user = userEvent.setup();
+    const onOpenSearch = vi.fn();
+    renderBar({ onOpenSearch });
+    const button = screen.getByRole('button', { name: 'Search' });
+    expect(button).toHaveTextContent('K');
+    await user.click(button);
+    expect(onOpenSearch).toHaveBeenCalledTimes(1);
+  });
+
   it('shows the show name and renames it as you type', async () => {
     const user = userEvent.setup();
     const { onRename } = renderBar();

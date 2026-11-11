@@ -2,20 +2,31 @@
 
 A quick tour of Open DMX Stage. If you have not installed it yet, start with the [install guide](INSTALL.md).
 
-The app has seven screens, reached from the left rail (or the bottom bar on phones and tablets):
+The app has eight screens, reached from the left rail (or the bottom bar on phones and tablets), grouped under **Show**
+and **Rig**:
 
-| Screen        | What it is for                                                     |
-| ------------- | ------------------------------------------------------------------ |
-| **Lights**    | Pick colours and brightness and see your fixtures respond live.    |
-| **Looks**     | Save what is on stage and bring it back with one tap.              |
-| **Sequences** | Chain looks into a show with timed fades.                          |
-| **Perform**   | Run a show with big buttons, keyboard shortcuts and MIDI.          |
-| **Setup**     | Tell the studio which lights you have and their DMX addresses.     |
-| **Fixtures**  | Describe your own lights: brand, model and what each channel does. |
-| **Output**    | See exactly what is being sent on the DMX line.                    |
+| Screen        | What it is for                                                         |
+| ------------- | ---------------------------------------------------------------------- |
+| **Home**      | See the output and rig status, quick-launch pads, and what to do next. |
+| **Lights**    | Pick colours and brightness and see your fixtures respond live.        |
+| **Looks**     | Save what is on stage and bring it back with one tap.                  |
+| **Sequences** | Chain looks into a show with timed fades.                              |
+| **Perform**   | Run a show with big buttons, keyboard shortcuts and MIDI.              |
+| **Setup**     | Tell the studio which lights you have and their DMX addresses.         |
+| **Fixtures**  | Describe your own lights: brand, model and what each channel does.     |
+| **Output**    | See exactly what is being sent on the DMX line.                        |
 
-The top bar is always available: the show name (click to rename), the connection status, the **Master** brightness,
-the light/dark **theme switch**, and **Blackout**.
+The top bar is always available: the show name (click to rename), the connection status (with a **Fix** button when the
+lights are not connected), **Search**, the **Master** brightness, the light/dark **theme switch**, and **Blackout**. The
+**On stage** bar at the bottom of every screen says what is playing and has the button to stop it.
+
+**Search (Ctrl or Command + K)** opens a palette from anywhere. Type a few letters to jump to a screen, play a look,
+start or stop a sequence, or run an action such as Blackout, then press **Enter**. The arrow keys move through the
+results and **Escape** closes it.
+
+**Home** is the first screen. It shows the output, how many lights, looks and sequences you have, and the tempo, as cards
+that open the right screen. While the show is unfinished a **Getting started** checklist (add lights, connect the output,
+save a look, build a sequence) says what is next. **Quick launch** has pads for your looks and sequences.
 
 ## 1. First run: the welcome screen
 
@@ -31,6 +42,9 @@ another, so fixtures never overlap.
 Finish with **Start lighting**. You can skip the welcome and add lights later in **Setup**.
 
 ## 2. Lights: colour and brightness
+
+Your fixtures are big cards on the left (tap to select, or **Select all**) and the colour and brightness controls sit in
+a panel on the right.
 
 Open **Lights**. The studio at the top has quick colour swatches, a rainbow swatch for any custom colour, and a
 **Brightness** slider. Pick a colour and your fixtures change immediately.

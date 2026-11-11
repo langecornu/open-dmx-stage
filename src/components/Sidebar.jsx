@@ -1,20 +1,15 @@
 // Left navigation rail with friendly labels.
+import { GROUPS, VIEWS } from '../utils/views.js';
+import { DRIVER_LABELS } from '../utils/drivers.js';
 import { Icon } from './Icon.jsx';
 
-export const VIEWS = [
-  { id: 'control', label: 'Lights', icon: 'control', group: 'Show' },
-  { id: 'scenes', label: 'Looks', icon: 'scenes', group: 'Show' },
-  { id: 'chases', label: 'Sequences', icon: 'chases', group: 'Show' },
-  { id: 'perform', label: 'Perform', icon: 'bolt', group: 'Show' },
-  { id: 'patch', label: 'Setup', icon: 'patch', group: 'Rig' },
-  { id: 'fixtures', label: 'Fixtures', icon: 'sliders', group: 'Rig' },
-  { id: 'monitor', label: 'Output', icon: 'monitor', group: 'Rig' },
-];
-
-const GROUPS = ['Show', 'Rig'];
+export { VIEWS };
 
 /** `liveViews` lists the screens that have something running, so the rail can show a pulsing dot beside them. */
-export function Sidebar({ current, onSelect, liveViews = [] }) {
+export function Sidebar({ current, onSelect, liveViews = [], output, isServerUp = true, onOpenOutput }) {
+  const outputReady = isServerUp && Boolean(output?.connected);
+  const outputTitle = !isServerUp ? 'Server offline' : (DRIVER_LABELS[output?.driver] ?? 'No output');
+  const outputSub = outputReady ? 'Connected' : isServerUp ? 'Not connected' : 'Reload when it is back';
   return (
     <aside className="rail">
       <div className="brand">
@@ -53,6 +48,17 @@ export function Sidebar({ current, onSelect, liveViews = [] }) {
           </div>
         ))}
       </nav>
+      {onOpenOutput ? (
+        <div className="rail-status">
+          <button type="button" className="rail-status-card" onClick={onOpenOutput}>
+            <span className={`dot ${outputReady ? 'dot-ok' : 'dot-bad'}`} aria-hidden="true" />
+            <span className="rail-status-text">
+              <strong>{outputTitle}</strong>
+              <span>{outputSub}</span>
+            </span>
+          </button>
+        </div>
+      ) : null}
       <div className="rail-footer">v0.1 · Open source · MIT</div>
     </aside>
   );

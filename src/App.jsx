@@ -1,11 +1,13 @@
 // App shell: loads the project, opens the live link, and routes between views.
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { buildPatch } from '../shared/patch.js';
 import { ChasesView } from './components/ChasesView.jsx';
+import { CommandPalette } from './components/CommandPalette.jsx';
 import { ControlView } from './components/ControlView.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import { FixturesView } from './components/FixturesView.jsx';
+import { HomeView } from './components/HomeView.jsx';
 import { MonitorView } from './components/MonitorView.jsx';
 import { PatchView } from './components/PatchView.jsx';
 import { PerformView } from './components/PerformView.jsx';
@@ -14,6 +16,7 @@ import { Sidebar } from './components/Sidebar.jsx';
 import { StageBar } from './components/StageBar.jsx';
 import { TopBar } from './components/TopBar.jsx';
 import { Welcome } from './components/Welcome.jsx';
+import { buildCommands } from './utils/commands.js';
 import { useLive } from './hooks/useLive.js';
 import { useProject } from './hooks/useProject.js';
 import { useTheme } from './hooks/useTheme.js';
@@ -43,7 +46,8 @@ function liveViews(engine) {
 }
 
 export function App() {
-  const [view, setView] = useState('control');
+  const [view, setView] = useState('home');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [welcomed, setWelcomed] = useState(hasSeenWelcome);
   const { project, library, update, flush, replace, saveStatus, error } = useProject();
   const live = useLive();
@@ -54,6 +58,18 @@ export function App() {
   if (project && startedEmpty.current === null) {
     startedEmpty.current = project.fixtures.length === 0;
   }
+
+  // Ctrl or Command + K opens the search palette from anywhere.
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setIsSearchOpen((open) => !open);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const patch = useMemo(() => (project ? buildPatch(project, library) : null), [project, library]);
 
@@ -79,7 +95,7 @@ export function App() {
       // Storage may be blocked; the welcome simply shows again next time.
     }
     setWelcomed(true);
-    setView('control');
+    setView('home');
   };
 
   const shared = { project, library, patch, update, flush, live, replaceProject: replace };
@@ -95,7 +111,14 @@ export function App() {
           onDone={handleWelcomeDone}
         />
       ) : null}
-      <Sidebar current={view} onSelect={setView} liveViews={liveViews(live.engine)} />
+      <Sidebar
+        current={view}
+        onSelect={setView}
+        liveViews={liveViews(live.engine)}
+        output={live.output}
+        isServerUp={live.connected}
+        onOpenOutput={() => setView('monitor')}
+      />
       <TopBar
         projectName={project.name}
         onRename={(name) => update((current) => ({ ...current, name: name.trim() === '' ? 'Untitled show' : name }))}
@@ -105,6 +128,7 @@ export function App() {
         engine={live.engine}
         send={live.send}
         onOpenOutput={() => setView('monitor')}
+        onOpenSearch={() => setIsSearchOpen(true)}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
@@ -120,6 +144,7 @@ export function App() {
           </div>
         ) : null}
         <ErrorBoundary key={view} label="this screen">
+          {view === 'home' ? <HomeView {...shared} navigate={setView} /> : null}
           {view === 'control' ? <ControlView {...shared} /> : null}
           {view === 'scenes' ? <ScenesView {...shared} /> : null}
           {view === 'chases' ? <ChasesView {...shared} /> : null}
@@ -129,7 +154,13 @@ export function App() {
           {view === 'monitor' ? <MonitorView {...shared} /> : null}
         </ErrorBoundary>
       </main>
-      <StageBar engine={live.engine} project={project} send={live.send} onNavigate={setView} />
+      <CommandPalette
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        commands={buildCommands({ project, engine: live.engine, theme })}
+        context={{ send: live.send, flush, navigate: setView, toggleTheme }}
+      />
+      <StageBar engine={live.engine} project={project} send={live.send} onNavigate={setView} currentView={view} />
     </div>
   );
 }
