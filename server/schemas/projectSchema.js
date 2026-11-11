@@ -1,6 +1,7 @@
 // zod schemas for the project document, live socket messages and imports. Unknown keys are rejected.
 import { z } from 'zod';
 
+import { AUTO_BEATS, AUTO_ORDERS, AUTO_SOURCES } from '../../shared/autoShow.js';
 import { EFFECT_BEATS, EFFECT_TYPES, MAX_BPM, MIN_BPM } from '../../shared/effects.js';
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
 import { HOST_HELP, isAllowedHost } from '../utils/networkHost.js';
@@ -115,6 +116,15 @@ export const liveMessageSchema = z.discriminatedUnion('type', [
     })
     .strict(),
   z.object({ type: z.literal('effectStop') }).strict(),
+  z
+    .object({
+      type: z.literal('autoStart'),
+      source: z.enum(AUTO_SOURCES),
+      beats: z.number().refine((beats) => AUTO_BEATS.includes(beats), 'Unsupported auto show length'),
+      order: z.enum(AUTO_ORDERS),
+    })
+    .strict(),
+  z.object({ type: z.literal('autoStop') }).strict(),
 ]);
 
 export const importFixtureSchema = z

@@ -22,18 +22,31 @@ import { DMX_CHANNELS } from '../../shared/patch.js';
  * @property {'fade' | 'hold'} phase
  * @property {number} phaseStart milliseconds on the engine clock
  */
-/** @typedef {{ master: number, blackout: boolean, bpm: number, effect: { type: string, beats: number, groupId: string | null } | null, activeSceneId: string | null, activeChaseId: string | null, chaseStep: number | null, programmerChannels: number[] }} EngineState */
+/**
+ * @typedef {object} AutoRun the auto show: plays looks or sequences in turn at the tempo, with no one at the controls
+ * @property {'looks' | 'sequences'} source
+ * @property {number} beats how long each look or sequence stays on, in beats
+ * @property {'order' | 'shuffle'} order
+ * @property {Scene[]} scenes the looks to play (looks that leave every light off are left out)
+ * @property {Chase[]} chases the sequences to play (those with no look left are left out)
+ * @property {Map<string, Scene>} scenesById for the sequences' steps
+ * @property {number} index the item on stage, in `scenes` or `chases`
+ * @property {number} changedAt milliseconds on the engine clock when the item came on
+ */
+/** @typedef {{ source: 'looks' | 'sequences', beats: number, order: 'order' | 'shuffle', itemId: string }} AutoState */
+/** @typedef {{ master: number, blackout: boolean, bpm: number, effect: { type: string, beats: number, groupId: string | null } | null, activeSceneId: string | null, activeChaseId: string | null, chaseStep: number | null, programmerChannels: number[], auto: AutoState | null }} EngineState */
 /** @typedef {{ type: 'frame', frame: Uint8Array } | { type: 'state', state: EngineState }} EngineEvent */
 
 export class DmxEngine {
   /**
-   * @param {{ driver: Driver, frameRate?: number, now?: () => number }} options `now` is injectable so tests can
-   *   drive time deterministically.
+   * @param {{ driver: Driver, frameRate?: number, now?: () => number, random?: () => number }} options `now` and
+   *   `random` are injectable so tests can drive time and the shuffle deterministically.
    */
-  constructor({ driver, frameRate = 30, now = () => Date.now() }) {
+  constructor({ driver, frameRate = 30, now = () => Date.now(), random = Math.random }) {
     this.driver = driver;
     this.frameRate = frameRate;
     this.now = now;
+    this.random = random;
     /** @type {ReturnType<typeof setInterval> | null} */
     this.timer = null;
     /** @type {Set<(event: EngineEvent) => void>} */
@@ -54,6 +67,8 @@ export class DmxEngine {
     this.fade = null;
     /** @type {ChaseRun | null} */
     this.chase = null;
+    /** @type {AutoRun | null} */
+    this.auto = null;
     this.frame = new Uint8Array(DMX_CHANNELS);
 
     this.bpm = 120;
@@ -160,11 +175,22 @@ export class DmxEngine {
    * @param {number} [fadeMs]
    */
   recallScene(scene, fadeMs = 0) {
+    this.auto = null; // a person took over
     this.stopChase();
+    this.showScene(scene, fadeMs, this.now());
+    this.emitState();
+  }
+
+  /**
+   * @param {Scene} scene
+   * @param {number} fadeMs
+   * @param {number} at
+   */
+  showScene(scene, fadeMs, at) {
+    this.chase = null;
     this.programmer.clear();
     this.activeSceneId = scene.id;
-    this.startFade(scene.values, fadeMs);
-    this.emitState();
+    this.startFade(scene.values, fadeMs, at);
   }
 
   /**
@@ -174,6 +200,21 @@ export class DmxEngine {
    * @returns {boolean} false when none of its looks exist, so nothing started
    */
   startChase(chase, scenesById) {
+    const isStarted = this.playChase(chase, scenesById, this.now());
+    if (isStarted) {
+      this.auto = null; // a person took over
+      this.emitState();
+    }
+    return isStarted;
+  }
+
+  /**
+   * @param {Chase} chase
+   * @param {Map<string, Scene>} scenesById
+   * @param {number} at
+   * @returns {boolean} false when none of its looks exist
+   */
+  playChase(chase, scenesById, at) {
     const steps = chase.steps.filter((step) => scenesById.has(step.sceneId));
     if (steps.length === 0) {
       return false;
@@ -194,14 +235,80 @@ export class DmxEngine {
     };
     this.chase = run;
     this.activeSceneId = null;
-    this.beginChaseStep(run, this.now());
+    this.beginChaseStep(run, at);
+    return true;
+  }
+
+  /**
+   * Starts the auto show: the first look or sequence comes on now, and the next one after `beats` beats, for as long as
+   * it runs. It follows the tempo as it changes. Looks cross-fade over one beat.
+   * @param {{ source: 'looks' | 'sequences', beats: number, order: 'order' | 'shuffle' }} settings
+   * @param {{ scenes: Scene[], chases: Chase[] }} show
+   * @returns {boolean} false when there is nothing to play, so nothing started
+   */
+  startAuto({ source, beats, order }, { scenes, chases }) {
+    const scenesById = new Map(scenes.map((scene) => [scene.id, scene]));
+    const playable = {
+      // A look that leaves every light off would make the show go dark, so it is not part of an auto show.
+      scenes: scenes.filter((scene) => Object.values(scene.values).some((value) => value > 0)),
+      chases: chases.filter((chase) => chase.steps.some((step) => scenesById.has(step.sceneId))),
+    };
+    const count = source === 'looks' ? playable.scenes.length : playable.chases.length;
+    if (count === 0) {
+      return false;
+    }
+    const at = this.now();
+    const index = order === 'shuffle' ? Math.floor(this.random() * count) : 0;
+    /** @type {AutoRun} */
+    const run = { source, beats, order, ...playable, scenesById, index, changedAt: at };
+    this.auto = run;
+    this.showAutoItem(run, at);
     this.emitState();
     return true;
   }
 
+  /** Ends the auto show; the look on stage stays, as when a sequence is stopped. */
+  stopAuto() {
+    this.stopChase();
+  }
+
+  /**
+   * @param {AutoRun} run
+   * @param {number} at
+   */
+  showAutoItem(run, at) {
+    run.changedAt = at;
+    if (run.source === 'looks') {
+      this.showScene(run.scenes[run.index], Math.round(this.beatMs()), at);
+    } else {
+      this.playChase(run.chases[run.index], run.scenesById, at);
+    }
+  }
+
+  /**
+   * @param {AutoRun} run
+   * @param {number} at
+   */
+  advanceAuto(run, at) {
+    if (at - run.changedAt < run.beats * this.beatMs()) {
+      return;
+    }
+    const count = run.source === 'looks' ? run.scenes.length : run.chases.length;
+    if (run.order === 'shuffle' && count > 1) {
+      // Any other item, never the same one twice in a row.
+      run.index = (run.index + 1 + Math.floor(this.random() * (count - 1))) % count;
+    } else {
+      run.index = (run.index + 1) % count;
+    }
+    this.showAutoItem(run, at);
+    this.emitState();
+  }
+
+  /** Stops the sequence, and the auto show if one is running (Escape and Stop mean "stop what is playing"). */
   stopChase() {
-    if (this.chase) {
+    if (this.chase || this.auto) {
       this.chase = null;
+      this.auto = null;
       this.emitState();
     }
   }
@@ -212,6 +319,7 @@ export class DmxEngine {
    * @param {number} [fadeMs]
    */
   releaseScene(fadeMs = 0) {
+    this.auto = null; // otherwise the auto show would bring a look back at its next change
     this.chase = null;
     this.activeSceneId = null;
     this.startFade({}, fadeMs);
@@ -270,6 +378,9 @@ export class DmxEngine {
     }
     if (this.chase) {
       this.advanceChase(this.chase, at);
+    }
+    if (this.auto) {
+      this.advanceAuto(this.auto, at);
     }
   }
 
@@ -369,6 +480,17 @@ export class DmxEngine {
       activeChaseId: this.chase?.id ?? null,
       chaseStep: this.chase?.index ?? null,
       programmerChannels: [...this.programmer.keys()],
+      auto: this.auto
+        ? {
+            source: this.auto.source,
+            beats: this.auto.beats,
+            order: this.auto.order,
+            itemId:
+              this.auto.source === 'looks'
+                ? this.auto.scenes[this.auto.index].id
+                : this.auto.chases[this.auto.index].id,
+          }
+        : null,
     };
   }
 

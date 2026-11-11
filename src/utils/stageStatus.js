@@ -1,13 +1,15 @@
 // Turns the live engine state into plain words for the "on stage" bar: what is playing, where it came from, and what
 // the one obvious action is. Pure, so every wording is easy to test.
 
+import { describeAuto } from './autoShow.js';
+
 const EFFECT_NAMES = { pulse: 'Pulse', sweep: 'Sweep', rainbow: 'Rainbow' };
 
 /**
  * @typedef {{ label: string, message: object }} StageAction a button label and the live message it sends
  * @typedef {{ id: string, text: string, action: StageAction | null }} StageLayer something also running underneath
  * @typedef {{
- *   kind: 'blackout' | 'sequence' | 'look' | 'manual' | 'idle',
+ *   kind: 'blackout' | 'auto' | 'sequence' | 'look' | 'manual' | 'idle',
  *   title: string,
  *   detail: string,
  *   view: string | null,
@@ -61,6 +63,20 @@ export function describeStage(engine, project) {
       view: null,
       action: { label: 'Lights on', message: { type: 'blackout', enabled: false } },
       layers: [],
+    };
+  }
+
+  if (engine.auto) {
+    const { auto } = engine;
+    const list = auto.source === 'looks' ? project.scenes : project.chases;
+    const item = list.find((entry) => entry.id === auto.itemId);
+    return {
+      kind: 'auto',
+      title: item ? `Auto show: ${item.name}` : 'Auto show',
+      detail: describeAuto(auto),
+      view: null,
+      action: { label: 'Stop', message: { type: 'autoStop' } },
+      layers,
     };
   }
 

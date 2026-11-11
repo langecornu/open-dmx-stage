@@ -54,6 +54,26 @@ describe('buildCommands', () => {
     expect(ctx.send).toHaveBeenLastCalledWith({ type: 'release' });
   });
 
+  it('starts the auto show after saving, and stops it while it runs', async () => {
+    const ctx = context();
+    const start = find(buildCommands({ project, engine: idle, theme: 'dark' }), 'action-auto');
+    expect(start.label).toBe('Start the auto show');
+    await start.run(ctx);
+    expect(ctx.flush).toHaveBeenCalled();
+    expect(ctx.send).toHaveBeenLastCalledWith({ type: 'autoStart', source: 'looks', beats: 8, order: 'order' });
+
+    const running = { ...idle, auto: { source: 'looks', beats: 8, order: 'order', itemId: 's1' } };
+    const stop = find(buildCommands({ project, engine: running, theme: 'dark' }), 'action-auto');
+    expect(stop.label).toBe('Stop the auto show');
+    await stop.run(ctx);
+    expect(ctx.send).toHaveBeenLastCalledWith({ type: 'autoStop' });
+  });
+
+  it('does not offer the auto show when there are no looks', () => {
+    const empty = { ...project, scenes: [] };
+    expect(find(buildCommands({ project: empty, engine: idle, theme: 'dark' }), 'action-auto')).toBeUndefined();
+  });
+
   it('plays a look after saving any pending edit, with a short fade', async () => {
     const ctx = context();
     await find(buildCommands({ project, engine: idle, theme: 'dark' }), 'look-s2').run(ctx);

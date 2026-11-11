@@ -52,6 +52,16 @@ describe('StageBar', () => {
     expect(send).toHaveBeenCalledWith({ type: 'chaseStop' });
   });
 
+  it('stops the auto show', async () => {
+    const { send } = renderBar({
+      auto: { source: 'looks', beats: 4, order: 'order', itemId: 's1' },
+      activeSceneId: 's1',
+    });
+    expect(screen.getByText('Auto show: Ocean')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
+    expect(send).toHaveBeenCalledWith({ type: 'autoStop' });
+  });
+
   it('stops a look left on stage, such as the last step of a sequence that played once', async () => {
     const { send } = renderBar({ activeSceneId: 's1' });
     expect(screen.getByText('Ocean')).toBeInTheDocument();

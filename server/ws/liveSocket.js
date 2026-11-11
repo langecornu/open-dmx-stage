@@ -157,6 +157,12 @@ export function attachLiveSocket({
       case 'effectStop':
         engine.stopEffect();
         break;
+      case 'autoStart':
+        engine.startAuto(message, project);
+        break;
+      case 'autoStop':
+        engine.stopAuto();
+        break;
       default:
         break;
     }
