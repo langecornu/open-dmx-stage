@@ -135,6 +135,9 @@ export function attachLiveSocket({
       case 'chaseStop':
         engine.stopChase();
         break;
+      case 'release':
+        engine.releaseScene(message.fadeMs);
+        break;
       case 'tempo':
         engine.setTempo(message.bpm, message.sync);
         break;

@@ -34,9 +34,10 @@ describe('describeStage', () => {
     expect(stage.view).toBe('chases');
   });
 
-  it('names the active look without a stop action', () => {
+  it('names the active look and offers to take it off stage', () => {
     const stage = describeStage({ ...idle, activeSceneId: 's1' }, project);
-    expect(stage).toMatchObject({ kind: 'look', title: 'Ocean', action: null, view: 'scenes' });
+    expect(stage).toMatchObject({ kind: 'look', title: 'Ocean', view: 'scenes' });
+    expect(stage.action).toEqual({ label: 'Stop', message: { type: 'release' } });
   });
 
   it('puts blackout first and offers to bring the lights back', () => {

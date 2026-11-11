@@ -18,13 +18,14 @@ const ALLOWED_ORIGIN = 'http://localhost:5173';
 let server;
 let socketApi;
 let outputManager;
+let projectService;
 let dataDir;
 let url;
 
 before(async () => {
   dataDir = await mkdtemp(path.join(tmpdir(), 'odmx-ws-'));
   const engine = new DmxEngine({ driver: new MockDriver() });
-  const projectService = new ProjectService({ dataDir });
+  projectService = new ProjectService({ dataDir });
   await projectService.load();
   outputManager = new OutputManager({ engine, dataDir, defaults: { driver: 'mock' } });
   server = createServer();
@@ -101,6 +102,25 @@ describe('live socket', () => {
     socket.send(JSON.stringify({ type: 'effectStop' }));
     await waitFor(() => lastState().effect === null, 'the effect to stop');
     socket.close();
+  });
+
+  it('takes a recalled look off stage with a release message', async () => {
+    const sceneId = 'look-red';
+    await projectService.save({
+      ...projectService.get(),
+      scenes: [{ id: sceneId, name: 'Red', values: { 1: 255 } }],
+    });
+    const { socket, messages } = connect(ALLOWED_ORIGIN);
+    try {
+      await waitFor(() => messages.some((m) => m.type === 'state'), 'the initial state');
+      const lastState = () => messages.filter((m) => m.type === 'state').at(-1).state;
+      socket.send(JSON.stringify({ type: 'recall', sceneId }));
+      await waitFor(() => lastState().activeSceneId === sceneId, 'the look to be on stage');
+      socket.send(JSON.stringify({ type: 'release' }));
+      await waitFor(() => lastState().activeSceneId === null, 'the look to be taken off stage');
+    } finally {
+      socket.close();
+    }
   });
 
   it('rejects a browser origin that is not allowed', async () => {
