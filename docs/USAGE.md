@@ -282,8 +282,9 @@ from an active adapter. The same guide is in [Connecting your lights](CONNECTION
 ## 9. Master, Blackout, themes and devices
 
 **The On stage bar.** The bar at the bottom of every screen always says what is playing: a sequence (with its step), a
-look, or colours set by hand. Press **Stop** there to stop a sequence, **Reset** to drop manual changes, or **Stop
-effect** to end an effect. During a blackout it turns red and says the lights are off; press **Lights on** to bring
+look, or colours set by hand. Press **Stop** there to stop a sequence; the lights stay on its current look, and a second
+**Stop** takes that look off stage and returns the lights to rest. The same **Stop** clears a look you played, or the
+last look of a sequence that played once. Press **Reset** to drop manual changes, or **Stop effect** to end an effect. During a blackout it turns red and says the lights are off; press **Lights on** to bring
 them back.
 
 - **Master** scales the brightness of everything (dimmer and colour channels only; pan and tilt are unaffected).
