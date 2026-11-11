@@ -28,6 +28,27 @@ describe('DmxEngine', () => {
     assert.equal(engine.tick(1000)[0], 200, 'at the end of the fade the value is the target');
   });
 
+  it('takes a look off stage and fades back to the resting values, keeping manual changes', () => {
+    const { engine } = createEngine();
+    engine.setRestingValues(new Map([[2, 255]]));
+    engine.recallScene({ id: 's1', values: { 1: 200, 2: 0 } }, 0);
+    engine.setProgrammer({ 3: 40 });
+    engine.releaseScene(1000);
+    assert.equal(engine.getState().activeSceneId, null, 'no look is on stage');
+    assert.equal(engine.tick(500)[0], 100, 'halfway through, the colour is halfway down');
+    const frame = engine.tick(1000);
+    assert.deepEqual([frame[0], frame[1], frame[2]], [0, 255, 40], 'back at rest, with the manual value kept');
+  });
+
+  it('stops a playing sequence when the look is taken off stage', () => {
+    const { engine } = createEngine();
+    const scenes = new Map([['a', { id: 'a', values: { 1: 255 } }]]);
+    engine.startChase({ id: 'c', loop: true, steps: [{ sceneId: 'a', fadeMs: 0, holdMs: 100 }] }, scenes);
+    engine.releaseScene();
+    assert.equal(engine.getState().activeChaseId, null, 'the sequence stopped');
+    assert.equal(engine.tick(0)[0], 0, 'the light is back at rest');
+  });
+
   it('lets the programmer override the scene layer', () => {
     const { engine } = createEngine();
     engine.recallScene({ id: 's1', values: { 1: 200 } }, 0);

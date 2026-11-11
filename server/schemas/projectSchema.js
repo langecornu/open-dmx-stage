@@ -102,6 +102,7 @@ export const liveMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('recall'), sceneId: id, fadeMs: z.number().int().min(0).max(60000).default(0) }).strict(),
   z.object({ type: z.literal('chaseStart'), chaseId: id }).strict(),
   z.object({ type: z.literal('chaseStop') }).strict(),
+  z.object({ type: z.literal('release'), fadeMs: z.number().int().min(0).max(60000).default(0) }).strict(),
   z
     .object({ type: z.literal('tempo'), bpm: z.number().min(MIN_BPM).max(MAX_BPM), sync: z.boolean().default(false) })
     .strict(),
