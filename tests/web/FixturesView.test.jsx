@@ -145,6 +145,15 @@ describe('FixturesView', () => {
     expect(screen.getByLabelText('Manufacturer')).toHaveValue("U'King");
   });
 
+  it('filters both lists by name or maker and shows each fixture channel count', async () => {
+    const user = userEvent.setup();
+    renderView(makeProject([MINE]));
+    expect(screen.getByText('Acme · 1 channel')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Filter fixtures'), 'acme');
+    expect(within(screen.getByRole('list', { name: 'Your fixtures' })).getByText('Wash 3')).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'Built-in fixtures' })).queryAllByRole('listitem')).toHaveLength(0);
+  });
+
   it('has no automated accessibility violations', async () => {
     const { container } = render(<FixturesView project={makeProject([MINE])} library={[EXAMPLE]} update={vi.fn()} />);
     expect(await accessibilityViolations(container)).toEqual([]);

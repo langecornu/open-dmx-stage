@@ -7,6 +7,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Looks: a live capture strip** shows a swatch of what the lights are doing right now beside the name field, and each
+  look card can be duplicated or updated to what is on stage now, without saving a new one.
+- **Fixtures: filter and channel counts**: a filter box searches both lists by name or maker, and each fixture shows how
+  many channels it uses.
 - **Keyboard shortcut list**: press **?** anywhere, or search for "keyboard shortcuts", to see every key you can press.
 - Empty screens show an icon, say what to do next, and use one consistent style.
 - **Output: choose how the signal leaves** with cards for the simulator, USB-DMX cable, ENTTEC Pro, Art-Net and sACN, each
