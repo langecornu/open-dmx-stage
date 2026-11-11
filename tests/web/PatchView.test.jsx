@@ -34,6 +34,11 @@ beforeEach(() => {
 });
 
 describe('PatchView', () => {
+  it('says which DMX address is free next for the chosen light and quantity', () => {
+    renderView(makeShow({ fixtures: [] }));
+    expect(screen.getByText(/Next free DMX address for this choice: 1\./)).toBeInTheDocument();
+  });
+
   it('invites you to add the first fixture when the rig is empty', () => {
     renderView(makeShow({ fixtures: [] }));
     expect(screen.getByText('Your rig is empty')).toBeInTheDocument();
