@@ -41,6 +41,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Perform is a denser stage console.** A status strip at the top shows the output, the MIDI controller and whether the
+  page is listening to the music, each with a dot and words, and jumps to its settings. Beside it, the tempo and four
+  beat lamps that pulse at its speed. Pads are smaller so more fit on screen; each shows what it is, and a sequence pad
+  has a strip of its step colours with the step on stage lit. The Home quick-launch pads match.
 - **Perform is a stage console.** Looks and sequences sit in their own rows with their counts, the playing pad says **On
   stage**, the keyboard shortcuts are listed at the top, and tempo (a large readout), effects, sound and MIDI sit in a
   tidy row below. Master, blackout and stop were repeated here; they now live only in the top bar and the On stage bar,

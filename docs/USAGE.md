@@ -11,7 +11,7 @@ and **Rig**:
 | **Lights**    | Pick colours and brightness and see your fixtures respond live.        |
 | **Looks**     | Save what is on stage and bring it back with one tap.                  |
 | **Sequences** | Chain looks into a show with timed fades.                              |
-| **Perform**   | Run a show with big buttons, keyboard shortcuts and MIDI.              |
+| **Perform**   | Run a show with pads, keyboard shortcuts and MIDI.                     |
 | **Setup**     | Tell the studio which lights you have and their DMX addresses.         |
 | **Fixtures**  | Describe your own lights: brand, model and what each channel does.     |
 | **Output**    | See exactly what is being sent on the DMX line.                        |
@@ -104,16 +104,25 @@ The step that is playing is highlighted. Use the arrow buttons to reorder steps 
 
 ![Perform screen](images/17-perform-dark.jpg)
 
-**Perform** turns every look and sequence into a big button, for running a show without hunting with the mouse.
+**Perform** turns every look and sequence into a pad, for running a show without hunting with the mouse. There is no
+separate start button: **pressing a pad starts it**.
 
-- **Tap a button** to play a look (with the fade chosen above the looks) or to start a sequence. Tap a playing sequence
+- **The status strip** at the top says, each with a dot and words, whether the **output** is ready, which **MIDI**
+  controller is connected, and whether the page is listening to the **music**. Press **MIDI** or **Music** to jump to
+  its settings. On the right, the **tempo** and four lamps that light in turn at its speed, one per beat of a bar (the
+  first in the accent colour), so you can see the beat even without music. With reduced motion turned on, the lamps
+  stay still.
+- **Tap a pad** to play a look (with the fade chosen above the looks) or to start a sequence. Tap a playing sequence
   again to stop it.
+- **Each pad** shows its colours and what it is: a look, or a sequence with its number of steps and whether it loops. A
+  sequence pad has a strip with one colour per step; while it plays, the step on stage is lit and the pad says which
+  step it is on (for example **On stage · step 2 of 5**).
 - **Keyboard shortcuts:** each button shows its key (1 to 0, then Q to P, then A to L). **Space** is blackout,
   **Escape** stops a sequence, and **[** and **]** lower and raise the master by 10%. Shortcuts never fire while you are
   typing in a field.
 - **Master, blackout and stop** live in the top bar and the **On stage** bar, which are on every screen, so Perform is
-  just pads and the tempo, effects and sound controls. Looks and sequences are in their own rows, with the number of
-  each, and the pad that is playing says **On stage**.
+  the status strip, the pads, and the tempo, effects, music and MIDI controls. Looks and sequences are in their own rows,
+  with the number of each, and the pad that is playing says **On stage**.
 - **MIDI:** while learning, extra buttons appear to link blackout, stop and the master to a pad or knob.
 
 ### Auto show

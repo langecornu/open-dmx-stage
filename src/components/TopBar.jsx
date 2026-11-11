@@ -1,4 +1,5 @@
 // Top bar: show name, status, master brightness, theme switch and blackout.
+import { describeOutput } from '../utils/outputStatus.js';
 import { Icon } from './Icon.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
 
@@ -19,14 +20,7 @@ export function TopBar({
   theme,
   onToggleTheme,
 }) {
-  const outputReady = connected && output?.connected;
-  const outputLabel = !connected
-    ? 'Server offline'
-    : output?.driver === 'mock'
-      ? 'Simulator'
-      : output?.connected
-        ? 'DMX ready'
-        : 'DMX not connected';
+  const { label: outputLabel, isReady: outputReady } = describeOutput(connected, output);
 
   return (
     <header className="topbar">

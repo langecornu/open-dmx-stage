@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SoundPanel } from '../../src/components/SoundPanel.jsx';
+import { useBeatFollower } from '../../src/hooks/useBeatFollower.js';
 import { accessibilityViolations } from './axe.js';
 import { createStream, installFakeAudio, musicWindows } from './audioFakes.js';
 
@@ -23,8 +24,14 @@ afterEach(() => {
   audio.uninstall();
 });
 
+// The Perform screen owns the follower and hands it to the panel; this does the same.
+function Harness() {
+  const follower = useBeatFollower({ send });
+  return <SoundPanel follower={follower} />;
+}
+
 async function renderPanel() {
-  const view = render(<SoundPanel send={send} />);
+  const view = render(<Harness />);
   await act(async () => {});
   return view;
 }
