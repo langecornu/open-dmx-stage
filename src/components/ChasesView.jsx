@@ -1,10 +1,14 @@
-// Chases: ordered scene steps with fade and hold times; play, loop and edit.
+// Sequences, made one of two ways, chosen with a toggle: Steps (a chain of looks with fade and hold times) or Timeline
+// (coloured blocks drawn per light on a grid of beats). Both play from here and from Perform.
 import { useState } from 'react';
+
+import { newTimeline } from '../utils/timelineEdit.js';
 
 import { averageColor, fixtureColors, sceneGradient } from '../utils/sceneColors.js';
 import { stepDurations } from '../utils/tempo.js';
 import { SequenceStepRow } from './SequenceStepRow.jsx';
 import { SequenceTimeline } from './SequenceTimeline.jsx';
+import { TimelineSequences } from './TimelineSequences.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { Icon } from './Icon.jsx';
 
@@ -13,7 +17,23 @@ const formatLength = (ms) => {
   return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s`;
 };
 
+const MODE_KEY = 'odmx-sequence-mode';
+const MODES = [
+  { id: 'steps', label: 'Steps', hint: 'Chain your looks into a show with timed fades.' },
+  { id: 'timeline', label: 'Timeline', hint: 'Draw coloured blocks for each light on a grid of beats.' },
+];
+
+function loadMode() {
+  try {
+    return localStorage.getItem(MODE_KEY) === 'timeline' ? 'timeline' : 'steps';
+  } catch {
+    return 'steps';
+  }
+}
+
 export function ChasesView({ project, patch, update, flush, live }) {
+  const [mode, setMode] = useState(loadMode);
+  const [timelineId, setTimelineId] = useState(project.timelines?.[0]?.id ?? null);
   const [selectedId, setSelectedId] = useState(project.chases[0]?.id ?? null);
   const chase = project.chases.find((candidate) => candidate.id === selectedId) ?? null;
   const isPlaying = chase && live.engine.activeChaseId === chase.id;
@@ -26,7 +46,22 @@ export function ChasesView({ project, patch, update, flush, live }) {
     live.send({ type: 'chaseStart', chaseId: chase.id });
   };
 
+  const changeMode = (next) => {
+    setMode(next);
+    try {
+      localStorage.setItem(MODE_KEY, next);
+    } catch {
+      // A remembered choice is a convenience; private windows may refuse it.
+    }
+  };
+
   const handleCreate = () => {
+    if (mode === 'timeline') {
+      const created = newTimeline(project.timelines?.length ?? 0, () => crypto.randomUUID());
+      update((current) => ({ ...current, timelines: [...(current.timelines ?? []), created] }));
+      setTimelineId(created.id);
+      return;
+    }
     const created = {
       id: crypto.randomUUID(),
       name: `Sequence ${project.chases.length + 1}`,
@@ -100,15 +135,39 @@ export function ChasesView({ project, patch, update, flush, live }) {
           <h1 className="view-title" id="chases-title">
             Sequences
           </h1>
-          <p className="view-sub">Chain your looks into a show with timed fades.</p>
+          <p className="view-sub">{MODES.find((item) => item.id === mode).hint}</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={handleCreate}>
-          <Icon name="plus" />
-          New sequence
-        </button>
+        <div className="toolbar">
+          <div className="segmented" role="group" aria-label="How to make sequences">
+            {MODES.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className="segmented-option"
+                aria-pressed={mode === item.id}
+                onClick={() => changeMode(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <button type="button" className="btn btn-primary" onClick={handleCreate}>
+            <Icon name="plus" />
+            New sequence
+          </button>
+        </div>
       </div>
 
-      {project.chases.length === 0 ? (
+      {mode === 'timeline' ? (
+        <TimelineSequences
+          project={project}
+          update={update}
+          flush={flush}
+          live={live}
+          selectedId={timelineId}
+          onSelectTimeline={setTimelineId}
+        />
+      ) : project.chases.length === 0 ? (
         <EmptyState
           icon="chases"
           title="No sequences yet"

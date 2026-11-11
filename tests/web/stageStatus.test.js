@@ -50,6 +50,18 @@ describe('describeStage', () => {
     ]);
   });
 
+  it('names a playing timeline as a sequence, and offers Stop', () => {
+    const withTimeline = { ...project, timelines: [{ id: 't1', name: 'Groove', beats: 16 }] };
+    const stage = describeStage({ ...idle, activeTimelineId: 't1' }, withTimeline);
+    expect(stage).toMatchObject({
+      kind: 'sequence',
+      title: 'Groove',
+      detail: 'Sequence · timeline · 4 bars · looping',
+      view: 'chases',
+    });
+    expect(stage.action).toEqual({ label: 'Stop', message: { type: 'chaseStop' } });
+  });
+
   it('names the playing sequence, its step, and offers Stop', () => {
     const stage = describeStage({ ...idle, activeChaseId: 'c1', chaseStep: 1 }, project);
     expect(stage.kind).toBe('sequence');

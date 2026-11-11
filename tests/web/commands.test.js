@@ -69,6 +69,21 @@ describe('buildCommands', () => {
     expect(ctx.send).toHaveBeenLastCalledWith({ type: 'autoStop' });
   });
 
+  it('starts a timeline after saving, and stops it while it plays', async () => {
+    const ctx = context();
+    const withTimeline = { ...project, timelines: [{ id: 't1', name: 'Groove', beats: 8 }] };
+    const start = find(buildCommands({ project: withTimeline, engine: idle, theme: 'dark' }), 'timeline-t1');
+    expect(start).toMatchObject({ label: 'Start Groove', hint: 'Sequence · timeline · 2 bars' });
+    await start.run(ctx);
+    expect(ctx.flush).toHaveBeenCalled();
+    expect(ctx.send).toHaveBeenLastCalledWith({ type: 'timelineStart', timelineId: 't1' });
+    const playing = { ...idle, activeTimelineId: 't1' };
+    const stop = find(buildCommands({ project: withTimeline, engine: playing, theme: 'dark' }), 'timeline-t1');
+    expect(stop.label).toBe('Stop Groove');
+    await stop.run(ctx);
+    expect(ctx.send).toHaveBeenLastCalledWith({ type: 'chaseStop' });
+  });
+
   it('does not offer the auto show when there are no looks', () => {
     const empty = { ...project, scenes: [] };
     expect(find(buildCommands({ project: empty, engine: idle, theme: 'dark' }), 'action-auto')).toBeUndefined();

@@ -1,6 +1,8 @@
-// Turns a show into the list of pads on the Perform screen: every look, then every sequence, each with a gradient
-// preview of what it looks like. A sequence also lists the colour of each step, for the strip on its pad.
+// Turns a show into the list of pads on the Perform screen: every look, then every sequence (made with steps or on a
+// timeline), each with a gradient preview of what it looks like. A step sequence also lists the colour of each step, for
+// the strip on its pad.
 import { averageColor, fixtureColors, sceneGradient } from './sceneColors.js';
+import { timelineGradient } from './timelineEdit.js';
 
 /**
  * @param {import('../../shared/types.js').Project} project
@@ -44,5 +46,13 @@ export function buildPerformItems(project, patch) {
       })),
     };
   });
-  return [...looks, ...sequences];
+  const timelines = (project.timelines ?? []).map((timeline) => ({
+    action: /** @type {const} */ ({ type: 'timeline', id: timeline.id }),
+    name: timeline.name,
+    kind: /** @type {const} */ ('Sequence'),
+    gradient: timelineGradient(timeline),
+    detail: `Timeline · ${timeline.beats / 4} ${timeline.beats === 4 ? 'bar' : 'bars'} · loops`,
+    steps: /** @type {{ id: string, colour: string }[]} */ ([]),
+  }));
+  return [...looks, ...sequences, ...timelines];
 }

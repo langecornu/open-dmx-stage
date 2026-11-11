@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { AUTO_BEATS, AUTO_ORDERS, AUTO_SOURCES } from '../../shared/autoShow.js';
 import { EFFECT_BEATS, EFFECT_TYPES, MAX_BPM, MIN_BPM } from '../../shared/effects.js';
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
+import { BLOCK_EFFECTS, MIN_BLOCK_BEATS, TIMELINE_BEATS, TRANSITIONS } from '../../shared/timeline.js';
 import { HOST_HELP, isAllowedHost } from '../utils/networkHost.js';
 
 const id = z.string().min(1).max(64);
@@ -55,7 +56,7 @@ export const sceneSchema = z
   .strict();
 
 /** Bump with every change to the saved show format, and add a migration in server/services/projectMigrations.js. */
-export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (3);
+export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (4);
 
 export const chaseSchema = z
   .object({
@@ -83,6 +84,36 @@ export const chaseSchema = z
 
 export const groupSchema = z.object({ id, name: label, fixtureIds: z.array(id).max(256) }).strict();
 
+const hexColor = z.string().regex(/^#[0-9a-f]{6}$/i, 'Colour must be #rrggbb');
+const percent = z.number().min(0).max(100);
+
+/** A block on a timeline lane: a light, a span of beats, a colour and intensity, a transition and an effect. */
+export const timelineBlockSchema = z
+  .object({
+    id,
+    fixtureId: id,
+    start: z.number().min(0).max(Math.max(...TIMELINE_BEATS)),
+    length: z.number().min(MIN_BLOCK_BEATS).max(Math.max(...TIMELINE_BEATS)),
+    color: hexColor,
+    intensity: percent,
+    transition: z.enum(TRANSITIONS),
+    endColor: hexColor,
+    endIntensity: percent,
+    effect: z.enum(BLOCK_EFFECTS),
+    strobeSpeed: z.number().min(1).max(100),
+  })
+  .strict();
+
+/** A timeline: one lane per light, a length in beats, and the blocks drawn on it. It loops, following the tempo. */
+export const timelineSchema = z
+  .object({
+    id,
+    name: label,
+    beats: z.number().refine((beats) => TIMELINE_BEATS.includes(beats), 'Unsupported timeline length'),
+    blocks: z.array(timelineBlockSchema).max(2000),
+  })
+  .strict();
+
 export const projectSchema = z
   .object({
     schemaVersion: z.literal(CURRENT_SCHEMA_VERSION),
@@ -92,6 +123,7 @@ export const projectSchema = z
     scenes: z.array(sceneSchema).max(500),
     chases: z.array(chaseSchema).max(100),
     groups: z.array(groupSchema).max(100),
+    timelines: z.array(timelineSchema).max(100),
   })
   .strict();
 
@@ -103,6 +135,7 @@ export const liveMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('recall'), sceneId: id, fadeMs: z.number().int().min(0).max(60000).default(0) }).strict(),
   z.object({ type: z.literal('chaseStart'), chaseId: id }).strict(),
   z.object({ type: z.literal('chaseStop') }).strict(),
+  z.object({ type: z.literal('timelineStart'), timelineId: id }).strict(),
   z.object({ type: z.literal('release'), fadeMs: z.number().int().min(0).max(60000).default(0) }).strict(),
   z
     .object({ type: z.literal('tempo'), bpm: z.number().min(MIN_BPM).max(MAX_BPM), sync: z.boolean().default(false) })
@@ -179,5 +212,6 @@ export function createEmptyProject() {
     scenes: [],
     chases: [],
     groups: [],
+    timelines: [],
   };
 }

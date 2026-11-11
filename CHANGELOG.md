@@ -7,6 +7,11 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Timeline sequences**: a second way to make a sequence, chosen with a **Steps / Timeline** toggle on Sequences. A
+  timeline has a lane for each light on a grid of beats: drag across lanes to draw blocks, then set their colour,
+  intensity, a fade to another colour and intensity, and a strobe with its speed. Blocks can be moved and resized by
+  dragging or from the keyboard. Timelines loop to the tempo, play from Perform, Home, the search palette and MIDI, and
+  show in the On stage bar. The saved show format moves to version 4; older shows are upgraded when they are opened.
 - **Auto show**: plays your looks or your sequences by itself at the tempo, changing every 1, 2, 4 or 8 bars, in order
   or shuffled, until you stop it. No music needed. Looks cross-fade over one beat and looks that leave every light off
   are skipped. Start it from the new card on Perform or from the search palette; the On stage bar shows it with

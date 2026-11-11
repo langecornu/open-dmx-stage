@@ -53,10 +53,20 @@ function addGroupsAndBeatTiming(project) {
   };
 }
 
+/**
+ * Version 4 adds timelines (one lane per light, blocks drawn on a grid of beats). Existing shows start with none.
+ * @param {Record<string, any>} project
+ * @returns {Record<string, any>}
+ */
+function addTimelines(project) {
+  return { ...project, timelines: Array.isArray(project.timelines) ? project.timelines : [] };
+}
+
 /** Ordered migrations: each takes a project at version `from` and returns one at version `to`. */
 const MIGRATIONS = [
   { from: 1, to: 2, up: addChaseStepIds },
   { from: 2, to: 3, up: addGroupsAndBeatTiming },
+  { from: 3, to: 4, up: addTimelines },
 ];
 
 /**

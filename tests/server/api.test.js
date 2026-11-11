@@ -7,6 +7,7 @@ import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
 import { createApp } from '../../server/app.js';
+import { CURRENT_SCHEMA_VERSION } from '../../server/schemas/projectSchema.js';
 import { MockDriver } from '../../server/clients/mockDriver.js';
 import { DmxEngine } from '../../server/services/dmxEngine.js';
 import { OutputManager } from '../../server/services/outputManager.js';
@@ -40,13 +41,14 @@ after(async () => {
 });
 
 const validProject = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_SCHEMA_VERSION,
   name: 'Test',
   fixtureTypes: [],
   fixtures: [{ id: 'f1', name: 'Par 1', typeId: 'generic-rgb-par', mode: 0, address: 1 }],
   scenes: [{ id: 's1', name: 'Red', values: { 1: 255 } }],
   chases: [],
   groups: [{ id: 'g1', name: 'Front', fixtureIds: ['f1'] }],
+  timelines: [],
 };
 
 const putProject = (body) =>
@@ -120,7 +122,7 @@ describe('API', () => {
     assert.equal(response.status, 200, 'export succeeds');
     assert.match(response.headers.get('content-disposition') ?? '', /attachment; filename="open-dmx-stage-show\.json"/);
     const exported = await response.json();
-    assert.equal(exported.schemaVersion, 3, 'the file carries its schema version');
+    assert.equal(exported.schemaVersion, CURRENT_SCHEMA_VERSION, 'the file carries its schema version');
     assert.equal(exported.fixtures[0].name, 'Par 1', 'the file contains the show');
   });
 
@@ -141,7 +143,7 @@ describe('API', () => {
     const ok = await importShow(oldShow);
     assert.equal(ok.status, 200, 'a version 1 show (no schemaVersion) is accepted');
     const imported = await ok.json();
-    assert.equal(imported.schemaVersion, 3, 'it was upgraded');
+    assert.equal(imported.schemaVersion, CURRENT_SCHEMA_VERSION, 'it was upgraded');
     assert.deepEqual(imported.groups, [], 'it gained an empty group list');
     assert.equal(imported.chases[0].timing, 'seconds', 'its sequences keep their timing in seconds');
     assert.ok(imported.chases[0].steps[0].id, 'chase steps gained stable ids');

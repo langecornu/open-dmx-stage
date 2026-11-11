@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { describe, it } from 'node:test';
 
-import { projectSchema } from '../../server/schemas/projectSchema.js';
+import { CURRENT_SCHEMA_VERSION, projectSchema } from '../../server/schemas/projectSchema.js';
 import { BUILTIN_FIXTURE_TYPES } from '../../server/services/fixtureLibrary.js';
 import { migrateProject } from '../../server/services/projectMigrations.js';
 import { buildPatch, restingValuesOf } from '../../shared/patch.js';
@@ -14,7 +14,7 @@ const patch = buildPatch(project, BUILTIN_FIXTURE_TYPES);
 
 describe('docs/examples/my-rig.json', () => {
   it('is a valid show at the current version', () => {
-    assert.equal(project.schemaVersion, 3, 'current schema version');
+    assert.equal(project.schemaVersion, CURRENT_SCHEMA_VERSION, 'current schema version');
     assert.equal(project.fixtures.length, 3, 'two pars and a moving head');
   });
 

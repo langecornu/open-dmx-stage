@@ -84,9 +84,19 @@ becomes a card with a preview of its colours.
 
 ## 4. Sequences: build a show
 
-A sequence plays looks one after another.
+There are two ways to make a sequence. The toggle at the top of **Sequences** chooses which one you see and which kind
+**New sequence** makes; the app remembers your choice.
 
-1. Open **Sequences** and choose **New sequence**.
+- **Steps**: a chain of your looks, one after another, with a fade and a hold for each.
+- **Timeline**: coloured blocks drawn for each light on a grid of beats, like a lighting timeline.
+
+Both kinds are sequences everywhere else: on Perform, on Home, in the search palette and in the **On stage** bar.
+
+### Steps
+
+A step sequence plays looks one after another.
+
+1. Open **Sequences**, choose **Steps**, then **New sequence**.
 2. Choose **Add step** for each look you want, then pick the look for each step.
 3. Set the **Fade** (seconds to transition in) and **Hold** (seconds to stay) for each step.
 4. Turn **Loop** on to repeat forever, then press **Play**. Press **Stop** to end it.
@@ -99,6 +109,37 @@ A sequence plays looks one after another.
 
 The **timeline** strip shows each look as a block sized by its fade plus hold time, with the fade drawn as a soft ramp.
 The step that is playing is highlighted. Use the arrow buttons to reorder steps and the bin to remove one.
+
+### Timeline
+
+A timeline has one lane for each light in your rig and a grid of beats, with a stronger line at each bar. It plays in a
+loop and follows the tempo: a faster tempo plays it faster.
+
+1. Choose **Timeline**, then **New sequence**. Set its **Length** (1 to 16 bars) and the **Grid** (1, 1/2 or 1/4
+   beat), which is what blocks snap to.
+2. **Drag across a lane** to draw a block over those beats. Drag across several lanes to draw the same block on each
+   of those lights at once.
+3. The new blocks are selected, and the **Block** panel beside the grid edits them all:
+   - **Colour**: a swatch, or any colour with the picker.
+   - **Intensity**: 0 to 100%.
+   - **Transition**: **Fade** goes from the colour and intensity to a **Fade to** colour and an **End intensity**
+     across the block. **None (hold)** keeps the colour.
+   - **Effect**: **Strobe** flashes the light, with a **Strobe speed** from slow to fast. A strobing block is striped.
+   - **Starts at beat** and **Length (beats)**, when one block is selected.
+
+   New blocks are drawn in the look you chose last, so a run of similar blocks needs no repeated edits.
+
+4. **Click** a block to select it, **Shift-click** to add more. **Drag** a block to move it (selected blocks move
+   together), or drag its **right edge** to change its length. A click on an empty part of a lane clears the
+   selection.
+5. Press **Play**. A playhead shows where the timeline is; press **Stop** to end it, or play it from Perform.
+
+Where blocks overlap on a lane, the one drawn last plays. Where a lane has no block, that light is dark. Making a
+timeline shorter cuts the blocks that run past the new end.
+
+**From the keyboard:** the **+** beside a light's name adds a one-bar block on that lane. A block is a button: **Tab**
+to it and press **Enter** to select it, **←** and **→** to move it by one grid step, **Shift** with **←** and **→** to
+shorten or lengthen it, and **Delete** to remove it. Every setting is also in the **Block** panel.
 
 ## 5. Perform: run a show
 

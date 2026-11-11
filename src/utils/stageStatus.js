@@ -55,7 +55,7 @@ function muteSoloLayer(engine, project) {
 
 /**
  * @param {import('../hooks/useLive.js').EngineState} engine
- * @param {{ scenes: { id: string, name: string }[], chases: { id: string, name: string, loop: boolean, steps: unknown[] }[], groups: { id: string, name: string }[], fixtures?: { id: string, name: string }[] }} project
+ * @param {{ scenes: { id: string, name: string }[], chases: { id: string, name: string, loop: boolean, steps: unknown[] }[], groups: { id: string, name: string }[], fixtures?: { id: string, name: string }[] , timelines?: { id: string, name: string, beats: number }[] }} project
  * @returns {StageStatus}
  */
 export function describeStage(engine, project) {
@@ -83,6 +83,19 @@ export function describeStage(engine, project) {
       detail: describeAuto(auto),
       view: null,
       action: { label: 'Stop', message: { type: 'autoStop' } },
+      layers,
+    };
+  }
+
+  if (engine.activeTimelineId) {
+    const timeline = (project.timelines ?? []).find((item) => item.id === engine.activeTimelineId);
+    const bars = timeline ? `${timeline.beats / 4} ${timeline.beats === 4 ? 'bar' : 'bars'}` : '';
+    return {
+      kind: 'sequence',
+      title: timeline?.name ?? 'A sequence',
+      detail: ['Sequence', 'timeline', bars, 'looping'].filter(Boolean).join(' · '),
+      view: 'chases',
+      action: { label: 'Stop', message: { type: 'chaseStop' } },
       layers,
     };
   }

@@ -293,3 +293,85 @@ describe('DmxEngine mute and solo', () => {
     assert.deepEqual(lit(engine.tick(0)), [200, 128, 150]);
   });
 });
+
+describe('DmxEngine timelines', () => {
+  // One RGB light with a dimmer (red 1, green 2, blue 3, dimmer 4) and one without (red 5, green 6, blue 7).
+  // At 120 BPM a beat is 500 ms.
+  const block = (fields) => ({
+    id: fields.id ?? 'b',
+    fixtureId: 'withDimmer',
+    start: 0,
+    length: 4,
+    color: '#ff0000',
+    intensity: 100,
+    transition: 'none',
+    endColor: '#ff0000',
+    endIntensity: 100,
+    effect: 'none',
+    strobeSpeed: 50,
+    ...fields,
+  });
+  function rig(blocks, beats = 8) {
+    const { engine } = createEngine();
+    engine.setFixtureChannels(
+      new Map([
+        ['withDimmer', { red: 1, green: 2, blue: 3, levels: [1, 2, 3, 4], dimmers: [4] }],
+        ['plain', { red: 5, green: 6, blue: 7, levels: [5, 6, 7], dimmers: [] }],
+      ]),
+    );
+    engine.startTimeline({ id: 't', name: 'T', beats, blocks });
+    return engine;
+  }
+  const at = (engine, ms) => [...engine.tick(ms).slice(0, 7)];
+
+  it('shows each lane’s block: colour on the colour channels, intensity on the dimmer or scaling the colour', () => {
+    const engine = rig([
+      block({ intensity: 50 }),
+      block({ id: 'p', fixtureId: 'plain', color: '#0000ff', intensity: 50 }),
+    ]);
+    assert.deepEqual(at(engine, 0), [255, 0, 0, 128, 0, 0, 128]);
+    assert.equal(engine.getState().activeTimelineId, 't');
+  });
+
+  it('leaves a lane dark where it has no block, and loops at its length', () => {
+    const engine = rig([block({ start: 0, length: 2 })], 4);
+    assert.equal(at(engine, 0)[0], 255, 'beat 0: the block');
+    assert.deepEqual(at(engine, 1500).slice(0, 4), [0, 0, 0, 0], 'beat 3: nothing drawn, so dark');
+    assert.equal(at(engine, 2250)[0], 255, 'beat 4.5 is beat 0.5 of the next loop');
+  });
+
+  it('fades colour and intensity across a block', () => {
+    const engine = rig([
+      block({ transition: 'fade', color: '#ff0000', endColor: '#0000ff', intensity: 100, endIntensity: 0 }),
+    ]);
+    assert.deepEqual(
+      at(engine, 1000).slice(0, 4),
+      [128, 0, 128, 128],
+      'halfway (beat 2 of 4): half red, half blue, half on',
+    );
+  });
+
+  it('strobes by switching the light off for most of each flash', () => {
+    const engine = rig([block({ effect: 'strobe', strobeSpeed: 1 })]); // 2 flashes a second: on for the first third
+    assert.equal(at(engine, 0)[3], 255, 'the start of a flash is lit');
+    assert.equal(at(engine, 250)[3], 0, 'half a flash later it is dark');
+  });
+
+  it('follows a tempo change without jumping', () => {
+    const engine = rig([block({ start: 0, length: 1 }), block({ id: 'b2', start: 1, length: 1, color: '#00ff00' })], 4);
+    engine.tick(0);
+    engine.setTempo(60, false, 250); // after half a beat, beats become 1000 ms long
+    assert.equal(at(engine, 500)[0], 255, '250 ms later at 60 BPM is beat 0.75: still the first block');
+    assert.equal(at(engine, 800)[1], 255, 'beat 1.05: the second block');
+  });
+
+  it('stops with Stop, and gives way to a look or a sequence', () => {
+    const engine = rig([block({})]);
+    engine.stopChase();
+    assert.equal(engine.getState().activeTimelineId, null, 'stop ends it');
+    engine.startTimeline({ id: 't', name: 'T', beats: 8, blocks: [block({})] });
+    engine.recallScene({ id: 'look', values: { 2: 200 } }, 0);
+    assert.equal(engine.getState().activeTimelineId, null, 'a look takes over');
+    assert.deepEqual(at(engine, 0).slice(0, 3), [0, 200, 0]);
+  });
+});

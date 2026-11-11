@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "name": "Demo light show",
   "fixtureTypes": [],
   "fixtures": [
@@ -370,5 +370,6 @@
       "name": "Both pars",
       "fixtureIds": ["par-1", "par-2"]
     }
-  ]
+  ],
+  "timelines": []
 }
