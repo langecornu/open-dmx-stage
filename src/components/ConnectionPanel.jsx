@@ -2,6 +2,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { api } from '../api.js';
+import { DRIVER_LABELS } from '../utils/drivers.js';
 import { DetectAdapter } from './DetectAdapter.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
 import { TAB_FOR_DRIVER } from './guide/guideTabs.js';
@@ -14,24 +15,23 @@ const ConnectionHelp = lazy(() =>
 );
 
 const INTERFACES = [
-  { id: 'mock', label: 'Simulator', hint: 'No hardware needed. Good for trying things out.' },
+  { id: 'mock', label: DRIVER_LABELS.mock, hint: 'No hardware needed. Good for trying things out.' },
   {
     id: 'open-dmx',
-    label: 'USB-DMX cable',
+    label: DRIVER_LABELS['open-dmx'],
     hint: 'Passive FTDI cables, such as the DSD TECH SH-RS09B and the ENTTEC Open DMX USB.',
   },
   {
     id: 'enttec-pro',
-    label: 'ENTTEC DMX USB Pro',
+    label: DRIVER_LABELS['enttec-pro'],
     hint: 'Interfaces with a built-in processor, including DMXKing ultraDMX.',
   },
-  { id: 'artnet', label: 'Art-Net', hint: 'DMX over your network to an Art-Net node or lighting app.' },
-  { id: 'sacn', label: 'sACN (E1.31)', hint: 'DMX over your network, multicast or to one device.' },
+  { id: 'artnet', label: DRIVER_LABELS.artnet, hint: 'DMX over your network to an Art-Net node or lighting app.' },
+  { id: 'sacn', label: DRIVER_LABELS.sacn, hint: 'DMX over your network, multicast or to one device.' },
 ];
 
 const DEFAULT_UNIVERSE = { artnet: 0, sacn: 1 };
 const UNIVERSE_LIMITS = { artnet: [0, 32767], sacn: [1, 63999] };
-const DRIVER_LABELS = Object.fromEntries(INTERFACES.map((entry) => [entry.id, entry.label]));
 
 const isSerial = (driver) => driver === 'open-dmx' || driver === 'enttec-pro';
 const isNetwork = (driver) => driver === 'artnet' || driver === 'sacn';

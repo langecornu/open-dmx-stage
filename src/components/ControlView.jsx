@@ -94,49 +94,57 @@ export function ControlView({ project, patch, live }) {
       {patched.length === 0 ? (
         <EmptyState title="No lights yet" hint="Add your fixtures in Setup, then come back here to colour them." />
       ) : (
-        <>
-          <ColorStudio
-            color={color}
-            brightness={brightness}
-            liveColor={liveColor}
-            isInSync={isInSync}
-            targetLabel={targetLabel}
-            onColor={handleColor}
-            onBrightness={handleBrightness}
-          />
-          <div className="section-bar">
-            <h2 className="section-title">Fixtures</h2>
-            <span className="pill">
-              {selected.size > 0 ? (
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  style={{ padding: 0 }}
-                  onClick={() => setSelected(new Set())}
-                >
-                  Clear selection
-                </button>
-              ) : (
-                'Tap fixtures to pick which ones to colour'
-              )}
-            </span>
+        <div className="lights-layout">
+          <div className="lights-fixtures">
+            <div className="section-bar">
+              <h2 className="section-title">Fixtures</h2>
+              <span className="section-actions">
+                {selected.size > 0 ? (
+                  <button type="button" className="btn btn-ghost" onClick={() => setSelected(new Set())}>
+                    Clear selection
+                  </button>
+                ) : (
+                  <span className="view-sub">Tap fixtures to pick which ones to colour</span>
+                )}
+                {selected.size < patched.length ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => setSelected(new Set(patched.map((fixture) => fixture.id)))}
+                  >
+                    Select all
+                  </button>
+                ) : null}
+              </span>
+            </div>
+            <div className="fixture-grid">
+              {patched.map((fixture) => (
+                <FixtureTile
+                  key={fixture.id}
+                  fixture={fixture}
+                  range={rangeOf(fixture)}
+                  patch={patch}
+                  valueOf={valueOf}
+                  overridden={overridden}
+                  isSelected={selected.has(fixture.id)}
+                  onToggleSelect={handleToggleSelect}
+                  onSet={handleSet}
+                />
+              ))}
+            </div>
           </div>
-          <div className="fixture-grid">
-            {patched.map((fixture) => (
-              <FixtureTile
-                key={fixture.id}
-                fixture={fixture}
-                range={rangeOf(fixture)}
-                patch={patch}
-                valueOf={valueOf}
-                overridden={overridden}
-                isSelected={selected.has(fixture.id)}
-                onToggleSelect={handleToggleSelect}
-                onSet={handleSet}
-              />
-            ))}
-          </div>
-        </>
+          <aside className="lights-inspector" aria-label="Colour and brightness">
+            <ColorStudio
+              color={color}
+              brightness={brightness}
+              liveColor={liveColor}
+              isInSync={isInSync}
+              targetLabel={targetLabel}
+              onColor={handleColor}
+              onBrightness={handleBrightness}
+            />
+          </aside>
+        </div>
       )}
     </section>
   );

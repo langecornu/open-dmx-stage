@@ -22,11 +22,17 @@ const idle = {
   programmerChannels: [],
 };
 
-function renderBar(engine) {
+function renderBar(engine, currentView = null) {
   const send = vi.fn();
   const onNavigate = vi.fn();
   const view = render(
-    <StageBar engine={{ ...idle, ...engine }} project={project} send={send} onNavigate={onNavigate} />,
+    <StageBar
+      engine={{ ...idle, ...engine }}
+      project={project}
+      send={send}
+      onNavigate={onNavigate}
+      currentView={currentView}
+    />,
   );
   return { ...view, send, onNavigate };
 }
@@ -50,6 +56,12 @@ describe('StageBar', () => {
     const { onNavigate } = renderBar({ activeChaseId: 'c1', chaseStep: 0 });
     await userEvent.click(screen.getByRole('button', { name: 'Open Sequences' }));
     expect(onNavigate).toHaveBeenCalledWith('chases');
+  });
+
+  it('does not offer to open the screen you are already on', () => {
+    renderBar({ activeChaseId: 'c1', chaseStep: 0 }, 'chases');
+    expect(screen.queryByRole('button', { name: /^Open/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
   });
 
   it('makes blackout unmistakable and turns the lights back on', async () => {

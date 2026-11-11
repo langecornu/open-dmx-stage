@@ -6,7 +6,7 @@ import { Icon } from './Icon.jsx';
 const KIND_ICONS = { blackout: 'power', sequence: 'chases', look: 'scenes', manual: 'sliders', idle: 'control' };
 const VIEW_NAMES = { chases: 'Sequences', scenes: 'Looks', control: 'Lights' };
 
-export function StageBar({ engine, project, send, onNavigate }) {
+export function StageBar({ engine, project, send, onNavigate, currentView = null }) {
   const stage = describeStage(engine, project);
   const isLive = stage.kind !== 'idle';
 
@@ -39,7 +39,7 @@ export function StageBar({ engine, project, send, onNavigate }) {
       ) : null}
 
       <div className="stage-actions">
-        {stage.view ? (
+        {stage.view && stage.view !== currentView ? (
           <button type="button" className="btn btn-ghost" onClick={() => onNavigate(stage.view)}>
             Open {VIEW_NAMES[stage.view]}
           </button>

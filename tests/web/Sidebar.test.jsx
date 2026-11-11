@@ -11,6 +11,7 @@ describe('Sidebar', () => {
     render(<Sidebar current="control" onSelect={vi.fn()} />);
     const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(VIEWS.map((view) => view.label)).toEqual([
+      'Home',
       'Lights',
       'Looks',
       'Sequences',
@@ -47,6 +48,33 @@ describe('Sidebar', () => {
     render(<Sidebar current="control" onSelect={vi.fn()} liveViews={['chases']} />);
     expect(screen.getByRole('button', { name: /Sequences.*on stage/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Looks' })).toBeInTheDocument();
+  });
+
+  it('shows the output in the footer and opens Output from it', async () => {
+    const user = userEvent.setup();
+    const onOpenOutput = vi.fn();
+    render(
+      <Sidebar
+        current="home"
+        onSelect={vi.fn()}
+        output={{ driver: 'open-dmx', connected: true }}
+        onOpenOutput={onOpenOutput}
+      />,
+    );
+    const card = screen.getByRole('button', { name: /USB-DMX cable/ });
+    expect(card).toHaveTextContent('Connected');
+    await user.click(card);
+    expect(onOpenOutput).toHaveBeenCalled();
+  });
+
+  it.each([
+    [{ driver: 'enttec-pro', connected: false }, true, 'Not connected'],
+    [{ driver: 'enttec-pro', connected: true }, false, 'Server offline'],
+  ])('says in words when the output is not usable (%j, server up: %s)', (output, isServerUp, expected) => {
+    render(
+      <Sidebar current="home" onSelect={vi.fn()} output={output} isServerUp={isServerUp} onOpenOutput={vi.fn()} />,
+    );
+    expect(screen.getByRole('button', { name: new RegExp(expected) })).toBeInTheDocument();
   });
 
   it('has no automated accessibility violations', async () => {

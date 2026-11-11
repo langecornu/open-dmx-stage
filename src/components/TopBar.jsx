@@ -2,6 +2,8 @@
 import { Icon } from './Icon.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
 
+const isMac = () => typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform ?? '');
+
 const SAVE_LABELS = { saved: 'Saved', saving: 'Saving…', pending: 'Unsaved', error: 'Save failed' };
 
 export function TopBar({
@@ -13,6 +15,7 @@ export function TopBar({
   engine,
   send,
   onOpenOutput,
+  onOpenSearch,
   theme,
   onToggleTheme,
 }) {
@@ -48,6 +51,15 @@ export function TopBar({
         {SAVE_LABELS[saveStatus]}
       </span>
       <div className="topbar-spacer" />
+      {onOpenSearch ? (
+        <button type="button" className="search-button" onClick={onOpenSearch} aria-label="Search">
+          <Icon name="search" size={16} />
+          <span>Search or jump to…</span>
+          <span className="search-hint">
+            <kbd>{isMac() ? '⌘' : 'Ctrl'}</kbd> <kbd>K</kbd>
+          </span>
+        </button>
+      ) : null}
       <label className="master">
         <span className="master-label">Master</span>
         <input
