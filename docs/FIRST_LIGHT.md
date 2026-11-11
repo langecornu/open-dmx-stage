@@ -1,8 +1,10 @@
 # First light: testing your lights for the first time
 
-This is a short checklist for the very first time you connect real lights. Nothing in Open DMX Stage has been verified
-on real hardware yet, so the point of this page is twofold: to get your lights working, and to record what happened so
-the documentation can say what is known to work. Allow about 30 minutes.
+This is a short checklist for the very first time you connect real lights. The first run on real hardware is recorded at
+the end of this page ([what happened](#what-happened-on-the-first-run)); most of Open DMX Stage has still not been tried on
+lights, so the point of this page is twofold: to get your lights working, and to record what happened so the
+documentation can say what is known to work. Allow about 30 minutes, and longer the first time a light is in an
+unexpected mode.
 
 If something goes wrong, nothing here can hurt the lights: the app only sends standard DMX values. Still, keep the
 moving head clear of people and objects, and never open a light that is plugged in.
@@ -23,15 +25,25 @@ computer --USB--> [USB-DMX cable] --DMX--> IN [Par 1] OUT --DMX--> IN [Par 2] OU
 Every light has a small display and four buttons (MENU, UP, DOWN, ENTER). The starter show in this repository,
 [`docs/examples/my-rig.json`](examples/my-rig.json), expects:
 
-| Light       | Mode on the display      | Address  | Channels used |
-| ----------- | ------------------------ | -------- | ------------- |
-| Par 1       | DMX, 7 channel           | **A001** | 1 to 7        |
-| Par 2       | DMX, 7 channel           | **A008** | 8 to 14       |
-| Moving head | DMX, **CH13** (13 chan.) | **A020** | 20 to 32      |
+| Light       | Mode on the display                | Address  | Channels used |
+| ----------- | ---------------------------------- | -------- | ------------- |
+| Par 1       | DMX (its address entry, see below) | **001**  | 1 to 7        |
+| Par 2       | DMX (its address entry, see below) | **008**  | 8 to 14       |
+| Moving head | DMX, **CH13** (13 chan.)           | **A020** | 20 to 32      |
 
-Check the manual of each light for the exact menu names. **If your pars show a different number of channels** (for
-example 3 or 6), the starter show will not match them: in Setup remove the pars and add the fixture that fits, or tell
-me the channel table and I will add it.
+Three things that cost an hour on the first run, so do them in this order:
+
+1. **Lights start in a built-in program, and the cable is ignored until DMX is chosen.** Pars like these cycle through
+   programs (a display such as `so04` or `cc01` means a program). Press **MENU** until you reach the address entry, set
+   the address with UP and DOWN, and press **ENTER**. The display should stay on the address (for example `d001`).
+2. **The menu name may not match what the light does.** The manual of one 36 LED par calls `d001` "3 channel" and `A001`
+   "7 channel", but the pars on the first run had no `A001` entry and `d001` behaved as the 7-channel layout (channel 1
+   dimmer, 2 red, 3 green, 4 blue). Do not trust the label: use the one-channel-at-a-time test below.
+3. **Give each light its own channels, with no overlap.** A 7-channel par takes 7 channels, so the second one goes at 8,
+   not 4. Overlapping addresses make lights read each other's data and show odd colours or flicker.
+
+If your lights use a different number of channels from the starter show, remove the pars in Setup and add the fixture
+that fits (or describe it on the **Fixtures** screen).
 
 ## 2. Start the app
 
@@ -75,18 +87,28 @@ Every look keeps the moving head centred, because a look that does not mention p
 
 ## If something does not work
 
-| What you see                                              | Try this                                                                                                                                                                 |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| The top bar says **Server offline**                       | The server is not running, or you opened the page from another address. Use the address the terminal prints.                                                             |
-| **Test lights** is greyed out                             | The show has no lights yet. Import the starter show (step 3).                                                                                                            |
-| The port is not in the list, or "That port was not found" | Unplug and replug the cable, press **Refresh**. On Windows the FTDI driver may need installing.                                                                          |
-| **Connect** says "Another program is using this cable"    | Close the other program, or unplug and replug the cable, then press **Connect** again.                                                                                   |
-| **DMX ready** but no light reacts                         | Check the cable direction (computer to **IN** of the first light), the DMX mode and address on each display, and try a different DMX cable.                              |
-| Lights flicker                                            | Passive cables are timed by software. Close other busy programs, try a USB port straight on the computer, and add a 120 ohm terminator to the **OUT** of the last light. |
-| One light shows the wrong colours                         | Its mode or address on the display does not match the show. Compare it with step 1.                                                                                      |
-| "This computer did not allow access to the port"          | On Linux add your user to the `dialout` group and log in again; see the connection guide for your system.                                                                |
-| A par is stuck in an automatic or sound program           | Its display is in auto or sound mode, not DMX. Set it to DMX.                                                                                                            |
-| The moving head restarted                                 | Channel 13 (Reset) was set to 250 or more. Return it to 0.                                                                                                               |
+| What you see                                                                 | Try this                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The top bar says **Server offline**                                          | The server is not running, or you opened the page from another address. Use the address the terminal prints.                                                                                                                                                                                             |
+| **Test lights** is greyed out                                                | The show has no lights yet. Import the starter show (step 3).                                                                                                                                                                                                                                            |
+| The port is not in the list, or "That port was not found"                    | Unplug and replug the cable, press **Refresh**. On Windows the FTDI driver may need installing.                                                                                                                                                                                                          |
+| **Connect** says "Another program is using this cable"                       | Close the other program, or unplug and replug the cable, then press **Connect** again.                                                                                                                                                                                                                   |
+| **DMX ready** but no light reacts                                            | Check the cable direction (computer to **IN** of the first light), the DMX mode and address on each display, and try a different DMX cable.                                                                                                                                                              |
+| Lights flicker                                                               | First check that no two lights share channels (a 7-channel par at 4 overlaps one at 1) and that each is in DMX mode with its address confirmed with ENTER. Only then: close other busy programs, try a USB port straight on the computer, and add a 120 ohm terminator to the **OUT** of the last light. |
+| One light shows the wrong colours, or another light's colours                | Its address or layout does not match the show. Put **both lights on the same address** and send one channel at a time (see below): each should behave the same, and the colour each channel gives is its true layout.                                                                                    |
+| "This computer did not allow access to the port"                             | On Linux add your user to the `dialout` group and log in again; see the connection guide for your system.                                                                                                                                                                                                |
+| A par is stuck in a program (display like `so04` or `cc01`, a fixed pattern) | It is not in DMX mode. Go to its address entry, set the address, and press **ENTER**. Unplug the DMX cable: if the pattern stops, the light was reacting to the cable but not decoding it.                                                                                                               |
+| The moving head restarted                                                    | Channel 13 (Reset) was set to 250 or more. Return it to 0.                                                                                                                                                                                                                                               |
+
+## Find out what a light's channels really do
+
+When colours come out wrong, stop guessing and test **one channel at a time**:
+
+1. Put the lights on the **same address**, so they all receive the same data.
+2. Send one channel at full (channel 2, say) and see what colour each light shows. A light with a master dimmer on
+   channel 1 stays dark until channel 1 is up too, so try channel 1 plus channel 2, then 1 plus 3, then 1 plus 4.
+3. Write the layout down (for the pars on the first run: 1 dimmer, 2 red, 3 green, 4 blue), then add the matching
+   fixture in Setup or on the **Fixtures** screen.
 
 ## Optional: test the cable without the app
 
@@ -120,3 +142,27 @@ Anything else:
 
 With a result, the USB-output decision record ([ADR 0003](adr/0003-passive-usb-cables-are-software-timed.md)) and the
 connection guide can state what has been verified instead of what is expected.
+
+## What happened on the first run
+
+**Recorded 2026-11-10.** Computer: a Mac (macOS 26.6, Apple silicon), Node 24.22. Cable: a DSD TECH SH-RS09B passive USB-DMX
+cable (FTDI FT232R, USB 0403:6001), connected with the app's **USB-DMX cable** interface. Lights: two 36 LED RGB par lights.
+
+| Question                  | Result                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Detect adapter said       | It did not answer, as a passive cable does.                                                             |
+| Connected and "DMX ready" | Yes, at the first try.                                                                                  |
+| Serial settings           | 250000 baud, 8 data bits, no parity, 2 stop bits (read back from the port).                             |
+| Colours, brightness       | All colours and the brightness slider worked on both pars, steady, once the pars were set up correctly. |
+| Flicker                   | None once each par had its own addresses. It flickered when the addresses overlapped.                   |
+| Par layout at `d001`      | Channel 1 dimmer, 2 red, 3 green, 4 blue (channels 5 to 7 not tested).                                  |
+| Moving head               | Not tried yet (not delivered).                                                                          |
+
+What went wrong along the way, so it is quicker next time:
+
+- The pars started in built-in programs and ignored the cable until their address was set and confirmed with ENTER.
+- The display labels did not match the layout (see step 1), and one par's address was off by a few until the lights were
+  put on the same address and tested one channel at a time.
+- The "flicker" and the odd colours were address overlap and wrong layouts, not the timing of the cable. A different
+  way of making the DMX break was tried and made no difference, and the long serial break in the driver stays.
+- Not tried: other computers and operating systems, long sessions, ENTTEC Pro adapters, network output on real lights.

@@ -48,12 +48,12 @@ flowchart TD
     F -- "No" --> H["Simulator"]
 ```
 
-| What you have                                                             | Choose                  | Notes                                                             |
-| ------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------- |
-| Cheap USB cable with an XLR plug (DSD TECH SH-RS09B, ENTTEC Open DMX USB) | **USB-DMX cable**       | Experimental. See [section 3](#3-passive-or-active-usb-adapters). |
-| USB box described as "Pro" (ENTTEC DMX USB Pro, DMXKing ultraDMX)         | **ENTTEC DMX USB Pro**  | Steady timing.                                                    |
-| Network box (Art-Net or sACN node)                                        | **Art-Net** or **sACN** | The most predictable option.                                      |
-| Nothing yet                                                               | **Simulator**           | Try the app with no hardware.                                     |
+| What you have                                                             | Choose                  | Notes                                                                       |
+| ------------------------------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------- |
+| Cheap USB cable with an XLR plug (DSD TECH SH-RS09B, ENTTEC Open DMX USB) | **USB-DMX cable**       | Verified once on a Mac. See [section 3](#3-passive-or-active-usb-adapters). |
+| USB box described as "Pro" (ENTTEC DMX USB Pro, DMXKing ultraDMX)         | **ENTTEC DMX USB Pro**  | Steady timing.                                                              |
+| Network box (Art-Net or sACN node)                                        | **Art-Net** or **sACN** | The most predictable option.                                                |
+| Nothing yet                                                               | **Simulator**           | Try the app with no hardware.                                               |
 
 SoundSwitch's own dongles (Micro DMX, Control One) use a proprietary protocol and are **not supported**.
 
@@ -87,7 +87,8 @@ tested on real equipment, so unplug your lights from the cable while you experim
 5. **Ask the adapter.** On the **Output** screen choose **USB-DMX cable**, pick the port and press **Detect adapter**.
    The app asks the adapter to identify itself: an adapter with its own processor (ENTTEC Pro style) answers, and a
    passive cable stays silent. The app then selects the matching interface for you. Silence is a strong hint, not
-   proof (a wrong port or a busy device is silent too), and this check has not been tried on real hardware yet.
+   proof (a wrong port or a busy device is silent too). It has been tried on one passive cable, which stayed silent as
+   expected, and not yet on an active adapter.
 6. **Try it here.** Choose one type and press **Connect**. If the lights stay dark, switch to the other type and try
    again. Only the correct one works.
 
@@ -142,8 +143,10 @@ What the port is called:
 
 ![The USB cable page of the in-app guide](images/14-guide-usb-cable.jpg)
 
-> This cable has no processor, so the computer produces the DMX timing. This option is **experimental and has not been
-> tested on real hardware yet**. If lights flicker: close other programs, try a different USB port, or use an active
+> This cable has no processor, so the computer produces the DMX timing. It has been **verified once** (a DSD TECH
+> SH-RS09B on a Mac, two LED pars, steady colours, no flicker), not on every computer. If lights flicker, first check
+> that no two lights overlap on the same channels and that each light is in DMX mode (see the
+> [first light checklist](FIRST_LIGHT.md)); then close other programs, try a different USB port, or use an active
 > adapter or a network interface.
 
 ### 5.3 ENTTEC DMX USB Pro (and DMXKing)
@@ -315,7 +318,8 @@ top bar says, and any message shown in the Connection card.
 **Do I need a driver?** Often not, but some systems need the FTDI driver for USB adapters. If your port does not appear, see
 the troubleshooting table above.
 
-**Is it safe to try the wrong adapter type?** It is unlikely to cause harm and the lights simply do not respond, but this has not been tested on real equipment. Unplug your lights from the cable while you experiment if you want to be careful.
+**Is it safe to try the wrong adapter type?** It is unlikely to cause harm and the lights simply do not respond, though only the passive cable has been tried on real equipment. Unplug your lights from the cable while you experiment if you want to be careful.
 
-**Has this been tested on real lights?** The simulator and Art-Net output have been checked. The USB drivers follow the
-published formats but have not been tested on real hardware yet, so report what you find.
+**Has this been tested on real lights?** The simulator and Art-Net output (to a program on the same computer) have been checked, and the passive USB cable has been
+verified once on real lights (see the [first light checklist](FIRST_LIGHT.md)). The ENTTEC Pro driver follows the
+published format but has not been tried on real hardware yet, so report what you find.

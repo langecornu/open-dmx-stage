@@ -48,8 +48,8 @@ Open http://localhost:5173. Requires Node.js 24.15 or newer (24 LTS). The tests 
 Open the **Output** screen, choose your interface (USB-DMX cable, ENTTEC Pro, Art-Net or sACN), pick the port or enter
 an address, and press **Connect**. Supported interfaces, platform notes and troubleshooting are in the
 [install guide](docs/INSTALL.md#4-connect-real-dmx-lights) and the
-full [connection guide](docs/CONNECTION.md). USB output is experimental and untested on real hardware so
-far.
+full [connection guide](docs/CONNECTION.md). USB output with a passive cable has been verified once: a DSD TECH SH-RS09B passive cable on a Mac (macOS 26, Apple silicon) driving two LED par lights, with steady colours and no flicker. Other adapters
+(ENTTEC Pro and compatibles) and network output have not yet been tried on real lights.
 
 ## Scripts
 

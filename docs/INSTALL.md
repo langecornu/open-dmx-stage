@@ -28,13 +28,13 @@ folder and it picks up `.nvmrc`.
 
 You need a way to get DMX out of the computer. Pick **one** of these:
 
-| Interface                                   | Examples                                                             | Status                                                                                                                                      |
-| ------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **USB-DMX cable (passive FTDI "Open DMX")** | DSD TECH SH-RS09B, ENTTEC Open DMX USB, most cheap USB-to-DMX cables | Supported, **experimental**. The computer generates the DMX timing, so it needs a quiet, unloaded machine. Not yet tested on real hardware. |
-| **ENTTEC DMX USB Pro and compatibles**      | ENTTEC DMX USB Pro, DMXKing ultraDMX Micro/Pro                       | Supported (these have a built-in processor, so timing is reliable). Not yet tested on real hardware.                                        |
-| **Art-Net** (network)                       | Art-Net nodes and gateways, many lighting apps and visualizers       | Supported.                                                                                                                                  |
-| **sACN / E1.31** (network)                  | sACN nodes and gateways, many lighting apps and visualizers          | Supported.                                                                                                                                  |
-| **Simulator**                               | none                                                                 | Always available.                                                                                                                           |
+| Interface                                   | Examples                                                             | Status                                                                                                                                                           |
+| ------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **USB-DMX cable (passive FTDI "Open DMX")** | DSD TECH SH-RS09B, ENTTEC Open DMX USB, most cheap USB-to-DMX cables | Supported. Verified once (DSD TECH SH-RS09B, a Mac, two LED pars, steady colours). The computer generates the DMX timing, so it needs a quiet, unloaded machine. |
+| **ENTTEC DMX USB Pro and compatibles**      | ENTTEC DMX USB Pro, DMXKing ultraDMX Micro/Pro                       | Supported (these have a built-in processor, so timing is reliable). Not yet tried on real lights.                                                                |
+| **Art-Net** (network)                       | Art-Net nodes and gateways, many lighting apps and visualizers       | Supported.                                                                                                                                                       |
+| **sACN / E1.31** (network)                  | sACN nodes and gateways, many lighting apps and visualizers          | Supported.                                                                                                                                                       |
+| **Simulator**                               | none                                                                 | Always available.                                                                                                                                                |
 
 You will also need a DMX cable (3-pin or 5-pin XLR to match your fixtures) and at least one DMX fixture. Set the
 fixture's DMX address and mode on the fixture itself so they match the **Setup** screen. A 120 Ω terminator on the last

@@ -234,5 +234,5 @@ _Unsaved_, _Saving…_ or _Saved_. The data lives in `server/data/project.json` 
 
 - One DMX universe (512 channels).
 - Export to Engine DJ / SoundSwitch is not available yet.
-- USB output has not been tested on real hardware yet. Network output (Art-Net and sACN) is the most predictable path.
+- USB output has been verified with one passive cable (DSD TECH SH-RS09B) on one Mac with two LED pars. ENTTEC Pro adapters and network output (Art-Net and sACN) have not yet been tried on real lights, and nothing has been tried on Windows or Linux.
 - SoundSwitch dongles are not supported.
