@@ -11,6 +11,8 @@ the project follows [Semantic Versioning](https://semver.org/).
   or shuffled, until you stop it. No music needed. Looks cross-fade over one beat and looks that leave every light off
   are skipped. Start it from the new card on Perform or from the search palette; the On stage bar shows it with
   **Stop**, and pressing a pad takes over.
+- **Setup: live lamps and the next free address**: each light in your rig glows in the colour it is really sending, and
+  the add bar says which DMX address is free next for the chosen light and quantity.
 - **Sequences: faster building**: Add step carries on with the next look and the same timing as the last step, steps
   can be duplicated, and a whole sequence can be duplicated.
 - **Looks: a live capture strip** shows a swatch of what the lights are doing right now beside the name field, and each
@@ -51,6 +53,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **The server could hang while stopping and keep port 4000 busy.** With the app open in a browser, Ctrl+C or a
+  restart during development waited forever ("Waiting for graceful termination"), so the next start could not use the
+  port. Stopping now disconnects the browsers (they reconnect when the server is back), always ends within 3 seconds
+  even if the USB output hangs, and a second Ctrl+C quits at once.
 - **Follow the music did not lock on real music** ("waiting for a steady beat"). It counted bass hits, which fails when a
   bass line is held under the kick, when snares and hi-hats add hits, or when a laptop microphone hears little bass. It
   now measures how hard the sound hits in the low band and the whole sound, and finds the tempo from how that pattern

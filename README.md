@@ -7,6 +7,10 @@ fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a
 
 ## Features
 
+- **Home and search:** a start screen with a setup checklist and quick launch pads, a command palette on **Ctrl/⌘ K**
+  to jump anywhere or run anything, and a **?** shortcut list.
+- **Always know what is on stage:** a bar on every screen says what is playing and gives the one button that stops it,
+  with a live view of every light in the colour it is really sending.
 - **Colour studio:** quick colours, a custom colour picker and brightness, applied to all or selected fixtures.
 - **Looks:** save what is on stage and recall it with a configurable fade.
 - **Sequences:** chain looks with fade and hold times, loop them, and watch a visual timeline.
@@ -38,7 +42,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173. Requires Node.js 24.15 or newer (24 LTS). The tests need it; the app itself also starts on older versions.
+Open http://localhost:5173. Requires Node.js 24.15 or newer (24 LTS; `nvm install && nvm use` reads `.nvmrc`). The tests need it; the app itself also starts on older versions.
 
 - **[Install guide](docs/INSTALL.md):** dependencies, connecting a DMX interface, configuration, troubleshooting.
 - **[Usage guide](docs/USAGE.md):** a tour of every screen, with screenshots.
@@ -78,9 +82,40 @@ full [connection guide](docs/CONNECTION.md). USB output with a passive cable has
   saved atomically with a rolling backup, and exportable from the Setup screen.
 - `shared/patch.js` resolves fixtures to absolute DMX channels for both the server and the browser.
 
+## Project layout
+
+| Folder     | What is in it                                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| `server/`  | Express API, WebSocket, DMX engine and output drivers (`clients/`), show storage (`data/`)                          |
+| `shared/`  | Code used by both sides, such as the patch resolver                                                                 |
+| `src/`     | The React app: `components/`, `hooks/`, `utils/` (pure helpers), `styles/` (`tokens.css`, `app.css`, `console.css`) |
+| `tests/`   | `server/` (`node:test`) and `web/` (Vitest and Testing Library, with axe accessibility checks)                      |
+| `docs/`    | Install, usage and connection guides, coding standards, decisions (`adr/`) and the screenshots                      |
+| `scripts/` | Hardware ramp test, demo show, bundle size and licence checks                                                       |
+
+## Working on another computer
+
+Copying the whole folder works, but some things do not travel with the code, so check these:
+
+1. **Reinstall dependencies, do not copy them.** Delete `node_modules` and `dist`, install Node 24 (`nvm install`),
+   then run `npm ci`. The USB driver (`serialport`) is built per operating system and chip.
+2. **Your show is not in git.** It lives in `server/data/project.json` (with `project.json.bak`), and the chosen output
+   in `server/data/output.json`. They are in the copied folder. Export the show from **Setup** as a backup as well.
+3. **The serial port name is different on every computer** (for example `/dev/tty.usbserial-XXXX` on macOS, `COM3` on
+   Windows). Open **Output**, pick the port again and press **Connect**.
+4. **Your `.env`** (if you made one) is git-ignored and is copied with the folder. Start from `.env.example` otherwise.
+5. **Browser settings stay in the old browser:** theme, the Perform MIDI mapping and the welcome screen are saved in the
+   browser's local storage, not in the folder.
+6. **GitHub:** sign in again on the new computer (`gh auth login`). The `.git` folder carries the remote and the commit
+   identity set for this repository. Check with `git remote -v`, `git config user.email` and `gh api user --jq .login`.
+7. Run `npm run check` once to confirm the new machine is healthy, then `npm run dev`.
+
+Day to day: branch from `main`, keep pull requests small, run `npm run check`, update `CHANGELOG.md` and the docs for
+anything users can see. [CONTRIBUTING.md](CONTRIBUTING.md) has the rules.
+
 ## Project status
 
-Version 0.1. One universe. Planned: more DMX interfaces, a beat-synced timeline, and export to other lighting systems. Issues and pull requests are welcome.
+Version 0.1 (see [CHANGELOG.md](CHANGELOG.md) for what is coming in the next release). One universe. Planned: more DMX interfaces, a beat-synced timeline, and export to other lighting systems. Issues and pull requests are welcome.
 
 ## Contributing
 
