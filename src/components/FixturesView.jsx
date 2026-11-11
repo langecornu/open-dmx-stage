@@ -15,7 +15,26 @@ import { Icon } from './Icon.jsx';
 
 const EXAMPLE_ID = 'uking-40w-beam-moving-head';
 
+function matchesFilter(item, filter) {
+  const needle = filter.trim().toLowerCase();
+  return needle === '' || `${item.manufacturer ?? ''} ${item.name}`.toLowerCase().includes(needle);
+}
+
+function channelSummary(item) {
+  const counts = item.modes.map((mode) => mode.channels.length);
+  if (counts.length === 0) {
+    return 'No modes';
+  }
+  const low = Math.min(...counts);
+  const high = Math.max(...counts);
+  if (low === high) {
+    return `${low} channel${low === 1 ? '' : 's'}`;
+  }
+  return `${low}–${high} channels`;
+}
+
 export function FixturesView({ project, library, update }) {
+  const [filter, setFilter] = useState('');
   const [selectedId, setSelectedId] = useState(project.fixtureTypes[0]?.id ?? EXAMPLE_ID);
   const own = project.fixtureTypes;
   const builtIn = library.filter((type) => !own.some((mine) => mine.id === type.id));
@@ -57,9 +76,11 @@ export function FixturesView({ project, library, update }) {
         aria-current={item.id === selectedId}
         onClick={() => setSelectedId(item.id)}
       >
-        <span>
+        <span className="fixture-item">
           <strong>{item.name}</strong>
-          {item.manufacturer ? <small className="fixture-meta"> {item.manufacturer}</small> : null}
+          <small className="fixture-meta">
+            {[item.manufacturer, channelSummary(item)].filter(Boolean).join(' · ')}
+          </small>
         </span>
       </button>
     </li>
@@ -87,17 +108,33 @@ export function FixturesView({ project, library, update }) {
 
       <div className="split">
         <div className="fixture-lists">
-          <h2 className="section-title">Your fixtures</h2>
+          <label className="field">
+            Filter fixtures
+            <input
+              className="input"
+              type="search"
+              value={filter}
+              placeholder="Name or maker"
+              onChange={(event) => setFilter(event.target.value)}
+            />
+          </label>
+          <h2 className="section-title">
+            Your fixtures
+            <span className="section-count">{own.length}</span>
+          </h2>
           {own.length === 0 ? (
             <p className="view-sub">None yet. Make a copy of the example, or choose New fixture.</p>
           ) : (
             <ul className="card list" aria-label="Your fixtures">
-              {own.map(renderItem)}
+              {own.filter((item) => matchesFilter(item, filter)).map(renderItem)}
             </ul>
           )}
-          <h2 className="section-title">Built in</h2>
+          <h2 className="section-title">
+            Built in
+            <span className="section-count">{builtIn.length}</span>
+          </h2>
           <ul className="card list" aria-label="Built-in fixtures">
-            {builtIn.map(renderItem)}
+            {builtIn.filter((item) => matchesFilter(item, filter)).map(renderItem)}
           </ul>
         </div>
 

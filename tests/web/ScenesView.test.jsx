@@ -153,6 +153,36 @@ describe('ScenesView', () => {
     expect(next.chases[0].steps.map((step) => step.sceneId)).toEqual(['cool']);
   });
 
+  it('duplicates a look right after the original, with its own id and a copy name', async () => {
+    const user = userEvent.setup();
+    const { last } = renderView();
+    await user.click(screen.getByRole('button', { name: 'Duplicate look Warm wash' }));
+    const { scenes } = last();
+    expect(scenes.map((scene) => scene.name)).toEqual(['Warm wash', 'Warm wash copy', 'Cool wash']);
+    expect(scenes[1].values).toEqual(SCENES[0].values);
+    expect(scenes[1].id).not.toBe('warm');
+  });
+
+  it('replaces a look with what is on stage now, keeping its name and id', async () => {
+    const user = userEvent.setup();
+    const { last } = renderView();
+    const frame = new Array(512).fill(0);
+    frame[0] = 50; // channel 1
+    act(() => frameStore.set(frame));
+    await user.click(screen.getByRole('button', { name: 'Update Cool wash to what is on stage now' }));
+    const cool = last().scenes[1];
+    expect(cool).toMatchObject({ id: 'cool', name: 'Cool wash', values: { 1: 50 } });
+  });
+
+  it('shows whether any light is lit in the live capture strip', () => {
+    renderView();
+    expect(screen.getByText('Everything is dark')).toBeInTheDocument();
+    const frame = new Array(512).fill(0);
+    frame[0] = 255;
+    act(() => frameStore.set(frame));
+    expect(screen.getByText(/lights lit/)).toBeInTheDocument();
+  });
+
   it('has no automated accessibility violations', async () => {
     const { container } = renderView();
     expect(await accessibilityViolations(container)).toEqual([]);
