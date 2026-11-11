@@ -7,6 +7,8 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Sequences: faster building**: Add step carries on with the next look and the same timing as the last step, steps
+  can be duplicated, and a whole sequence can be duplicated.
 - **Looks: a live capture strip** shows a swatch of what the lights are doing right now beside the name field, and each
   look card can be duplicated or updated to what is on stage now, without saving a new one.
 - **Fixtures: filter and channel counts**: a filter box searches both lists by name or maker, and each fixture shows how

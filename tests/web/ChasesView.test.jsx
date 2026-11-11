@@ -71,6 +71,37 @@ describe('ChasesView', () => {
     expect(steps[2].sceneId).toBe('s1');
   });
 
+  it('adds the next look with the same fade and hold as the last step', async () => {
+    const user = userEvent.setup();
+    const project = projectWith(STEPS);
+    const { update } = renderView(project);
+    await user.click(screen.getByRole('button', { name: 'Add step' }));
+    const added = update.mock.calls[0][0](project).chases[0].steps[2];
+    expect(added).toMatchObject({ sceneId: 's1', fadeMs: 500, holdMs: 1500, fadeBeats: 1, holdBeats: 3 });
+  });
+
+  it('duplicates a step right after itself with a new id', async () => {
+    const user = userEvent.setup();
+    const project = projectWith(STEPS);
+    const { update } = renderView(project);
+    await user.click(screen.getByRole('button', { name: 'Duplicate step 1' }));
+    const steps = update.mock.calls[0][0](project).chases[0].steps;
+    expect(steps.map((step) => step.sceneId)).toEqual(['s1', 's1', 's2']);
+    expect(new Set(steps.map((step) => step.id)).size).toBe(3);
+  });
+
+  it('duplicates a whole sequence with fresh step ids', async () => {
+    const user = userEvent.setup();
+    const project = projectWith(STEPS);
+    const { update } = renderView(project);
+    await user.click(screen.getByRole('button', { name: 'Duplicate' }));
+    const chases = update.mock.calls[0][0](project).chases;
+    expect(chases.map((chase) => chase.name)).toEqual(['Opening', 'Opening copy']);
+    expect(chases[1].id).not.toBe('c1');
+    expect(chases[1].steps.map((step) => step.id)).not.toContain('step-a');
+    expect(chases[1].steps.map((step) => step.sceneId)).toEqual(['s1', 's2']);
+  });
+
   it('removes only the chosen step', async () => {
     const user = userEvent.setup();
     const project = projectWith(STEPS);
