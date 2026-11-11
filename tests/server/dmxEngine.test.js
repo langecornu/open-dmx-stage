@@ -128,6 +128,120 @@ describe('DmxEngine', () => {
   });
 });
 
+describe('DmxEngine auto show', () => {
+  // At 120 BPM one beat is 500 ms, so an auto show changing every 4 beats changes every 2000 ms.
+  const look = (id, value) => ({ id, name: id, values: { 1: value } });
+  const show = {
+    scenes: [look('red', 200), look('dark', 0), look('blue', 100), look('green', 50)],
+    chases: [
+      {
+        id: 'c1',
+        name: 'One',
+        loop: true,
+        timing: 'seconds',
+        steps: [{ id: 's1', sceneId: 'red', fadeMs: 0, holdMs: 100 }],
+      },
+      {
+        id: 'c2',
+        name: 'Two',
+        loop: true,
+        timing: 'seconds',
+        steps: [{ id: 's2', sceneId: 'blue', fadeMs: 0, holdMs: 100 }],
+      },
+      {
+        id: 'c3',
+        name: 'Gone',
+        loop: true,
+        timing: 'seconds',
+        steps: [{ id: 's3', sceneId: 'deleted', fadeMs: 0, holdMs: 100 }],
+      },
+    ],
+  };
+  const autoItem = (engine) => engine.getState().auto?.itemId ?? null;
+
+  it('plays the looks in order at the tempo, cross-fading over one beat, and skips looks that are all off', () => {
+    const { engine } = createEngine();
+    assert.equal(engine.startAuto({ source: 'looks', beats: 4, order: 'order' }, show), true);
+    assert.deepEqual(engine.getState().auto, { source: 'looks', beats: 4, order: 'order', itemId: 'red' });
+    assert.equal(engine.tick(250)[0], 100, 'halfway through the one-beat fade');
+    assert.equal(engine.tick(1999)[0], 200, 'the first look holds until its four beats are up');
+    engine.tick(2000);
+    assert.equal(autoItem(engine), 'blue', 'the dark look is skipped');
+    engine.tick(4000);
+    assert.equal(autoItem(engine), 'green');
+    engine.tick(6000);
+    assert.equal(autoItem(engine), 'red', 'it starts again from the first look');
+    assert.equal(engine.getState().activeSceneId, 'red', 'the look on stage is the auto show item');
+  });
+
+  it('follows a tempo change straight away', () => {
+    const { engine } = createEngine();
+    engine.startAuto({ source: 'looks', beats: 4, order: 'order' }, show);
+    engine.setTempo(60, false, 0); // one beat is now 1000 ms, so the change comes at 4000 ms
+    engine.tick(3999);
+    assert.equal(autoItem(engine), 'red');
+    engine.tick(4000);
+    assert.equal(autoItem(engine), 'blue');
+  });
+
+  it('never plays the same look twice in a row when shuffled', () => {
+    const engine = new DmxEngine({ driver: new MockDriver(), now: () => 0, random: () => 0 });
+    engine.startAuto({ source: 'looks', beats: 4, order: 'shuffle' }, show);
+    const played = [autoItem(engine)];
+    for (let at = 2000; at <= 10000; at += 2000) {
+      engine.tick(at);
+      played.push(autoItem(engine));
+    }
+    played.slice(1).forEach((id, index) => assert.notEqual(id, played[index], 'two different looks in a row'));
+  });
+
+  it('plays sequences in turn, leaving out those with no look left', () => {
+    const { engine } = createEngine();
+    engine.startAuto({ source: 'sequences', beats: 8, order: 'order' }, show);
+    assert.equal(engine.getState().activeChaseId, 'c1');
+    engine.tick(4000);
+    assert.equal(engine.getState().activeChaseId, 'c2');
+    engine.tick(8000);
+    assert.equal(engine.getState().activeChaseId, 'c1', 'the sequence whose look was deleted is skipped');
+  });
+
+  it('starts nothing when there is nothing to play', () => {
+    const { engine } = createEngine();
+    assert.equal(
+      engine.startAuto({ source: 'looks', beats: 4, order: 'order' }, { scenes: [look('dark', 0)], chases: [] }),
+      false,
+    );
+    assert.equal(engine.getState().auto, null);
+  });
+
+  it('stops when a person plays a look or a sequence, or presses stop, and keeps the look on stage', () => {
+    const { engine } = createEngine();
+    engine.startAuto({ source: 'looks', beats: 4, order: 'order' }, show);
+    engine.recallScene(look('green', 50), 0);
+    assert.equal(engine.getState().auto, null, 'playing a look takes over');
+
+    engine.startAuto({ source: 'looks', beats: 4, order: 'order' }, show);
+    engine.startChase(show.chases[1], new Map(show.scenes.map((scene) => [scene.id, scene])));
+    assert.equal(engine.getState().auto, null, 'starting a sequence takes over');
+
+    engine.startAuto({ source: 'sequences', beats: 4, order: 'order' }, show);
+    engine.stopChase();
+    assert.equal(engine.getState().auto, null, 'stop ends the auto show');
+    assert.equal(engine.getState().activeChaseId, null, 'and its sequence');
+    assert.equal(engine.getState().activeSceneId, 'red', 'the look on stage stays');
+
+    engine.startAuto({ source: 'looks', beats: 4, order: 'order' }, show);
+    engine.setBlackout(true);
+    assert.notEqual(engine.getState().auto, null, 'a blackout does not stop it');
+    engine.setBlackout(false);
+
+    engine.releaseScene();
+    assert.equal(engine.getState().auto, null, 'taking the look off stage ends it');
+    engine.tick(10000);
+    assert.equal(engine.getState().activeSceneId, null, 'and no look comes back at the next change');
+  });
+});
+
 describe('DmxEngine mute and solo', () => {
   // Two fixtures: "a" has red on 1 and a pan on 2; "b" has red on 3.
   function rig() {

@@ -166,6 +166,12 @@ export function attachLiveSocket({
       case 'clearMuteSolo':
         engine.clearMuteSolo();
         break;
+      case 'autoStart':
+        engine.startAuto(message, project);
+        break;
+      case 'autoStop':
+        engine.stopAuto();
+        break;
       default:
         break;
     }

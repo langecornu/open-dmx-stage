@@ -7,6 +7,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Auto show**: plays your looks or your sequences by itself at the tempo, changing every 1, 2, 4 or 8 bars, in order
+  or shuffled, until you stop it. No music needed. Looks cross-fade over one beat and looks that leave every light off
+  are skipped. Start it from the new card on Perform or from the search palette; the On stage bar shows it with
+  **Stop**, and pressing a pad takes over.
 - **Mute and solo for each light**: a card on Perform mutes a light (dark whatever plays, position still moves) or solos
   it (only soloed lights are lit). The On stage bar reminds you with **Clear** while any is set, and the search palette
   can clear them. Live only, not saved with the show.

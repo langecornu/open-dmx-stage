@@ -3,7 +3,14 @@
 import { describeStage } from '../utils/stageStatus.js';
 import { Icon } from './Icon.jsx';
 
-const KIND_ICONS = { blackout: 'power', sequence: 'chases', look: 'scenes', manual: 'sliders', idle: 'control' };
+const KIND_ICONS = {
+  blackout: 'power',
+  auto: 'bolt',
+  sequence: 'chases',
+  look: 'scenes',
+  manual: 'sliders',
+  idle: 'control',
+};
 const VIEW_NAMES = { chases: 'Sequences', scenes: 'Looks', control: 'Lights' };
 
 export function StageBar({ engine, project, send, onNavigate, currentView = null }) {

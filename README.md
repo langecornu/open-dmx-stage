@@ -26,6 +26,7 @@ fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a
 - **Fixtures screen:** search the Open Fixture Library for your light and copy its channels, or describe it by hand
   (manufacturer, model, description and channel layout). Built-in fixtures from maker manuals are included.
 - **Follow the music:** the tempo can follow the beat of music from the microphone or a browser tab.
+- **Auto show:** plays your looks or sequences by itself at the tempo, in order or shuffled, with no music needed.
 - **Mute and solo:** keep one light dark, or light only the ones you choose, live during a show.
 - **Tempo, effects and groups:** tap a tempo, run pulse, sweep and rainbow effects on all lights or a group, and time
   sequences in beats.

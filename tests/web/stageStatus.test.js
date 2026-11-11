@@ -25,6 +25,17 @@ describe('describeStage', () => {
     expect(stage).toMatchObject({ kind: 'idle', title: 'Nothing playing', action: null, layers: [] });
   });
 
+  it('names the auto show and what it is playing, ahead of its sequence, and offers Stop', () => {
+    const auto = { source: 'sequences', beats: 8, order: 'shuffle', itemId: 'c1' };
+    const stage = describeStage({ ...idle, auto, activeChaseId: 'c1', chaseStep: 0 }, project);
+    expect(stage).toMatchObject({
+      kind: 'auto',
+      title: 'Auto show: Colour cycle',
+      detail: 'Sequences · shuffled · changes every 2 bars',
+    });
+    expect(stage.action).toEqual({ label: 'Stop', message: { type: 'autoStop' } });
+  });
+
   it('reminds that lights are muted or soloed, and offers to clear them', () => {
     const withRig = {
       ...project,

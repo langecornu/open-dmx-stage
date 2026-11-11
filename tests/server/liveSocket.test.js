@@ -104,6 +104,26 @@ describe('live socket', () => {
     socket.close();
   });
 
+  it('starts and stops the auto show, and refuses a length it does not offer', async () => {
+    await projectService.save({
+      ...projectService.get(),
+      scenes: [{ id: 'look-red', name: 'Red', values: { 1: 255 } }],
+    });
+    const { socket, messages } = connect(ALLOWED_ORIGIN);
+    try {
+      await waitFor(() => messages.some((m) => m.type === 'state'), 'the initial state');
+      const lastState = () => messages.filter((m) => m.type === 'state').at(-1).state;
+      socket.send(JSON.stringify({ type: 'autoStart', source: 'looks', beats: 5, order: 'order' }));
+      socket.send(JSON.stringify({ type: 'autoStart', source: 'looks', beats: 8, order: 'order' }));
+      await waitFor(() => lastState().auto !== null, 'the auto show to start');
+      assert.deepEqual(lastState().auto, { source: 'looks', beats: 8, order: 'order', itemId: 'look-red' });
+      socket.send(JSON.stringify({ type: 'autoStop' }));
+      await waitFor(() => lastState().auto === null, 'the auto show to stop');
+    } finally {
+      socket.close();
+    }
+  });
+
   it('mutes, solos and clears lights from control messages', async () => {
     const { socket, messages } = connect(ALLOWED_ORIGIN);
     try {

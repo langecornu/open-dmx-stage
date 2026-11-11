@@ -19,6 +19,7 @@ import {
 import { assignKeys } from '../utils/performKeys.js';
 import { buildPerformItems } from '../utils/performItems.js';
 import { useTapTempo } from '../hooks/useTapTempo.js';
+import { AutoShowPanel } from './AutoShowPanel.jsx';
 import { EffectsPanel } from './EffectsPanel.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { MidiPanel } from './MidiPanel.jsx';
@@ -285,6 +286,7 @@ export function PerformView({ project, patch, live, flush }) {
           onTempo={(bpm) => live.send({ type: 'tempo', bpm, sync: false })}
           onTap={tap}
         />
+        <AutoShowPanel project={project} live={live} flush={flush} />
         <EffectsPanel groups={project.groups} live={live} />
         <MuteSoloPanel project={project} live={live} />
         <SoundPanel id={PANEL_IDS.sound} follower={follower} />
