@@ -1,7 +1,8 @@
-// Perform: big buttons for every look and sequence, with keyboard shortcuts and MIDI controller mapping, plus master,
-// blackout and stop. Built for running a show without the mouse.
+// Perform: a stage console. A status strip (output, MIDI, music, tempo), a pad for every look and sequence with keyboard
+// shortcuts and MIDI mapping, then tempo, effects, music and MIDI. Built for running a show without the mouse.
 import { useEffect, useMemo, useReducer, useState } from 'react';
 
+import { useBeatFollower } from '../hooks/useBeatFollower.js';
 import { useMidi } from '../hooks/useMidi.js';
 import { usePerformKeys } from '../hooks/usePerformKeys.js';
 import {
@@ -23,12 +24,25 @@ import { EmptyState } from './EmptyState.jsx';
 import { MidiPanel } from './MidiPanel.jsx';
 import { MuteSoloPanel } from './MuteSoloPanel.jsx';
 import { PerformLearnLinks } from './PerformLearnLinks.jsx';
+import { PerformStatus } from './PerformStatus.jsx';
 import { PerformTile } from './PerformTile.jsx';
 import { SoundPanel } from './SoundPanel.jsx';
 import { TempoPanel } from './TempoPanel.jsx';
 
 const FADES = [0, 250, 500, 1000, 2000];
 const MASTER_STEP = 0.1;
+const PANEL_IDS = { midi: 'perform-midi', sound: 'perform-sound' };
+
+// Brings a settings panel into view and moves the focus to it, so a keyboard or screen reader user lands there too.
+function showPanel(id) {
+  const panel = document.getElementById(id);
+  if (!panel) {
+    return;
+  }
+  const isReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  panel.scrollIntoView?.({ behavior: isReduced ? 'auto' : 'smooth', block: 'center' });
+  panel.focus({ preventScroll: true });
+}
 
 // Learn mode is a small flow: switch it on, tap a button to arm it, then touch a control. Turning it off, or finishing
 // a link, always disarms. One reducer keeps those transitions together.
@@ -126,6 +140,8 @@ export function PerformView({ project, patch, live, flush }) {
   };
   const midi = useMidi({ onMessage: handleMidi });
 
+  const follower = useBeatFollower({ send: live.send });
+
   const tap = useTapTempo({ send: live.send, bpm: live.engine.bpm });
 
   const stepMaster = (delta) =>
@@ -159,7 +175,10 @@ export function PerformView({ project, patch, live, flush }) {
       key={actionId(item.action)}
       name={item.name}
       kind={item.kind}
+      detail={item.detail}
       gradient={item.gradient}
+      steps={item.steps}
+      playingStep={item.kind === 'Sequence' && isPlaying(item) ? live.engine.chaseStep : null}
       keyLabel={keys[index]}
       midiLabel={midiLabelOf(item.action)}
       isPlaying={isPlaying(item)}
@@ -178,7 +197,7 @@ export function PerformView({ project, patch, live, flush }) {
           <h1 className="view-title" id="perform-title">
             Perform
           </h1>
-          <p className="view-sub">Tap a pad or press its key. Tap a playing sequence again to stop it.</p>
+          <p className="view-sub">Tap a pad or press its key to start it. Tap a playing sequence again to stop it.</p>
         </div>
         <ul className="key-hints" aria-label="Keyboard shortcuts">
           <li>
@@ -195,6 +214,15 @@ export function PerformView({ project, patch, live, flush }) {
           </li>
         </ul>
       </div>
+
+      <PerformStatus
+        connected={live.connected}
+        output={live.output}
+        midi={midi}
+        follower={follower}
+        bpm={live.engine.bpm}
+        onShow={(chipId) => showPanel(PANEL_IDS[chipId])}
+      />
 
       {error ? (
         <p className="error-banner" role="alert">
@@ -259,8 +287,9 @@ export function PerformView({ project, patch, live, flush }) {
         />
         <EffectsPanel groups={project.groups} live={live} />
         <MuteSoloPanel project={project} live={live} />
-        <SoundPanel send={live.send} />
+        <SoundPanel id={PANEL_IDS.sound} follower={follower} />
         <MidiPanel
+          id={PANEL_IDS.midi}
           midi={midi}
           isLearning={isLearning}
           onToggleLearn={() => dispatchLearn({ type: 'toggle' })}

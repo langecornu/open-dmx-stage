@@ -174,7 +174,10 @@ export function HomeView({ project, patch, live, flush, navigate }) {
                     key={`${item.action.type}-${item.action.id}`}
                     name={item.name}
                     kind={item.kind}
+                    detail={item.detail}
                     gradient={item.gradient}
+                    steps={item.steps}
+                    playingStep={item.kind === 'Sequence' && isPlaying(item) ? engine.chaseStep : null}
                     keyLabel={null}
                     midiLabel={null}
                     isPlaying={isPlaying(item)}
@@ -211,7 +214,10 @@ export function HomeView({ project, patch, live, flush, navigate }) {
                     key={`${item.action.type}-${item.action.id}`}
                     name={item.name}
                     kind={item.kind}
+                    detail={item.detail}
                     gradient={item.gradient}
+                    steps={item.steps}
+                    playingStep={item.kind === 'Sequence' && isPlaying(item) ? engine.chaseStep : null}
                     keyLabel={null}
                     midiLabel={null}
                     isPlaying={isPlaying(item)}

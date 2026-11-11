@@ -6,10 +6,10 @@ const STATUS_TEXT = {
   denied: 'The browser did not allow MIDI. Allow it in the site settings, then try again.',
 };
 
-export function MidiPanel({ midi, isLearning, onToggleLearn, mappingCount, onClear }) {
+export function MidiPanel({ midi, isLearning, onToggleLearn, mappingCount, onClear, id }) {
   const isReady = midi.status === 'ready';
   return (
-    <section className="card card-pad midi-panel" aria-label="MIDI">
+    <section id={id} tabIndex={-1} className="card card-pad midi-panel" aria-label="MIDI">
       <div className="section-bar">
         <h2 className="section-title">MIDI controller</h2>
         {isReady ? (
