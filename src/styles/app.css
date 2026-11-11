@@ -2053,3 +2053,8 @@ input[type='range'] {
   background: var(--accent);
   transition: width 60ms linear;
 }
+
+.perform-status {
+  flex-basis: 100%;
+  margin: 0;
+}

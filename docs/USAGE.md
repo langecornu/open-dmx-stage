@@ -91,7 +91,9 @@ The step that is playing is highlighted. Use the arrow buttons to reorder steps 
 - **Keyboard shortcuts:** each button shows its key (1 to 0, then Q to P, then A to L). **Space** is blackout,
   **Escape** stops a sequence, and **[** and **]** lower and raise the master by 10%. Shortcuts never fire while you are
   typing in a field.
-- **Master, blackout and stop** are always at the top of the screen.
+- **Master, blackout and play/stop** are always at the top of the screen. The play button says **Play sequence** when
+  nothing is playing (it starts the sequence that played last, or the first one) and becomes **Stop sequence** while one
+  plays; a line beside it says what is playing, and when blackout is on it says so, because the lights are dark then.
 
 ### Tempo and effects
 
