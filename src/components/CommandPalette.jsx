@@ -5,7 +5,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { filterCommands } from '../utils/commands.js';
 import { Icon } from './Icon.jsx';
 
-export function CommandPalette({ isOpen, onClose, commands, context }) {
+export function CommandPalette({ isOpen, onClose, commands, context, onRun }) {
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef(null);
@@ -45,6 +45,7 @@ export function CommandPalette({ isOpen, onClose, commands, context }) {
   };
   const runCommand = (command) => {
     close();
+    onRun?.(command);
     command.run(context);
   };
   const handleKeyDown = (event) => {

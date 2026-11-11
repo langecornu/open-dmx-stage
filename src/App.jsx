@@ -12,13 +12,18 @@ import { MonitorView } from './components/MonitorView.jsx';
 import { PatchView } from './components/PatchView.jsx';
 import { PerformView } from './components/PerformView.jsx';
 import { ScenesView } from './components/ScenesView.jsx';
+import { ShortcutsDialog } from './components/ShortcutsDialog.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
 import { StageBar } from './components/StageBar.jsx';
+import { StageView } from './components/StageView.jsx';
+import { ToastRegion } from './components/ToastRegion.jsx';
 import { TopBar } from './components/TopBar.jsx';
 import { Welcome } from './components/Welcome.jsx';
 import { buildCommands } from './utils/commands.js';
+import { isTypingTarget } from './utils/performKeys.js';
 import { useLive } from './hooks/useLive.js';
 import { useProject } from './hooks/useProject.js';
+import { useToasts } from './hooks/useToasts.js';
 import { useTheme } from './hooks/useTheme.js';
 
 const WELCOME_KEY = 'odmx-welcomed';
@@ -48,9 +53,11 @@ function liveViews(engine) {
 export function App() {
   const [view, setView] = useState('home');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [welcomed, setWelcomed] = useState(hasSeenWelcome);
   const { project, library, update, flush, replace, saveStatus, error } = useProject();
   const live = useLive();
+  const { toasts, notify } = useToasts();
   const { theme, toggle: toggleTheme } = useTheme();
 
   // The welcome only appears for a brand-new rig; remember that from the first load so it can finish its steps.
@@ -59,12 +66,15 @@ export function App() {
     startedEmpty.current = project.fixtures.length === 0;
   }
 
-  // Ctrl or Command + K opens the search palette from anywhere.
+  // Ctrl or Command + K opens the search palette, and ? the shortcut list, from anywhere.
   useEffect(() => {
     const handleKeyDown = (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         setIsSearchOpen((open) => !open);
+      } else if (event.key === '?' && !event.ctrlKey && !event.metaKey && !isTypingTarget(event.target)) {
+        event.preventDefault();
+        setIsShortcutsOpen((open) => !open);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -82,8 +92,9 @@ export function App() {
   }
   if (!project || !patch) {
     return (
-      <div className="main" role="status">
-        Loading…
+      <div className="splash" role="status">
+        <div className="splash-mark" aria-hidden="true" />
+        <p>Loading…</p>
       </div>
     );
   }
@@ -157,10 +168,22 @@ export function App() {
       <CommandPalette
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
+        onRun={(command) => notify(command.label)}
         commands={buildCommands({ project, engine: live.engine, theme })}
-        context={{ send: live.send, flush, navigate: setView, toggleTheme }}
+        context={{
+          send: live.send,
+          flush,
+          navigate: setView,
+          toggleTheme,
+          showShortcuts: () => setIsShortcutsOpen(true),
+        }}
       />
-      <StageBar engine={live.engine} project={project} send={live.send} onNavigate={setView} currentView={view} />
+      <div className="dock">
+        <StageBar engine={live.engine} project={project} send={live.send} onNavigate={setView} currentView={view} />
+        <StageView project={project} patch={patch} />
+      </div>
+      <ShortcutsDialog isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+      <ToastRegion toasts={toasts} />
     </div>
   );
 }

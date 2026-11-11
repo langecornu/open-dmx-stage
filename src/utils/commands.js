@@ -5,7 +5,7 @@ import { VIEWS } from './views.js';
 const LOOK_FADE_MS = 500;
 
 /**
- * @typedef {{ send: (message: object) => void, flush: () => Promise<void>, navigate: (view: string) => void, toggleTheme: () => void }} CommandContext
+ * @typedef {{ send: (message: object) => void, flush: () => Promise<void>, navigate: (view: string) => void, toggleTheme: () => void, showShortcuts: () => void }} CommandContext
  * @typedef {{ id: string, group: string, label: string, hint: string, keywords: string, run: (context: CommandContext) => void | Promise<void> }} Command
  */
 
@@ -63,6 +63,15 @@ export function buildCommands({ project, engine, theme }) {
     hint: 'Change how the app looks',
     keywords: 'appearance mode',
     run: ({ toggleTheme }) => toggleTheme(),
+  });
+
+  commands.push({
+    id: 'action-shortcuts',
+    group: 'Actions',
+    label: 'Keyboard shortcuts',
+    hint: 'See every key you can press',
+    keywords: 'help keys hotkeys cheat sheet',
+    run: ({ showShortcuts }) => showShortcuts(),
   });
 
   for (const scene of project.scenes) {

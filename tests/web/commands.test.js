@@ -13,7 +13,13 @@ const project = {
 const idle = { blackout: false, effect: null, activeChaseId: null, programmerChannels: [] };
 
 function context() {
-  return { send: vi.fn(), flush: vi.fn().mockResolvedValue(undefined), navigate: vi.fn(), toggleTheme: vi.fn() };
+  return {
+    send: vi.fn(),
+    flush: vi.fn().mockResolvedValue(undefined),
+    navigate: vi.fn(),
+    toggleTheme: vi.fn(),
+    showShortcuts: vi.fn(),
+  };
 }
 const find = (commands, id) => commands.find((command) => command.id === id);
 
@@ -69,6 +75,12 @@ describe('buildCommands', () => {
     expect(on.label).toMatch(/Lights on/);
     on.run(ctx);
     expect(ctx.send).toHaveBeenLastCalledWith({ type: 'blackout', enabled: false });
+  });
+
+  it('opens the keyboard shortcuts', () => {
+    const ctx = context();
+    find(buildCommands({ project, engine: idle, theme: 'dark' }), 'action-shortcuts').run(ctx);
+    expect(ctx.showShortcuts).toHaveBeenCalled();
   });
 
   it('goes to a screen and switches the theme', () => {

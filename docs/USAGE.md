@@ -20,13 +20,17 @@ The top bar is always available: the show name (click to rename), the connection
 lights are not connected), **Search**, the **Master** brightness, the light/dark **theme switch**, and **Blackout**. The
 **On stage** bar at the bottom of every screen says what is playing and has the button to stop it.
 
+![Home screen](images/16-home-dark.jpg)
+
 **Search (Ctrl or Command + K)** opens a palette from anywhere. Type a few letters to jump to a screen, play a look,
 start or stop a sequence, or run an action such as Blackout, then press **Enter**. The arrow keys move through the
-results and **Escape** closes it.
+results and **Escape** closes it. Press **?** anywhere (outside a text field) to see every keyboard shortcut.
+
+![The search palette](images/18-search-dark.jpg)
 
 **Home** is the first screen. It shows the output, how many lights, looks and sequences you have, and the tempo, as cards
 that open the right screen. While the show is unfinished a **Getting started** checklist (add lights, connect the output,
-save a look, build a sequence) says what is next. **Quick launch** has pads for your looks and sequences.
+save a look, build a sequence) says what is next. **Quick launch** has pads for your looks and sequences. At the bottom right, a **live stage view** draws each of your lights as a lamp with a cone of light in the colour it is really sending.
 
 ## 1. First run: the welcome screen
 
@@ -98,6 +102,8 @@ The step that is playing is highlighted. Use the arrow buttons to reorder steps 
 
 ## 5. Perform: run a show
 
+![Perform screen](images/17-perform-dark.jpg)
+
 **Perform** turns every look and sequence into a big button, for running a show without hunting with the mouse.
 
 - **Tap a button** to play a look (with the fade chosen above the looks) or to start a sequence. Tap a playing sequence
@@ -161,6 +167,9 @@ If you have a MIDI controller (pads, keys, knobs or faders), you can play looks 
 are forgotten. Safari and Firefox do not support MIDI everywhere, so use Chrome or Edge.
 
 ## 6. Setup: your rig
+
+A **DMX map** at the top shows the 512 channels of the universe with a coloured block for each light, an outline where two
+lights overlap, and the next free address.
 
 Use **Setup** to manage your fixtures.
 

@@ -105,8 +105,21 @@ describe('App', () => {
     await user.type(box, 'perform{Enter}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(await screen.findByRole('heading', { level: 1, name: 'Perform' })).toBeInTheDocument();
+    expect(screen.getAllByRole('status').some((node) => node.textContent === 'Perform')).toBe(true);
     await user.keyboard('{Control>}k{/Control}');
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('opens the shortcut list with ?, but not while typing in a field', async () => {
+    const user = userEvent.setup();
+    await renderApp();
+    await user.type(screen.getByLabelText('Show name'), '?');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(document.body);
+    await user.keyboard('?');
+    expect(await screen.findByRole('dialog', { name: 'Keyboard shortcuts' })).toBeInTheDocument();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });

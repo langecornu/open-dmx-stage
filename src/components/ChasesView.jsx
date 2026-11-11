@@ -1,11 +1,17 @@
 // Chases: ordered scene steps with fade and hold times; play, loop and edit.
 import { useState } from 'react';
 
-import { fixtureColors, sceneGradient } from '../utils/sceneColors.js';
+import { averageColor, fixtureColors, sceneGradient } from '../utils/sceneColors.js';
+import { stepDurations } from '../utils/tempo.js';
 import { SequenceStepRow } from './SequenceStepRow.jsx';
 import { SequenceTimeline } from './SequenceTimeline.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { Icon } from './Icon.jsx';
+
+const formatLength = (ms) => {
+  const seconds = Math.round(ms / 1000);
+  return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s`;
+};
 
 export function ChasesView({ project, patch, update, flush, live }) {
   const [selectedId, setSelectedId] = useState(project.chases[0]?.id ?? null);
@@ -75,7 +81,11 @@ export function ChasesView({ project, patch, update, flush, live }) {
       </div>
 
       {project.chases.length === 0 ? (
-        <EmptyState title="No sequences yet" hint="Save a few looks first, then chain them into a sequence." />
+        <EmptyState
+          icon="chases"
+          title="No sequences yet"
+          hint="Save a few looks first, then chain them into a sequence."
+        />
       ) : (
         <div className="split">
           <ul className="card list">
@@ -87,7 +97,35 @@ export function ChasesView({ project, patch, update, flush, live }) {
                   aria-current={item.id === selectedId}
                   onClick={() => setSelectedId(item.id)}
                 >
-                  {item.name}
+                  <span
+                    className="list-thumb"
+                    aria-hidden="true"
+                    style={{
+                      background: sceneGradient(
+                        item.steps.map((step) =>
+                          averageColor(
+                            fixtureColors(
+                              project,
+                              patch,
+                              project.scenes.find((scene) => scene.id === step.sceneId)?.values ?? {},
+                            ),
+                          ),
+                        ),
+                      ),
+                    }}
+                  />
+                  <span className="list-text">
+                    <span className="list-name">{item.name}</span>
+                    <span className="list-meta">
+                      {item.steps.length} {item.steps.length === 1 ? 'step' : 'steps'} ·{' '}
+                      {formatLength(
+                        item.steps.reduce((sum, step) => {
+                          const timed = stepDurations(step, item.timing, live.engine.bpm);
+                          return sum + timed.fadeMs + timed.holdMs;
+                        }, 0),
+                      )}
+                    </span>
+                  </span>
                   {live.engine.activeChaseId === item.id ? <span className="badge badge-live">Playing</span> : null}
                 </button>
               </li>
@@ -195,7 +233,7 @@ export function ChasesView({ project, patch, update, flush, live }) {
               </div>
             </div>
           ) : (
-            <EmptyState title="Pick a sequence" hint="Choose one on the left or create a new one." />
+            <EmptyState icon="chases" title="Pick a sequence" hint="Choose one on the left or create a new one." />
           )}
         </div>
       )}

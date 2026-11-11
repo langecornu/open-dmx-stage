@@ -125,7 +125,11 @@ export function ScenesView({ project, patch, update, flush, live }) {
         </label>
       </div>
       {project.scenes.length === 0 ? (
-        <EmptyState title="No looks saved yet" hint="Set the lights how you like them, then save the look here." />
+        <EmptyState
+          icon="scenes"
+          title="No looks saved yet"
+          hint="Set the lights how you like them, then save the look here."
+        />
       ) : (
         <div className="scene-grid">
           {project.scenes.map((scene) => (
