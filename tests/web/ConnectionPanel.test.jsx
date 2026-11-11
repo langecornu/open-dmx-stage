@@ -38,7 +38,7 @@ describe('ConnectionPanel', () => {
     const group = screen.getByRole('group', { name: 'Interface type' });
     expect(within(group).getAllByRole('button')).toHaveLength(5);
     expect(within(group).getByRole('button', { name: 'Simulator' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('Active: Simulator')).toBeInTheDocument();
+    expect(screen.getByText('Using: Simulator')).toBeInTheDocument();
     await screen.findByRole('button', { name: /How to connect/ });
   });
 

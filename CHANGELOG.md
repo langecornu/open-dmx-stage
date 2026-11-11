@@ -5,6 +5,16 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **An "On stage" bar on every screen.** It says what is playing and where it came from (a sequence with its step, a
+  look, or manual changes), shows an effect or manual changes running underneath, and has one obvious **Stop** (or
+  **Reset**) button. During a blackout the bar turns red, says the lights are off, and has a **Lights on** button.
+
+### Changed
+
+- The Output screen says **Using: Open DMX (simple USB cable)** rather than "Active", which read like the cable type.
+
 ### Fixed
 
 - **Stop sequence did nothing when no sequence was playing, and gave no hint why.** The Perform screen now has one button
