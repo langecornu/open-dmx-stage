@@ -2,16 +2,19 @@
 import { Icon } from './Icon.jsx';
 
 export const VIEWS = [
-  { id: 'control', label: 'Lights', icon: 'control' },
-  { id: 'scenes', label: 'Looks', icon: 'scenes' },
-  { id: 'chases', label: 'Sequences', icon: 'chases' },
-  { id: 'perform', label: 'Perform', icon: 'bolt' },
-  { id: 'patch', label: 'Setup', icon: 'patch' },
-  { id: 'fixtures', label: 'Fixtures', icon: 'sliders' },
-  { id: 'monitor', label: 'Output', icon: 'monitor' },
+  { id: 'control', label: 'Lights', icon: 'control', group: 'Show' },
+  { id: 'scenes', label: 'Looks', icon: 'scenes', group: 'Show' },
+  { id: 'chases', label: 'Sequences', icon: 'chases', group: 'Show' },
+  { id: 'perform', label: 'Perform', icon: 'bolt', group: 'Show' },
+  { id: 'patch', label: 'Setup', icon: 'patch', group: 'Rig' },
+  { id: 'fixtures', label: 'Fixtures', icon: 'sliders', group: 'Rig' },
+  { id: 'monitor', label: 'Output', icon: 'monitor', group: 'Rig' },
 ];
 
-export function Sidebar({ current, onSelect }) {
+const GROUPS = ['Show', 'Rig'];
+
+/** `liveViews` lists the screens that have something running, so the rail can show a pulsing dot beside them. */
+export function Sidebar({ current, onSelect, liveViews = [] }) {
   return (
     <aside className="rail">
       <div className="brand">
@@ -22,19 +25,32 @@ export function Sidebar({ current, onSelect }) {
         </div>
       </div>
       <nav className="nav" aria-label="Main">
-        {VIEWS.map((view) => (
-          <button
-            key={view.id}
-            type="button"
-            className="nav-item"
-            aria-current={current === view.id ? 'page' : undefined}
-            onClick={() => onSelect(view.id)}
-          >
-            <span className="nav-icon">
-              <Icon name={view.icon} size={17} />
-            </span>
-            {view.label}
-          </button>
+        {GROUPS.map((group) => (
+          <div key={group} className="nav-group" role="group" aria-labelledby={`nav-group-${group}`}>
+            <div className="nav-heading" id={`nav-group-${group}`}>
+              {group}
+            </div>
+            {VIEWS.filter((view) => view.group === group).map((view) => (
+              <button
+                key={view.id}
+                type="button"
+                className="nav-item"
+                aria-current={current === view.id ? 'page' : undefined}
+                onClick={() => onSelect(view.id)}
+              >
+                <span className="nav-icon">
+                  <Icon name={view.icon} size={17} />
+                </span>
+                {view.label}
+                {liveViews.includes(view.id) ? (
+                  <>
+                    <span className="nav-live" aria-hidden="true" />
+                    <span className="sr-only">{' (on stage)'}</span>
+                  </>
+                ) : null}
+              </button>
+            ))}
+          </div>
         ))}
       </nav>
       <div className="rail-footer">v0.1 · Open source · MIT</div>

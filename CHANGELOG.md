@@ -5,6 +5,24 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **An "On stage" bar on every screen.** It says what is playing and where it came from (a sequence with its step, a
+  look, or manual changes), shows an effect or manual changes running underneath, and has one obvious **Stop** (or
+  **Reset**) button. During a blackout the bar turns red, says the lights are off, and has a **Lights on** button.
+
+### Changed
+
+- **Perform is a stage console.** Looks and sequences sit in their own rows with their counts, the playing pad says **On
+  stage**, the keyboard shortcuts are listed at the top, and tempo (a large readout), effects, sound and MIDI sit in a
+  tidy row below. Master, blackout and stop were repeated here; they now live only in the top bar and the On stage bar,
+  and the buttons to link them to a MIDI controller appear while learning.
+- **Calmer, more guided shell.** The navigation is grouped under **Show** (Lights, Looks, Sequences, Perform) and
+  **Rig** (Setup, Fixtures, Output), and a pulsing dot marks the screens that have something running. The top bar shows
+  a **Fix** button that opens Output when the lights are not connected, and the Saved note is quiet until there is
+  something to worry about.
+- The Output screen says **Using: Open DMX (simple USB cable)** rather than "Active", which read like the cable type.
+
 ### Fixed
 
 - **Stop sequence did nothing when no sequence was playing, and gave no hint why.** The Perform screen now has one button

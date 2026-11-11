@@ -86,14 +86,15 @@ The step that is playing is highlighted. Use the arrow buttons to reorder steps 
 
 **Perform** turns every look and sequence into a big button, for running a show without hunting with the mouse.
 
-- **Tap a button** to play a look (with the fade chosen at the top) or to start a sequence. Tap a playing sequence
+- **Tap a button** to play a look (with the fade chosen above the looks) or to start a sequence. Tap a playing sequence
   again to stop it.
 - **Keyboard shortcuts:** each button shows its key (1 to 0, then Q to P, then A to L). **Space** is blackout,
   **Escape** stops a sequence, and **[** and **]** lower and raise the master by 10%. Shortcuts never fire while you are
   typing in a field.
-- **Master, blackout and play/stop** are always at the top of the screen. The play button says **Play sequence** when
-  nothing is playing (it starts the sequence that played last, or the first one) and becomes **Stop sequence** while one
-  plays; a line beside it says what is playing, and when blackout is on it says so, because the lights are dark then.
+- **Master, blackout and stop** live in the top bar and the **On stage** bar, which are on every screen, so Perform is
+  just pads and the tempo, effects and sound controls. Looks and sequences are in their own rows, with the number of
+  each, and the pad that is playing says **On stage**.
+- **MIDI:** while learning, extra buttons appear to link blackout, stop and the master to a pad or knob.
 
 ### Tempo and effects
 
@@ -239,6 +240,11 @@ Press **How to connect** in that card for a step-by-step guide with diagrams, in
 from an active adapter. The same guide is in [Connecting your lights](CONNECTION.md).
 
 ## 9. Master, Blackout, themes and devices
+
+**The On stage bar.** The bar at the bottom of every screen always says what is playing: a sequence (with its step), a
+look, or colours set by hand. Press **Stop** there to stop a sequence, **Reset** to drop manual changes, or **Stop
+effect** to end an effect. During a blackout it turns red and says the lights are off; press **Lights on** to bring
+them back.
 
 - **Master** scales the brightness of everything (dimmer and colour channels only; pan and tilt are unaffected).
 - **Blackout** switches all light output off at once; press it again to bring it back.

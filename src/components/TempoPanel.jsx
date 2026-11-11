@@ -16,11 +16,14 @@ export function TempoPanel({ bpm, onTempo, onTap }) {
   };
 
   return (
-    <div className="card card-pad tempo-panel" role="group" aria-label="Tempo">
-      <label className="field">
-        Tempo (beats per minute)
+    <section className="card card-pad tempo-panel" aria-label="Tempo">
+      <div className="section-bar">
+        <h2 className="section-title">Tempo</h2>
+      </div>
+      <div className="tempo-readout">
         <input
-          className="input input-narrow"
+          className="tempo-input"
+          aria-label="Tempo (beats per minute)"
           type="number"
           min={MIN_BPM}
           max={MAX_BPM}
@@ -34,16 +37,24 @@ export function TempoPanel({ bpm, onTempo, onTap }) {
             }
           }}
         />
-      </label>
-      <button type="button" className="btn btn-primary" onClick={onTap}>
-        Tap tempo
-      </button>
-      <button type="button" className="btn" aria-label="Half speed" onClick={() => onTempo(clampBpm(bpm / 2))}>
-        ½×
-      </button>
-      <button type="button" className="btn" aria-label="Double speed" onClick={() => onTempo(clampBpm(bpm * 2))}>
-        2×
-      </button>
-    </div>
+        <span className="tempo-unit" aria-hidden="true">
+          BPM
+        </span>
+      </div>
+      <div className="toolbar">
+        <button type="button" className="btn btn-primary btn-tap" onClick={onTap}>
+          Tap tempo
+        </button>
+        <button type="button" className="btn" aria-label="Half speed" onClick={() => onTempo(clampBpm(bpm / 2))}>
+          ½×
+        </button>
+        <button type="button" className="btn" aria-label="Double speed" onClick={() => onTempo(clampBpm(bpm * 2))}>
+          2×
+        </button>
+      </div>
+      <p className="view-sub">
+        Effects and sequences timed in beats follow this. Tap along to the music, or press <kbd>.</kbd>
+      </p>
+    </section>
   );
 }

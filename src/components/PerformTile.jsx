@@ -19,11 +19,11 @@ export function PerformTile({ name, kind, gradient, keyLabel, midiLabel, isPlayi
       </span>
       <span className="perform-tile-label">
         <strong>{name}</strong>
-        <small>{isArmed ? 'Press a pad or turn a knob…' : kind}</small>
+        <small>{isArmed ? 'Press a pad or turn a knob…' : isPlaying ? 'On stage' : kind}</small>
       </span>
       {isPlaying ? (
         <span className="perform-live" aria-hidden="true">
-          <Icon name="chases" size={14} />
+          <Icon name={kind === 'Sequence' ? 'stop' : 'chases'} size={14} />
         </span>
       ) : null}
     </button>

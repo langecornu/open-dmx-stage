@@ -11,6 +11,7 @@ import { PatchView } from './components/PatchView.jsx';
 import { PerformView } from './components/PerformView.jsx';
 import { ScenesView } from './components/ScenesView.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
+import { StageBar } from './components/StageBar.jsx';
 import { TopBar } from './components/TopBar.jsx';
 import { Welcome } from './components/Welcome.jsx';
 import { useLive } from './hooks/useLive.js';
@@ -25,6 +26,20 @@ function hasSeenWelcome() {
   } catch {
     return false;
   }
+}
+
+// Which screens have something running: shown as a dot in the navigation.
+function liveViews(engine) {
+  const views = [];
+  if (engine.activeChaseId) {
+    views.push('chases', 'perform');
+  } else if (engine.activeSceneId) {
+    views.push('scenes');
+  }
+  if (engine.programmerChannels.length > 0) {
+    views.push('control');
+  }
+  return views;
 }
 
 export function App() {
@@ -80,7 +95,7 @@ export function App() {
           onDone={handleWelcomeDone}
         />
       ) : null}
-      <Sidebar current={view} onSelect={setView} />
+      <Sidebar current={view} onSelect={setView} liveViews={liveViews(live.engine)} />
       <TopBar
         projectName={project.name}
         onRename={(name) => update((current) => ({ ...current, name: name.trim() === '' ? 'Untitled show' : name }))}
@@ -89,6 +104,7 @@ export function App() {
         output={live.output}
         engine={live.engine}
         send={live.send}
+        onOpenOutput={() => setView('monitor')}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
@@ -113,6 +129,7 @@ export function App() {
           {view === 'monitor' ? <MonitorView {...shared} /> : null}
         </ErrorBoundary>
       </main>
+      <StageBar engine={live.engine} project={project} send={live.send} onNavigate={setView} />
     </div>
   );
 }

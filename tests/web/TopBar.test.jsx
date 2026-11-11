@@ -44,6 +44,19 @@ describe('TopBar', () => {
     expect(screen.getByText(label)).toBeInTheDocument();
   });
 
+  it('offers a Fix button that opens Output when the lights are not connected', async () => {
+    const user = userEvent.setup();
+    const onOpenOutput = vi.fn();
+    renderBar({ output: { driver: 'open-dmx', connected: false }, onOpenOutput });
+    await user.click(screen.getByRole('button', { name: 'Fix' }));
+    expect(onOpenOutput).toHaveBeenCalledTimes(1);
+  });
+
+  it('has no Fix button while the output works', () => {
+    renderBar({ onOpenOutput: vi.fn() });
+    expect(screen.queryByRole('button', { name: 'Fix' })).not.toBeInTheDocument();
+  });
+
   it('shows the show name and renames it as you type', async () => {
     const user = userEvent.setup();
     const { onRename } = renderBar();

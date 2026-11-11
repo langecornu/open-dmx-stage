@@ -4,7 +4,18 @@ import { ThemeToggle } from './ThemeToggle.jsx';
 
 const SAVE_LABELS = { saved: 'Saved', saving: 'Saving…', pending: 'Unsaved', error: 'Save failed' };
 
-export function TopBar({ projectName, onRename, saveStatus, connected, output, engine, send, theme, onToggleTheme }) {
+export function TopBar({
+  projectName,
+  onRename,
+  saveStatus,
+  connected,
+  output,
+  engine,
+  send,
+  onOpenOutput,
+  theme,
+  onToggleTheme,
+}) {
   const outputReady = connected && output?.connected;
   const outputLabel = !connected
     ? 'Server offline'
@@ -26,8 +37,16 @@ export function TopBar({ projectName, onRename, saveStatus, connected, output, e
       <span className="pill" role="status">
         <span className={`dot ${outputReady ? 'dot-ok' : 'dot-bad'}`} />
         <span className="pill-text">{outputLabel}</span>
+        {!outputReady && onOpenOutput ? (
+          <button type="button" className="pill-action" onClick={onOpenOutput}>
+            Fix
+          </button>
+        ) : null}
       </span>
-      <span className="pill pill-save">{SAVE_LABELS[saveStatus]}</span>
+      <span className={`pill pill-save pill-save-${saveStatus}`}>
+        {saveStatus === 'saved' ? <Icon name="check" size={14} /> : null}
+        {SAVE_LABELS[saveStatus]}
+      </span>
       <div className="topbar-spacer" />
       <label className="master">
         <span className="master-label">Master</span>
