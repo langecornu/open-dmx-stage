@@ -100,6 +100,24 @@ Every look keeps the moving head centred, because a look that does not mention p
 | A par is stuck in a program (display like `so04` or `cc01`, a fixed pattern) | It is not in DMX mode. Go to its address entry, set the address, and press **ENTER**. Unplug the DMX cable: if the pattern stops, the light was reacting to the cable but not decoding it.                                                                                                               |
 | The moving head restarted                                                    | Channel 13 (Reset) was set to 250 or more. Return it to 0.                                                                                                                                                                                                                                               |
 
+## Once it works: the demo light show
+
+With two 36 LED pars on addresses 1 and 8 (the starter show's pars), you can play a two-minute demo that uses almost
+everything the app does: [`docs/examples/pars-demo-show.json`](examples/pars-demo-show.json) is a show with 13 looks, 4
+sequences and 3 groups, and a script plays a routine over it.
+
+```bash
+npm run demo:show -- --load              # loads the demo show into the app, then plays it (replaces the current show)
+npm run demo:show -- --no-strobe         # the same, without any flashing
+npm run demo:show -- --dry-run           # prints the plan without touching the lights
+```
+
+It covers looks with fades, hand-mixed colours, master dimming, the pulse, sweep and rainbow effects (on both pars and on
+one par), tempo changes, sequences timed in seconds and in beats, strobe and blackout. About 13 seconds of it flashes,
+so do not run it near anyone sensitive to flashing light, and use `--no-strobe` if in doubt. Press Ctrl+C at any time to
+stop it: the lights go back to rest. The same looks and sequences are on the **Looks**, **Sequences** and **Perform**
+screens for you to play by hand, and the effects and tempo are on **Perform**.
+
 ## Find out what a light's channels really do
 
 When colours come out wrong, stop guessing and test **one channel at a time**:
