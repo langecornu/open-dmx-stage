@@ -21,7 +21,7 @@ import { useTapTempo } from '../hooks/useTapTempo.js';
 import { EffectsPanel } from './EffectsPanel.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { MidiPanel } from './MidiPanel.jsx';
-import { PerformControls } from './PerformControls.jsx';
+import { PerformLearnLinks } from './PerformLearnLinks.jsx';
 import { PerformTile } from './PerformTile.jsx';
 import { SoundPanel } from './SoundPanel.jsx';
 import { TempoPanel } from './TempoPanel.jsx';
@@ -52,16 +52,6 @@ export function PerformView({ project, patch, live, flush }) {
 
   const items = useMemo(() => buildPerformItems(project, patch), [project, patch]);
 
-  // Which sequence "Play sequence" starts: the one that played last, else the first.
-  const [lastSequenceId, setLastSequenceId] = useState(null);
-  const playingId = live.engine.activeChaseId;
-  useEffect(() => {
-    if (playingId) {
-      setLastSequenceId(playingId);
-    }
-  }, [playingId]);
-  const playingName = playingId ? (project.chases.find((chase) => chase.id === playingId)?.name ?? 'a sequence') : null;
-  const playTarget = project.chases.find((chase) => chase.id === lastSequenceId) ?? project.chases[0] ?? null;
   const keys = assignKeys(items.length);
 
   // Forget links to looks and sequences that were deleted.
@@ -163,6 +153,23 @@ export function PerformView({ project, patch, live, flush }) {
       ? live.engine.activeSceneId === item.action.id && live.engine.activeChaseId === null
       : live.engine.activeChaseId === item.action.id;
 
+  const renderTile = (item, index) => (
+    <PerformTile
+      key={actionId(item.action)}
+      name={item.name}
+      kind={item.kind}
+      gradient={item.gradient}
+      keyLabel={keys[index]}
+      midiLabel={midiLabelOf(item.action)}
+      isPlaying={isPlaying(item)}
+      isArmed={isArmed(item.action)}
+      onPress={() => handlePress(item.action)}
+    />
+  );
+  const entries = items.map((item, index) => ({ item, index }));
+  const looks = entries.filter(({ item }) => item.kind === 'Look');
+  const sequences = entries.filter(({ item }) => item.kind === 'Sequence');
+
   return (
     <section className="view" aria-labelledby="perform-title">
       <div className="view-header">
@@ -170,21 +177,22 @@ export function PerformView({ project, patch, live, flush }) {
           <h1 className="view-title" id="perform-title">
             Perform
           </h1>
-          <p className="view-sub">
-            Big buttons for your show. Keys: Space is blackout, Escape stops a sequence, [ and ] change the master, and
-            . taps the tempo.
-          </p>
+          <p className="view-sub">Tap a pad or press its key. Tap a playing sequence again to stop it.</p>
         </div>
-        <label className="field">
-          Fade when playing a look
-          <select className="select" value={fadeMs} onChange={(event) => setFadeMs(Number(event.target.value))}>
-            {FADES.map((ms) => (
-              <option key={ms} value={ms}>
-                {ms === 0 ? 'Instant' : `${ms / 1000} s`}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ul className="key-hints" aria-label="Keyboard shortcuts">
+          <li>
+            <kbd>Space</kbd> Blackout
+          </li>
+          <li>
+            <kbd>Esc</kbd> Stop
+          </li>
+          <li>
+            <kbd>[</kbd> <kbd>]</kbd> Master
+          </li>
+          <li>
+            <kbd>.</kbd> Tap tempo
+          </li>
+        </ul>
       </div>
 
       {error ? (
@@ -193,52 +201,70 @@ export function PerformView({ project, patch, live, flush }) {
         </p>
       ) : null}
 
-      <PerformControls
-        master={live.engine.master}
-        isBlackout={live.engine.blackout}
-        isLearning={isLearning}
-        playingName={playingName}
-        playTarget={playTarget}
-        labelFor={withMidiLabel}
-        isArmed={isArmed}
-        onPress={handlePress}
-        onMaster={(level) => live.send({ type: 'master', level })}
-      />
+      {isLearning ? <PerformLearnLinks labelFor={withMidiLabel} isArmed={isArmed} onPress={handlePress} /> : null}
 
       {items.length === 0 ? (
         <EmptyState title="Nothing to perform yet" hint="Save some looks first. They appear here as big buttons." />
       ) : (
-        <div className="perform-grid">
-          {items.map((item, index) => (
-            <PerformTile
-              key={actionId(item.action)}
-              name={item.name}
-              kind={item.kind}
-              gradient={item.gradient}
-              keyLabel={keys[index]}
-              midiLabel={midiLabelOf(item.action)}
-              isPlaying={isPlaying(item)}
-              isArmed={isArmed(item.action)}
-              onPress={() => handlePress(item.action)}
-            />
-          ))}
-        </div>
+        <>
+          {looks.length > 0 ? (
+            <section className="pad-section" aria-labelledby="pads-looks">
+              <div className="pad-section-head">
+                <h2 className="section-title" id="pads-looks">
+                  Looks
+                  <span className="section-count">{looks.length}</span>
+                </h2>
+                <label className="field field-inline">
+                  Fade when playing a look
+                  <select
+                    className="select select-compact"
+                    value={fadeMs}
+                    onChange={(event) => setFadeMs(Number(event.target.value))}
+                  >
+                    {FADES.map((ms) => (
+                      <option key={ms} value={ms}>
+                        {ms === 0 ? 'Instant' : `${ms / 1000} s`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="perform-grid">{looks.map(({ item, index }) => renderTile(item, index))}</div>
+            </section>
+          ) : null}
+          {sequences.length > 0 ? (
+            <section className="pad-section" aria-labelledby="pads-sequences">
+              <div className="pad-section-head">
+                <h2 className="section-title" id="pads-sequences">
+                  Sequences
+                  <span className="section-count">{sequences.length}</span>
+                </h2>
+              </div>
+              <div className="perform-grid">{sequences.map(({ item, index }) => renderTile(item, index))}</div>
+            </section>
+          ) : null}
+        </>
       )}
 
-      <TempoPanel bpm={live.engine.bpm} onTempo={(bpm) => live.send({ type: 'tempo', bpm, sync: false })} onTap={tap} />
-      <SoundPanel send={live.send} />
-      <EffectsPanel groups={project.groups} live={live} />
-
-      <MidiPanel
-        midi={midi}
-        isLearning={isLearning}
-        onToggleLearn={() => dispatchLearn({ type: 'toggle' })}
-        mappingCount={Object.keys(midiMap).length}
-        onClear={() => {
-          setMidiMap({});
-          saveMidiMap({});
-        }}
-      />
+      <div className="console">
+        <TempoPanel
+          bpm={live.engine.bpm}
+          onTempo={(bpm) => live.send({ type: 'tempo', bpm, sync: false })}
+          onTap={tap}
+        />
+        <EffectsPanel groups={project.groups} live={live} />
+        <SoundPanel send={live.send} />
+        <MidiPanel
+          midi={midi}
+          isLearning={isLearning}
+          onToggleLearn={() => dispatchLearn({ type: 'toggle' })}
+          mappingCount={Object.keys(midiMap).length}
+          onClear={() => {
+            setMidiMap({});
+            saveMidiMap({});
+          }}
+        />
+      </div>
     </section>
   );
 }

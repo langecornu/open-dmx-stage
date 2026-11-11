@@ -34,6 +34,21 @@ describe('Sidebar', () => {
     expect(onSelect).toHaveBeenCalledWith('perform');
   });
 
+  it('groups the screens under Show and Rig headings', () => {
+    render(<Sidebar current="control" onSelect={vi.fn()} />);
+    const show = screen.getByRole('group', { name: 'Show' });
+    const rig = screen.getByRole('group', { name: 'Rig' });
+    expect(show).toContainElement(screen.getByRole('button', { name: 'Perform' }));
+    expect(rig).toContainElement(screen.getByRole('button', { name: 'Output' }));
+    expect(show).not.toContainElement(screen.getByRole('button', { name: 'Setup' }));
+  });
+
+  it('marks the screens that have something running, for screen readers too', () => {
+    render(<Sidebar current="control" onSelect={vi.fn()} liveViews={['chases']} />);
+    expect(screen.getByRole('button', { name: /Sequences.*on stage/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Looks' })).toBeInTheDocument();
+  });
+
   it('has no automated accessibility violations', async () => {
     const { container } = render(<Sidebar current="control" onSelect={vi.fn()} />);
     expect(await accessibilityViolations(container)).toEqual([]);
