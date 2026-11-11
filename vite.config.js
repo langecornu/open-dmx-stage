@@ -4,6 +4,11 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // Small assets are normally inlined as data: URLs, but the audio worklet must be a real file served from this site:
+    // the content security policy only allows scripts from 'self'.
+    assetsInlineLimit: (file) => (file.includes('beatMeterWorklet') ? false : undefined),
+  },
   server: {
     port: 5173,
     proxy: {

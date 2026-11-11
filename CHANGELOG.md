@@ -34,6 +34,11 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Follow the music:** a panel on Perform that listens to the microphone or a browser tab's sound, finds the beat (the
+  low frequencies, measured on the audio thread so it keeps working when the page is in the background) and sets the
+  tempo, so the effects and the sequences timed in beats keep time with the music. The sound is analysed in the page and
+  is never recorded or sent anywhere. Tried with a synthetic 128 and 100 beats per minute track in a real browser; not yet
+  with real music.
 - **First light checklist** ([docs/FIRST_LIGHT.md](docs/FIRST_LIGHT.md)) with a starter show to import
   ([docs/examples/my-rig.json](docs/examples/my-rig.json)), and `--channels` for `npm run dmx:ramp`.
 - **Find a fixture online:** search the Open Fixture Library from the Fixtures screen and copy a light's modes and

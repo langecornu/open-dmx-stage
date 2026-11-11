@@ -23,6 +23,7 @@ import { EmptyState } from './EmptyState.jsx';
 import { MidiPanel } from './MidiPanel.jsx';
 import { PerformControls } from './PerformControls.jsx';
 import { PerformTile } from './PerformTile.jsx';
+import { SoundPanel } from './SoundPanel.jsx';
 import { TempoPanel } from './TempoPanel.jsx';
 
 const FADES = [0, 250, 500, 1000, 2000];
@@ -212,6 +213,7 @@ export function PerformView({ project, patch, live, flush }) {
       )}
 
       <TempoPanel bpm={live.engine.bpm} onTempo={(bpm) => live.send({ type: 'tempo', bpm, sync: false })} onTap={tap} />
+      <SoundPanel send={live.send} />
       <EffectsPanel groups={project.groups} live={live} />
 
       <MidiPanel
