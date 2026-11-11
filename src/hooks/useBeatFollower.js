@@ -3,15 +3,13 @@
 // worklet; it is not recorded and it never leaves the computer. Only tempo messages go to the server.
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { createBeatDetector, smoothTempo, tempoFromBeats } from '../utils/beatDetector.js';
+import { createBeatTracker } from '../utils/beatTracker.js';
 
 export const SOURCES = /** @type {const} */ ({ MICROPHONE: 'microphone', TAB: 'tab' });
 
 const WORKLET_URL = new URL('../audio/beatMeterWorklet.js', import.meta.url).href;
-const LEVEL_EVERY = 3; // update the level meter every third 20 ms window
-const CHECK_EVERY = 10; // and check for silence every tenth
-const SILENCE_MS = 4000; // no beat for this long means the tempo is no longer locked
-const KEPT_BEATS = 24;
+const SHOW_EVERY = 3; // update what is shown every third 20 ms window
+const TEMPO_STEP = 0.3; // send a tempo change without a beat only when it moved by at least this much
 
 /** @param {unknown} error @param {string} source @returns {string} */
 function describeError(error, source) {
@@ -27,18 +25,30 @@ function describeError(error, source) {
   return 'Could not start listening. Check the sound source and try again.';
 }
 
+const OFF = {
+  status: 'off',
+  level: 0,
+  bpm: null,
+  isLocked: false,
+  error: null,
+  beatsHeard: 0,
+  candidateBpm: null,
+  confidence: 0,
+};
+
 /**
  * @param {{ send: (message: object) => void }} options
  * @returns {{
  *   status: 'off' | 'asking' | 'listening',
  *   level: number, bpm: number | null, isLocked: boolean, error: string | null,
+ *   beatsHeard: number, candidateBpm: number | null, confidence: number,
  *   inputs: { id: string, label: string }[],
  *   start: (options: { source: string, deviceId?: string }) => Promise<void>,
  *   stop: () => void,
  * }}
  */
 export function useBeatFollower({ send }) {
-  const [state, setState] = useState({ status: 'off', level: 0, bpm: null, isLocked: false, error: null });
+  const [state, setState] = useState(OFF);
   const [inputs, setInputs] = useState(/** @type {{ id: string, label: string }[]} */ ([]));
   const sessionRef = useRef(
     /** @type {null | { stream: MediaStream, context: AudioContext, node: AudioWorkletNode }} */ (null),
@@ -76,17 +86,14 @@ export function useBeatFollower({ send }) {
       }
       session.context.close();
     }
-    setState((current) =>
-      current.status === 'off' ? current : { status: 'off', level: 0, bpm: null, isLocked: false, error: null },
-    );
+    setState((current) => (current.status === 'off' ? current : OFF));
   }, []);
 
   const start = useCallback(
     async ({ source, deviceId }) => {
       stop();
-      setState({ status: 'asking', level: 0, bpm: null, isLocked: false, error: null });
-      const fail = (/** @type {string} */ message) =>
-        setState({ status: 'off', level: 0, bpm: null, isLocked: false, error: message });
+      setState({ ...OFF, status: 'asking' });
+      const fail = (/** @type {string} */ message) => setState({ ...OFF, error: message });
 
       /** @type {MediaStream} */
       let stream;
@@ -147,42 +154,50 @@ export function useBeatFollower({ send }) {
         await context.resume();
       }
 
-      const detector = createBeatDetector();
-      /** @type {number[]} */
-      let beats = [];
+      const tracker = createBeatTracker();
       /** @type {number | null} */
-      let tempo = null;
+      let sentTempo = null;
       let windows = 0;
-      let peak = 0.01;
-      let lastBeatAt = -Infinity;
-      node.port.onmessage = (/** @type {MessageEvent<{ energy: number, time: number }>} */ event) => {
-        const { energy, time } = event.data;
+      let peak = 1e-6;
+      node.port.onmessage = (/** @type {MessageEvent<{ low: number, full: number, time: number }>} */ event) => {
+        const { low, full, time } = event.data;
         windows += 1;
-        peak = Math.max(energy, peak * 0.997);
-        if (detector.feed(energy, time)) {
-          lastBeatAt = time;
-          beats = [...beats, time].slice(-KEPT_BEATS);
-          const estimate = tempoFromBeats(beats);
-          if (estimate) {
-            tempo = smoothTempo(tempo, estimate.bpm);
-            // Each beat also lines the beat up on the server, so effects land on the music.
-            sendRef.current({ type: 'tempo', bpm: tempo, sync: true });
-            setState((current) => ({ ...current, bpm: tempo, isLocked: true }));
+        const result = tracker.feed({ low, full }, time);
+        peak = Math.max(full, peak * 0.997);
+        if (result.bpm !== null) {
+          if (result.isBeat) {
+            // Each beat that fits the tempo also lines the beat up on the server, so effects land on the music.
+            sendRef.current({ type: 'tempo', bpm: result.bpm, sync: true });
+            sentTempo = result.bpm;
+          } else if (sentTempo === null || Math.abs(result.bpm - sentTempo) >= TEMPO_STEP) {
+            sendRef.current({ type: 'tempo', bpm: result.bpm, sync: false });
+            sentTempo = result.bpm;
           }
+        } else {
+          sentTempo = null;
         }
-        if (windows % LEVEL_EVERY === 0) {
-          const level = Math.min(1, energy / peak);
-          setState((current) => (current.status === 'listening' ? { ...current, level } : current));
-        }
-        if (windows % CHECK_EVERY === 0 && time - lastBeatAt > SILENCE_MS) {
-          setState((current) => (current.isLocked ? { ...current, isLocked: false } : current));
+        if (windows % SHOW_EVERY === 0) {
+          const level = Math.min(1, full / peak);
+          setState((current) =>
+            current.status === 'listening'
+              ? {
+                  ...current,
+                  level,
+                  bpm: result.bpm,
+                  isLocked: result.bpm !== null,
+                  beatsHeard: result.beatsHeard,
+                  candidateBpm: result.candidateBpm,
+                  confidence: result.confidence,
+                }
+              : current,
+          );
         }
       };
       for (const track of stream.getAudioTracks()) {
         track.addEventListener('ended', stop); // the person stopped sharing, or unplugged the microphone
       }
       sessionRef.current = { stream, context, node };
-      setState({ status: 'listening', level: 0, bpm: null, isLocked: false, error: null });
+      setState({ ...OFF, status: 'listening' });
       refreshInputs();
     },
     [refreshInputs, stop],

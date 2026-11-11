@@ -82,6 +82,12 @@ export function SoundPanel({ send }) {
         {statusText}
       </p>
       {follower.status === 'listening' ? (
+        <p className="view-sub sound-detail">
+          Heard {follower.beatsHeard} beats. Strongest rhythm: {follower.candidateBpm ?? 'none yet'}
+          {follower.candidateBpm ? ` bpm, ${Math.round(follower.confidence * 100)}% steady` : ''}.
+        </p>
+      ) : null}
+      {follower.status === 'listening' ? (
         <div
           className="sound-meter"
           role="meter"
