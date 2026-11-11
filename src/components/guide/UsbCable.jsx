@@ -6,7 +6,8 @@ export function UsbCable() {
     <>
       <p>
         Use this for passive USB-to-DMX cables such as the <strong>DSD TECH SH-RS09B</strong> and the ENTTEC Open DMX
-        USB. This is the experimental option: it has not been tested on real hardware yet, so tell us how it goes.
+        USB. It has been verified once, with a DSD TECH SH-RS09B on a Mac and two LED pars, so tell us how it goes on
+        yours.
       </p>
       <ol className="help-steps">
         <li>

@@ -84,7 +84,7 @@ export function PassiveOrActive() {
           and press <strong>Detect adapter</strong>. The app asks the adapter to identify itself: an adapter with its
           own processor (ENTTEC Pro style) answers, and a passive cable stays silent. The app then selects the matching
           interface for you. Silence is a strong hint, not proof (a wrong port or a busy device is silent too), and this
-          check has not been tried on real hardware yet.
+          check has been tried on one passive cable, which stayed silent as expected, and not yet on an active adapter.
         </li>
         <li>
           <strong>Try it here.</strong> Choose one type and press Connect. If the lights stay dark, switch to the other

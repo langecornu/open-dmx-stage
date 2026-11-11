@@ -18,6 +18,12 @@ the project follows [Semantic Versioning](https://semver.org/).
 - The built app served by `npm start` could not open its live link with default settings, so it said "Server offline" and
   faders, blackout and the lights test did nothing. The server's own address is now always trusted.
 
+### Verified
+
+- **USB output on real lights:** a DSD TECH SH-RS09B passive cable on a Mac (macOS 26, Apple silicon, Node 24) drove two
+  LED par lights with steady colours, brightness and no flicker. See the first light checklist and ADR 0003. Not yet
+  verified: other computers and operating systems, ENTTEC Pro adapters, Art-Net and sACN on real lights, the moving head.
+
 ### Added
 
 - **First light checklist** ([docs/FIRST_LIGHT.md](docs/FIRST_LIGHT.md)) with a starter show to import
@@ -38,8 +44,8 @@ the project follows [Semantic Versioning](https://semver.org/).
   each mode (name, what it does, resting value; add, reorder and remove). Built-in fixtures are read-only examples you
   can copy. Your fixtures are saved in the show file. Fixtures have a new `description` field (optional in older shows).
 - **More built-in fixtures, from maker manuals:** 36 LED RGB par (7 channel), Mini Spider Light (7 channel) and Mini Moving
-  Head Gobo Light (12 and 10 channel). Reset and program channels rest at 0 and are never scaled by master. Not yet
-  tried on real lights.
+  Head Gobo Light (12 and 10 channel). Reset and program channels rest at 0 and are never scaled by master. Tried on real
+  lights: the 36 LED par profile works (channels 1 to 4 checked); the others have not been tried yet.
 - **U`King 40W RGBW Moving Head Light** built-in fixture (13 channel mode, from the maker's manual) and the worked
   example for the Fixtures screen. Not yet tried on the real light.
 
@@ -47,7 +53,7 @@ the project follows [Semantic Versioning](https://semver.org/).
   master), and MIDI controller mapping with learn mode (pads to looks and sequences, a knob to the master). MIDI
   links are saved in the browser.
 - **Detect adapter:** asks a USB adapter to identify itself (the ENTTEC Pro query) and selects the matching interface;
-  a passive cable stays silent. Not yet tried on real hardware.
+  a passive cable stays silent (tried on one passive cable; not yet on an active adapter).
 - **Test lights:** cycles every patched fixture through red, green, blue and white from the Connection card.
 
 ### Changed
