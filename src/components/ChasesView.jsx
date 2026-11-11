@@ -41,16 +41,44 @@ export function ChasesView({ project, patch, update, flush, live }) {
     update((current) => ({ ...current, chases: current.chases.filter((c) => c.id !== chase.id) }));
     setSelectedId(null);
   };
+  // A new step carries on from the last one: the next look in the list, with the same fade and hold, so building a
+  // sequence is a run of clicks instead of a run of edits.
   const handleAddStep = () => {
-    const firstScene = project.scenes[0];
-    if (firstScene) {
-      patchChase(chase.id, {
-        steps: [
-          ...chase.steps,
-          { id: crypto.randomUUID(), sceneId: firstScene.id, fadeMs: 1000, holdMs: 2000, fadeBeats: 2, holdBeats: 4 },
-        ],
-      });
+    if (project.scenes.length === 0) {
+      return;
     }
+    const last = chase.steps.at(-1);
+    const lastIndex = last ? project.scenes.findIndex((scene) => scene.id === last.sceneId) : -1;
+    const scene = project.scenes[(lastIndex + 1) % project.scenes.length];
+    const timing = last ?? { fadeMs: 1000, holdMs: 2000, fadeBeats: 2, holdBeats: 4 };
+    patchChase(chase.id, {
+      steps: [
+        ...chase.steps,
+        {
+          id: crypto.randomUUID(),
+          sceneId: scene.id,
+          fadeMs: timing.fadeMs,
+          holdMs: timing.holdMs,
+          fadeBeats: timing.fadeBeats,
+          holdBeats: timing.holdBeats,
+        },
+      ],
+    });
+  };
+  const handleDuplicateStep = (index) => {
+    const steps = [...chase.steps];
+    steps.splice(index + 1, 0, { ...chase.steps[index], id: crypto.randomUUID() });
+    patchChase(chase.id, { steps });
+  };
+  const handleDuplicate = () => {
+    const copy = {
+      ...chase,
+      id: crypto.randomUUID(),
+      name: `${chase.name} copy`,
+      steps: chase.steps.map((step) => ({ ...step, id: crypto.randomUUID() })),
+    };
+    update((current) => ({ ...current, chases: [...current.chases, copy] }));
+    setSelectedId(copy.id);
   };
   const handleStep = (index, changes) =>
     patchChase(chase.id, { steps: chase.steps.map((step, i) => (i === index ? { ...step, ...changes } : step)) });
@@ -179,6 +207,10 @@ export function ChasesView({ project, patch, update, flush, live }) {
                     Play
                   </button>
                 )}
+                <button type="button" className="btn" onClick={handleDuplicate}>
+                  <Icon name="copy" size={16} />
+                  Duplicate
+                </button>
                 <button type="button" className="btn btn-danger" onClick={handleDelete}>
                   <Icon name="trash" size={16} />
                   Delete
@@ -222,6 +254,7 @@ export function ChasesView({ project, patch, update, flush, live }) {
                   onChange={handleStep}
                   onMove={handleMove}
                   onRemove={handleRemoveStep}
+                  onDuplicate={handleDuplicateStep}
                 />
               ))}
               <div>

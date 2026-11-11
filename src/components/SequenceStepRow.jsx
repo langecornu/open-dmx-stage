@@ -5,7 +5,18 @@ const clampMs = (raw) => Math.max(0, Math.min(600000, Math.round(Number(raw) * 1
 
 const clampBeats = (raw) => Math.max(0, Math.min(64, Math.round(Number(raw) * 4) / 4 || 0));
 
-export function SequenceStepRow({ step, index, isPlaying, timing, scenes, thumbnail, onChange, onMove, onRemove }) {
+export function SequenceStepRow({
+  step,
+  index,
+  isPlaying,
+  timing,
+  scenes,
+  thumbnail,
+  onChange,
+  onMove,
+  onRemove,
+  onDuplicate,
+}) {
   const number = index + 1;
   const isBeats = timing === 'beats';
   return (
@@ -74,6 +85,14 @@ export function SequenceStepRow({ step, index, isPlaying, timing, scenes, thumbn
           onClick={() => onMove(index, 1)}
         >
           <Icon name="down" size={16} />
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost btn-icon"
+          aria-label={`Duplicate step ${number}`}
+          onClick={() => onDuplicate(index)}
+        >
+          <Icon name="copy" size={16} />
         </button>
         <button
           type="button"
