@@ -7,6 +7,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Auto show**: plays your looks or your sequences by itself at the tempo, changing every 1, 2, 4 or 8 bars, in order
+  or shuffled, until you stop it. No music needed. Looks cross-fade over one beat and looks that leave every light off
+  are skipped. Start it from the new card on Perform or from the search palette; the On stage bar shows it with
+  **Stop**, and pressing a pad takes over.
 - **Sequences: faster building**: Add step carries on with the next look and the same timing as the last step, steps
   can be duplicated, and a whole sequence can be duplicated.
 - **Looks: a live capture strip** shows a swatch of what the lights are doing right now beside the name field, and each

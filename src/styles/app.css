@@ -1135,10 +1135,19 @@ input[type='range'] {
   color: var(--primary-ink);
 }
 
-.midi-panel {
+.midi-panel,
+.auto-panel {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+
+.auto-panel .toolbar {
+  align-items: flex-end;
+}
+
+.auto-panel .select {
+  max-width: 100%;
 }
 
 .iface-list {

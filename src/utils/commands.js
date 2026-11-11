@@ -1,8 +1,11 @@
 // The commands in the search palette (Ctrl or Command + K): go to a screen, play a look, start or stop a sequence, and
 // the quick actions. Built from the show and the live state, so the list always matches what can be done right now.
+import { describeAuto } from './autoShow.js';
 import { VIEWS } from './views.js';
 
 const LOOK_FADE_MS = 500;
+/** What "Start the auto show" plays from the palette; the Perform screen offers every choice. */
+const PALETTE_AUTO = /** @type {const} */ ({ source: 'looks', beats: 8, order: 'order' });
 
 /**
  * @typedef {{ send: (message: object) => void, flush: () => Promise<void>, navigate: (view: string) => void, toggleTheme: () => void, showShortcuts: () => void }} CommandContext
@@ -44,6 +47,28 @@ export function buildCommands({ project, engine, theme }) {
       hint: 'End pulse, sweep or rainbow',
       keywords: 'halt end',
       run: ({ send }) => send({ type: 'effectStop' }),
+    });
+  }
+  if (engine.auto) {
+    commands.push({
+      id: 'action-auto',
+      group: 'Actions',
+      label: 'Stop the auto show',
+      hint: 'The look on stage stays',
+      keywords: 'automatic halt end',
+      run: ({ send }) => send({ type: 'autoStop' }),
+    });
+  } else if (project.scenes.length > 0) {
+    commands.push({
+      id: 'action-auto',
+      group: 'Actions',
+      label: 'Start the auto show',
+      hint: describeAuto(PALETTE_AUTO),
+      keywords: 'automatic hands free play all',
+      run: async ({ send, flush }) => {
+        await flush();
+        send({ type: 'autoStart', ...PALETTE_AUTO });
+      },
     });
   }
   if (engine.programmerChannels.length > 0) {

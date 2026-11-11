@@ -52,6 +52,16 @@ describe('StageBar', () => {
     expect(send).toHaveBeenCalledWith({ type: 'chaseStop' });
   });
 
+  it('stops the auto show', async () => {
+    const { send } = renderBar({
+      auto: { source: 'looks', beats: 4, order: 'order', itemId: 's1' },
+      activeSceneId: 's1',
+    });
+    expect(screen.getByText('Auto show: Ocean')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
+    expect(send).toHaveBeenCalledWith({ type: 'autoStop' });
+  });
+
   it('jumps to the screen the sequence lives on', async () => {
     const { onNavigate } = renderBar({ activeChaseId: 'c1', chaseStep: 0 });
     await userEvent.click(screen.getByRole('button', { name: 'Open Sequences' }));

@@ -116,6 +116,22 @@ The step that is playing is highlighted. Use the arrow buttons to reorder steps 
   each, and the pad that is playing says **On stage**.
 - **MIDI:** while learning, extra buttons appear to link blackout, stop and the master to a pad or knob.
 
+### Auto show
+
+The **Auto show** card plays your show by itself, with no music and no one at the controls, until you stop it.
+
+- **Play:** your **Looks** or your **Sequences**. **Change:** how long each stays on, from **every bar** (four beats)
+  to **every 8 bars**. **Order:** **In order**, or **Shuffled** (never the same one twice in a row). Then press **Start
+  auto show**.
+- It follows the **tempo**, so a faster tempo changes faster; type or tap a new tempo at any time. Looks fade into each
+  other over one beat. Looks that leave every light off (such as "Dark") are skipped, so the stage never goes black.
+- The **On stage** bar says **Auto show** and what is playing, with **Stop**. **Escape** stops it too, and the search
+  palette has **Start the auto show** (looks, in order, every 2 bars) and **Stop the auto show**. Stopping leaves the
+  current look on stage.
+- **Pressing a pad takes over**: the auto show stops and your look or sequence plays. A blackout does not stop it; the
+  show carries on underneath.
+- The server runs it, so it keeps going if you close the page.
+
 ### Tempo and effects
 
 - **Tempo:** type the beats per minute, or press **Tap tempo** (or the **.** key) in time with the music. The first tap
