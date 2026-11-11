@@ -48,6 +48,17 @@ describe('SoundPanel', () => {
     expect(screen.getByRole('button', { name: 'Stop listening' })).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it('shows what it hears while it waits, so a person can tell it is working', async () => {
+    const user = userEvent.setup();
+    await renderPanel();
+    await user.click(screen.getByRole('button', { name: 'Start listening' }));
+    expect(screen.getByText(/Strongest rhythm: none yet/)).toBeInTheDocument();
+    act(() => audio.feed(musicWindows({ seconds: 14, intervalMs: 500 })));
+    expect(
+      screen.getByText(/Heard \d+ beats\. Strongest rhythm: 1(19|20|21)(\.\d)? bpm, \d+% steady\./),
+    ).toBeInTheDocument();
+  });
+
   it('shows the tempo it follows, a level meter, and sets the tempo for the lights', async () => {
     const user = userEvent.setup();
     await renderPanel();

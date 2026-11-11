@@ -86,9 +86,7 @@ export function useBeatFollower({ send }) {
       }
       session.context.close();
     }
-    setState((current) =>
-      current.status === 'off' ? current : { status: 'off', level: 0, bpm: null, isLocked: false, error: null },
-    );
+    setState((current) => (current.status === 'off' ? current : OFF));
   }, []);
 
   const start = useCallback(

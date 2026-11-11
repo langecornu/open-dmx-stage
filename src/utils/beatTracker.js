@@ -159,9 +159,6 @@ export function createBeatTracker() {
       return sinceLast >= 250;
     }
     const period = 60000 / bpm;
-    if (sinceLast < 0.55 * period) {
-      return false;
-    }
     // On the beat when it falls close to where the tempo says, or when the beat has been lost and this is a fresh start.
     return Math.abs(sinceLast - period) <= 0.28 * period || sinceLast > 1.7 * period;
   }

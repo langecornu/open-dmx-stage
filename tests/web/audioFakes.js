@@ -13,18 +13,68 @@ function seededRandom(seed) {
   };
 }
 
+/** A hit that starts at 1 and dies away with the given time constant (ms). */
+const decay = (sinceMs, timeConstantMs) => (sinceMs < 0 ? 0 : Math.exp(-sinceMs / timeConstantMs));
+
 /**
- * Low-band strengths of a kick drum every `intervalMs` over a noise floor, one value per 20 ms window.
- * @returns {{ energy: number, time: number }[]}
+ * Made-up music, one low-band and one full-band strength per 20 ms window, like the audio worklet reports.
+ * Real music is messy, so the defaults are the hard case: a steady bass line under the kick, snares on beats two and
+ * four in the mid band only, and hi-hats between the beats.
+ * @param {object} options
+ * @param {number} options.seconds
+ * @param {number} options.intervalMs time between beats (500 is 120 beats per minute)
+ * @param {number} [options.floor] background noise
+ * @param {number} [options.kick] strength of the kick in the low band (0 for a track with no bass at all)
+ * @param {number} [options.click] strength of the kick's click, heard in the full band only (a weak laptop microphone)
+ * @param {number} [options.bass] a steady bass line, which should not look like a beat
+ * @param {number} [options.snare] snares on beats two and four, full band only
+ * @param {number} [options.hat] hi-hats on the half beats, full band only
+ * @param {number} [options.startTime]
+ * @param {number} [options.seed]
+ * @returns {{ low: number, full: number, time: number }[]}
  */
-export function musicWindows({ seconds, intervalMs, floor = 0.02, hit = 0.3, startTime = 0, seed = 7 }) {
+export function musicWindows({
+  seconds,
+  intervalMs,
+  floor = 0.02,
+  kick = 0.3,
+  click = 0.1,
+  bass = 0.12,
+  snare = 0.25,
+  hat = 0.06,
+  startTime = 0,
+  seed = 7,
+}) {
   const random = seededRandom(seed);
   const windows = [];
   for (let time = 0; time < seconds * 1000; time += WINDOW_MS) {
-    windows.push({
-      energy: floor + hit * Math.exp(-(time % intervalMs) / 60) + random() * floor * 0.4,
-      time: startTime + time,
-    });
+    const sinceBeat = time % intervalMs;
+    const beatNumber = Math.floor(time / intervalMs);
+    const noise = random() * floor * 0.4;
+    const low = floor + bass + kick * decay(sinceBeat, 60) + noise;
+    const isBackBeat = beatNumber % 2 === 1;
+    const sinceHalf = (time + intervalMs / 2) % intervalMs;
+    const full =
+      low +
+      click * decay(sinceBeat, 25) +
+      (isBackBeat ? snare * decay(sinceBeat, 50) : 0) +
+      hat * decay(sinceHalf, 20) +
+      random() * floor * 0.3;
+    windows.push({ low, full, time: startTime + time });
+  }
+  return windows;
+}
+
+/** Noise and a steady hum with nothing repeating in it. */
+export function steadyNoise({ seconds, startTime = 0, level = 0.05, seed = 5 }) {
+  return musicWindows({ seconds, intervalMs: 500, kick: 0, click: 0, snare: 0, hat: 0, bass: level, startTime, seed });
+}
+
+/** Complete silence. */
+export function silence({ seconds, startTime = 0 }) {
+  const windows = [];
+  for (let time = 0; time < seconds * 1000; time += WINDOW_MS) {
+    windows.push({ low: 0, full: 0, time: startTime + time });
   }
   return windows;
 }

@@ -25,6 +25,12 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Follow the music did not lock on real music** ("waiting for a steady beat"). It counted bass hits, which fails when a
+  bass line is held under the kick, when snares and hi-hats add hits, or when a laptop microphone hears little bass. It
+  now measures how hard the sound hits in the low band and the whole sound, and finds the tempo from how that pattern
+  repeats, the way beat trackers do. While it waits, the panel shows how many beats it has heard and the strongest
+  rhythm so far.
+
 - **Stop sequence did nothing when no sequence was playing, and gave no hint why.** The Perform screen now has one button
   that says **Play sequence** when nothing plays and becomes **Stop sequence** while a sequence runs, a line that says what
   is playing, and a **Blackout is on** label (with a note that the lights are dark) so a blackout is not mistaken for a

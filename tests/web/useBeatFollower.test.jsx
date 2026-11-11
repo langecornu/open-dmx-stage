@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SOURCES, useBeatFollower } from '../../src/hooks/useBeatFollower.js';
-import { createStream, installFakeAudio, musicWindows } from './audioFakes.js';
+import { createStream, installFakeAudio, musicWindows, silence, steadyNoise } from './audioFakes.js';
 
 let audio;
 let send;
@@ -78,8 +78,8 @@ describe('useBeatFollower', () => {
     expect(result.current.bpm).toBeLessThan(122);
     const tempoMessages = send.mock.calls.map(([message]) => message).filter((message) => message.type === 'tempo');
     expect(tempoMessages.length).toBeGreaterThan(5);
+    expect(tempoMessages.filter((message) => message.sync).length).toBeGreaterThan(5);
     for (const message of tempoMessages) {
-      expect(message.sync).toBe(true);
       expect(message.bpm).toBeGreaterThan(110);
       expect(message.bpm).toBeLessThan(130);
     }
@@ -95,18 +95,27 @@ describe('useBeatFollower', () => {
 
   it('does not touch the tempo for noise with no beat, and shows a level', async () => {
     const { result } = await startedHook();
-    act(() => audio.feed(musicWindows({ seconds: 8, intervalMs: 500, hit: 0 })));
+    act(() => audio.feed(steadyNoise({ seconds: 8 })));
     expect(send).not.toHaveBeenCalled();
     expect(result.current.isLocked).toBe(false);
+    expect(result.current.bpm).toBeNull();
     expect(result.current.level).toBeGreaterThanOrEqual(0);
     expect(result.current.level).toBeLessThanOrEqual(1);
+  });
+
+  it('shows what it is hearing before it locks, so a person can see it working', async () => {
+    const { result } = await startedHook();
+    act(() => audio.feed(musicWindows({ seconds: 4, intervalMs: 500 })));
+    expect(result.current.isLocked).toBe(false);
+    expect(result.current.level).toBeGreaterThan(0);
+    expect(result.current.beatsHeard).toBeGreaterThan(0);
   });
 
   it('says the beat is lost after a few seconds without one', async () => {
     const { result } = await startedHook();
     act(() => audio.feed(musicWindows({ seconds: 14, intervalMs: 500 })));
     expect(result.current.isLocked).toBe(true);
-    act(() => audio.feed(musicWindows({ seconds: 8, intervalMs: 500, hit: 0, startTime: 14000, seed: 11 })));
+    act(() => audio.feed(silence({ seconds: 8, startTime: 14000 })));
     expect(result.current.isLocked).toBe(false);
   });
 

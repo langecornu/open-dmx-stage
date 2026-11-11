@@ -121,11 +121,14 @@ listen to:
 - **Music in another app** (Spotify, Music): macOS cannot hand app sound to a browser, so use the microphone, or install
   a loopback input such as BlackHole and choose it under **Microphone**.
 
-The panel says **Listening… waiting for a steady beat** until it has heard about eight beats, then **Following the beat:
-128 beats per minute**, and the tempo above follows it. Start an effect (for example **Pulse**) or a sequence timed in
-beats (for example the demo show's **Colour cycle**) and it plays in time. It works best with a steady kick drum; music
-without a clear beat, or with a changing tempo, may not lock. If the beat is lost for a few seconds the panel goes back to
-waiting and leaves the tempo where it was. Press **Stop listening** to let go of the microphone.
+The panel says **Listening… waiting for a steady beat** for the first four or five seconds while it learns the rhythm,
+then **Following the beat: 128 beats per minute**, and the tempo above follows it. While it waits it shows how many beats
+it has heard and the strongest rhythm it has found so far, so you can see it working (and hold the microphone nearer the
+speaker if the level bar barely moves). It finds the tempo from how the sound's hits repeat rather than from the bass
+alone, so it copes with bass lines, snares, hi-hats and the thin bass of a laptop microphone. Start an effect (for example
+**Pulse**) or a sequence timed in beats (for example the demo show's **Colour cycle**) and it plays in time. Music without
+any clear rhythm will not lock. If the sound stops for a few seconds the panel goes back to waiting. Press **Stop
+listening** to let go of the microphone.
 
 The sound is analysed inside the page by the browser and is never recorded or sent anywhere: only the tempo goes to the
 server. There is a short delay between a sound and the light (a few tens of milliseconds), which is normal.
