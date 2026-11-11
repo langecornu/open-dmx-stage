@@ -1001,3 +1001,73 @@ kbd {
 .connection .toolbar .field input:not(.input-narrow) {
   width: 100%;
 }
+
+/* ---------- Empty states ---------- */
+.empty {
+  gap: var(--space-2);
+  padding: 56px var(--space-5);
+  border: 1.5px dashed var(--border-strong);
+  background: var(--surface);
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: var(--space-2);
+  border-radius: 16px;
+  background: var(--accent-soft);
+  color: var(--on-accent-soft);
+}
+
+.empty p {
+  max-width: 42ch;
+}
+
+/* ---------- Keyboard shortcuts ---------- */
+.shortcuts {
+  padding-bottom: var(--space-4);
+}
+
+.shortcuts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.shortcuts-section {
+  padding: var(--space-3) var(--space-4) 0;
+}
+
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  margin: var(--space-2) 0 0;
+}
+
+.shortcuts-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+}
+
+.shortcuts-row:first-child {
+  border-top: 0;
+}
+
+.shortcuts-row dt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.shortcuts-row dd {
+  margin: 0;
+  color: var(--text-dim);
+}

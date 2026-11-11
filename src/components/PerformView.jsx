@@ -204,7 +204,11 @@ export function PerformView({ project, patch, live, flush }) {
       {isLearning ? <PerformLearnLinks labelFor={withMidiLabel} isArmed={isArmed} onPress={handlePress} /> : null}
 
       {items.length === 0 ? (
-        <EmptyState title="Nothing to perform yet" hint="Save some looks first. They appear here as big buttons." />
+        <EmptyState
+          icon="bolt"
+          title="Nothing to perform yet"
+          hint="Save some looks first. They appear here as big buttons."
+        />
       ) : (
         <>
           {looks.length > 0 ? (

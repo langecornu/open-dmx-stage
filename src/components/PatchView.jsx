@@ -137,7 +137,11 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
       {project.fixtures.length > 0 ? <DmxMap project={project} patch={patch} /> : null}
 
       {project.fixtures.length === 0 ? (
-        <EmptyState title="Your rig is empty" hint="Add your first fixture above. Addresses are assigned for you." />
+        <EmptyState
+          icon="patch"
+          title="Your rig is empty"
+          hint="Add your first fixture above. Addresses are assigned for you."
+        />
       ) : (
         <div className="rig-list">
           {project.fixtures.map((fixture) => {

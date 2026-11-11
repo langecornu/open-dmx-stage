@@ -24,7 +24,7 @@ lights are not connected), **Search**, the **Master** brightness, the light/dark
 
 **Search (Ctrl or Command + K)** opens a palette from anywhere. Type a few letters to jump to a screen, play a look,
 start or stop a sequence, or run an action such as Blackout, then press **Enter**. The arrow keys move through the
-results and **Escape** closes it.
+results and **Escape** closes it. Press **?** anywhere (outside a text field) to see every keyboard shortcut.
 
 ![The search palette](images/18-search-dark.jpg)
 

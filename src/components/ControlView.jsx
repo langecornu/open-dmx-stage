@@ -92,7 +92,11 @@ export function ControlView({ project, patch, live }) {
       </div>
 
       {patched.length === 0 ? (
-        <EmptyState title="No lights yet" hint="Add your fixtures in Setup, then come back here to colour them." />
+        <EmptyState
+          icon="control"
+          title="No lights yet"
+          hint="Add your fixtures in Setup, then come back here to colour them."
+        />
       ) : (
         <div className="lights-layout">
           <div className="lights-fixtures">

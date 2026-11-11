@@ -112,6 +112,18 @@ describe('App', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('opens the shortcut list with ?, but not while typing in a field', async () => {
+    const user = userEvent.setup();
+    await renderApp();
+    await user.type(screen.getByLabelText('Show name'), '?');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(document.body);
+    await user.keyboard('?');
+    expect(await screen.findByRole('dialog', { name: 'Keyboard shortcuts' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('renames the show from the top bar and shows it as unsaved until it is saved', async () => {
     const user = userEvent.setup();
     await renderApp();

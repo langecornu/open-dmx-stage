@@ -7,6 +7,8 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Keyboard shortcut list**: press **?** anywhere, or search for "keyboard shortcuts", to see every key you can press.
+- Empty screens show an icon, say what to do next, and use one consistent style.
 - **Output: choose how the signal leaves** with cards for the simulator, USB-DMX cable, ENTTEC Pro, Art-Net and sACN, each
   with an icon and a one-line explanation, instead of plain pills.
 - **A live stage view on every screen**, beside the On stage bar: each light is drawn as a lamp with a cone of light in the

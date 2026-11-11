@@ -81,7 +81,11 @@ export function ChasesView({ project, patch, update, flush, live }) {
       </div>
 
       {project.chases.length === 0 ? (
-        <EmptyState title="No sequences yet" hint="Save a few looks first, then chain them into a sequence." />
+        <EmptyState
+          icon="chases"
+          title="No sequences yet"
+          hint="Save a few looks first, then chain them into a sequence."
+        />
       ) : (
         <div className="split">
           <ul className="card list">
@@ -229,7 +233,7 @@ export function ChasesView({ project, patch, update, flush, live }) {
               </div>
             </div>
           ) : (
-            <EmptyState title="Pick a sequence" hint="Choose one on the left or create a new one." />
+            <EmptyState icon="chases" title="Pick a sequence" hint="Choose one on the left or create a new one." />
           )}
         </div>
       )}
