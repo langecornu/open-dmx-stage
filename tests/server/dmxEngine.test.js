@@ -106,3 +106,55 @@ describe('DmxEngine', () => {
     assert.deepEqual(engine.getState().programmerChannels, [], 'no manual overrides remain');
   });
 });
+
+describe('DmxEngine mute and solo', () => {
+  // Two fixtures: "a" has red on 1 and a pan on 2; "b" has red on 3.
+  function rig() {
+    const { engine } = createEngine();
+    engine.setFixtureChannels(
+      new Map([
+        ['a', { red: 1, levels: [1] }],
+        ['b', { red: 3, levels: [3] }],
+      ]),
+    );
+    engine.recallScene({ id: 'look', values: { 1: 200, 2: 128, 3: 150 } }, 0);
+    return engine;
+  }
+  const lit = (frame) => [frame[0], frame[1], frame[2]];
+
+  it('keeps a muted fixture dark, even against a manual change, and leaves its position alone', () => {
+    const engine = rig();
+    engine.setMute('a', true);
+    engine.setProgrammer({ 1: 255 });
+    assert.deepEqual(lit(engine.tick(0)), [0, 128, 150], 'a is dark, its pan holds, b is lit');
+    assert.deepEqual(engine.getState().muted, ['a']);
+    engine.setMute('a', false);
+    assert.equal(engine.tick(0)[0], 255, 'unmuted, the manual value shows again');
+  });
+
+  it('lights only the soloed fixtures while any is soloed', () => {
+    const engine = rig();
+    engine.setSolo('b', true);
+    assert.deepEqual(lit(engine.tick(0)), [0, 128, 150], 'only b is lit');
+    engine.setSolo('a', true);
+    assert.deepEqual(lit(engine.tick(0)), [200, 128, 150], 'both soloed, both lit');
+    engine.setMute('b', true);
+    assert.equal(engine.tick(0)[2], 0, 'mute wins over solo');
+  });
+
+  it('ignores a solo on a fixture that has left the rig, instead of darkening everything', () => {
+    const engine = rig();
+    engine.setSolo('gone', true);
+    assert.deepEqual(lit(engine.tick(0)), [200, 128, 150]);
+  });
+
+  it('clears every mute and solo at once', () => {
+    const engine = rig();
+    engine.setMute('a', true);
+    engine.setSolo('b', true);
+    engine.clearMuteSolo();
+    assert.deepEqual(engine.getState().muted, []);
+    assert.deepEqual(engine.getState().soloed, []);
+    assert.deepEqual(lit(engine.tick(0)), [200, 128, 150]);
+  });
+});

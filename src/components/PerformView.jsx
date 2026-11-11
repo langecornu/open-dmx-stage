@@ -21,6 +21,7 @@ import { useTapTempo } from '../hooks/useTapTempo.js';
 import { EffectsPanel } from './EffectsPanel.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { MidiPanel } from './MidiPanel.jsx';
+import { MuteSoloPanel } from './MuteSoloPanel.jsx';
 import { PerformLearnLinks } from './PerformLearnLinks.jsx';
 import { PerformTile } from './PerformTile.jsx';
 import { SoundPanel } from './SoundPanel.jsx';
@@ -257,6 +258,7 @@ export function PerformView({ project, patch, live, flush }) {
           onTap={tap}
         />
         <EffectsPanel groups={project.groups} live={live} />
+        <MuteSoloPanel project={project} live={live} />
         <SoundPanel send={live.send} />
         <MidiPanel
           midi={midi}

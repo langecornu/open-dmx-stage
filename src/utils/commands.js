@@ -46,6 +46,16 @@ export function buildCommands({ project, engine, theme }) {
       run: ({ send }) => send({ type: 'effectStop' }),
     });
   }
+  if ((engine.muted?.length ?? 0) > 0 || (engine.soloed?.length ?? 0) > 0) {
+    commands.push({
+      id: 'action-clear-mute-solo',
+      group: 'Actions',
+      label: 'Clear mute and solo',
+      hint: 'Let every light play again',
+      keywords: 'unmute unsolo reset',
+      run: ({ send }) => send({ type: 'clearMuteSolo' }),
+    });
+  }
   if (engine.programmerChannels.length > 0) {
     commands.push({
       id: 'action-reset',

@@ -17,6 +17,8 @@ const INITIAL_STATE = {
   activeChaseId: null,
   chaseStep: null,
   programmerChannels: [],
+  muted: [],
+  soloed: [],
 };
 
 /**

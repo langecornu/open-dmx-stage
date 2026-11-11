@@ -1141,6 +1141,75 @@ input[type='range'] {
   gap: var(--space-3);
 }
 
+/* ---------- Perform: mute and solo ---------- */
+.mutesolo-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.mutesolo-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mutesolo-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.mutesolo-row:last-child {
+  border-bottom: none;
+}
+
+.mutesolo-name {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.mutesolo-name strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mutesolo-name small {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.mutesolo-row[data-dark='true'] .mutesolo-name strong {
+  color: var(--text-dim);
+}
+
+.mutesolo-toggle {
+  min-height: 30px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+.mutesolo-toggle[data-kind='mute'][aria-pressed='true'] {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.mutesolo-toggle[data-kind='solo'][aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--on-accent-soft);
+}
+
 .iface-list {
   display: flex;
   flex-wrap: wrap;

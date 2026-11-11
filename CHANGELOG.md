@@ -7,6 +7,9 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Mute and solo for each light**: a card on Perform mutes a light (dark whatever plays, position still moves) or solos
+  it (only soloed lights are lit). The On stage bar reminds you with **Clear** while any is set, and the search palette
+  can clear them. Live only, not saved with the show.
 - **Sequences: faster building**: Add step carries on with the next look and the same timing as the last step, steps
   can be duplicated, and a whole sequence can be duplicated.
 - **Looks: a live capture strip** shows a swatch of what the lights are doing right now beside the name field, and each

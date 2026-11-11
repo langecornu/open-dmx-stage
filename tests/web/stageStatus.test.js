@@ -25,6 +25,20 @@ describe('describeStage', () => {
     expect(stage).toMatchObject({ kind: 'idle', title: 'Nothing playing', action: null, layers: [] });
   });
 
+  it('reminds that lights are muted or soloed, and offers to clear them', () => {
+    const withRig = {
+      ...project,
+      fixtures: [
+        { id: 'f1', name: 'Par 1' },
+        { id: 'f2', name: 'Par 2' },
+      ],
+    };
+    const stage = describeStage({ ...idle, muted: ['f2'], soloed: [] }, withRig);
+    expect(stage.layers).toEqual([
+      { id: 'mutesolo', text: 'Muted: Par 2', action: { label: 'Clear', message: { type: 'clearMuteSolo' } } },
+    ]);
+  });
+
   it('names the playing sequence, its step, and offers Stop', () => {
     const stage = describeStage({ ...idle, activeChaseId: 'c1', chaseStep: 1 }, project);
     expect(stage.kind).toBe('sequence');

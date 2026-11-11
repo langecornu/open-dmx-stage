@@ -45,6 +45,17 @@ describe('buildCommands', () => {
     expect(busy).toEqual(expect.arrayContaining(['action-stop', 'action-stop-effect', 'action-reset']));
   });
 
+  it('offers to clear mute and solo only while a light is muted or soloed', async () => {
+    const ctx = context();
+    expect(find(buildCommands({ project, engine: idle, theme: 'dark' }), 'action-clear-mute-solo')).toBeUndefined();
+    const command = find(
+      buildCommands({ project, engine: { ...idle, muted: [], soloed: ['a'] }, theme: 'dark' }),
+      'action-clear-mute-solo',
+    );
+    await command.run(ctx);
+    expect(ctx.send).toHaveBeenLastCalledWith({ type: 'clearMuteSolo' });
+  });
+
   it('plays a look after saving any pending edit, with a short fade', async () => {
     const ctx = context();
     await find(buildCommands({ project, engine: idle, theme: 'dark' }), 'look-s2').run(ctx);

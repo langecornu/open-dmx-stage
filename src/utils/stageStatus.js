@@ -1,6 +1,8 @@
 // Turns the live engine state into plain words for the "on stage" bar: what is playing, where it came from, and what
 // the one obvious action is. Pure, so every wording is easy to test.
 
+import { summariseMuteSolo } from './muteSolo.js';
+
 const EFFECT_NAMES = { pulse: 'Pulse', sweep: 'Sweep', rainbow: 'Rainbow' };
 
 /**
@@ -44,13 +46,19 @@ function manualLayer(engine) {
   };
 }
 
+// Muted or soloed lights stay dark whatever plays, so the bar always says so and offers to clear it.
+function muteSoloLayer(engine, project) {
+  const text = summariseMuteSolo(project.fixtures ?? [], engine);
+  return text ? { id: 'mutesolo', text, action: { label: 'Clear', message: { type: 'clearMuteSolo' } } } : null;
+}
+
 /**
  * @param {import('../hooks/useLive.js').EngineState} engine
- * @param {{ scenes: { id: string, name: string }[], chases: { id: string, name: string, loop: boolean, steps: unknown[] }[], groups: { id: string, name: string }[] }} project
+ * @param {{ scenes: { id: string, name: string }[], chases: { id: string, name: string, loop: boolean, steps: unknown[] }[], groups: { id: string, name: string }[], fixtures?: { id: string, name: string }[] }} project
  * @returns {StageStatus}
  */
 export function describeStage(engine, project) {
-  const layers = [effectLayer(engine, project), manualLayer(engine)].filter(Boolean);
+  const layers = [effectLayer(engine, project), manualLayer(engine), muteSoloLayer(engine, project)].filter(Boolean);
   const withoutLayer = (id) => layers.filter((layer) => layer.id !== id);
 
   if (engine.blackout) {
