@@ -7,6 +7,12 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **A live stage view on every screen**, beside the On stage bar: each light is drawn as a lamp with a cone of light in the
+  colour it is really sending, updated with the DMX frame.
+- **A DMX map on Setup**: the 512 channels with a block for each light, an outline where lights overlap, and the next free
+  address.
+- **Brief confirmations** ("Play Ocean") when a command from the search palette runs, and a branded loading screen.
+- **Richer sequence list**: each sequence shows a strip of its colours, its step count and its length.
 - **A redesign of the whole app.** A refreshed design language for both themes (graphite or paper, one accent, hairline
   borders, calmer type, soft motion) and a new structure:
   - **Home**, the new first screen: output, rig and tempo cards, a getting-started checklist, and quick-launch pads.

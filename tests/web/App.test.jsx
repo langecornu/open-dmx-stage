@@ -105,6 +105,7 @@ describe('App', () => {
     await user.type(box, 'perform{Enter}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(await screen.findByRole('heading', { level: 1, name: 'Perform' })).toBeInTheDocument();
+    expect(screen.getAllByRole('status').some((node) => node.textContent === 'Perform')).toBe(true);
     await user.keyboard('{Control>}k{/Control}');
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
     await user.keyboard('{Escape}');

@@ -5,6 +5,7 @@ import { DMX_CHANNELS, indexFixtureTypes } from '../../shared/patch.js';
 import { api } from '../api.js';
 import { planFixtures } from '../utils/patchTools.js';
 import { EmptyState } from './EmptyState.jsx';
+import { DmxMap } from './DmxMap.jsx';
 import { GroupsCard } from './GroupsCard.jsx';
 import { ShowFileCard } from './ShowFileCard.jsx';
 import { Icon } from './Icon.jsx';
@@ -132,6 +133,8 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
           {message}
         </p>
       ) : null}
+
+      {project.fixtures.length > 0 ? <DmxMap project={project} patch={patch} /> : null}
 
       {project.fixtures.length === 0 ? (
         <EmptyState title="Your rig is empty" hint="Add your first fixture above. Addresses are assigned for you." />

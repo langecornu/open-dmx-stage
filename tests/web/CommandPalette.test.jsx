@@ -65,6 +65,14 @@ describe('CommandPalette', () => {
     expect(screen.getAllByRole('option')[0]).toHaveAttribute('aria-selected', 'true');
   });
 
+  it('tells the app which command ran, so it can confirm it', async () => {
+    const user = userEvent.setup();
+    const onRun = vi.fn();
+    const { commands } = renderPalette({ onRun });
+    await user.keyboard('{Enter}');
+    expect(onRun).toHaveBeenCalledWith(commands[0]);
+  });
+
   it('runs a command when it is clicked', async () => {
     const user = userEvent.setup();
     const { commands, onClose } = renderPalette();

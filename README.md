@@ -3,7 +3,7 @@
 **Light your show from the browser.** Colour your fixtures, save looks, and chain them into sequences with smooth
 fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a built-in simulator when you have no hardware.
 
-![Open DMX Stage, Lights screen](docs/images/03-lights-light.jpg)
+![Open DMX Stage, Home screen](docs/images/16-home-dark.jpg)
 
 ## Features
 

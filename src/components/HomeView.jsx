@@ -56,6 +56,8 @@ export function HomeView({ project, patch, live, flush, navigate }) {
   const steps = setupSteps(project, output);
   const doneCount = steps.filter((step) => step.isDone).length;
   const nextStep = steps.find((step) => !step.isDone);
+  // With most of the setup done, the pads matter more than the checklist, so they come first.
+  const isNearlyDone = doneCount >= steps.length - 1;
   const isOutputReady = live.connected && Boolean(output?.connected);
   const outputName = output?.driver ? (DRIVER_LABELS[output.driver] ?? output.driver) : 'No output';
 
@@ -74,6 +76,35 @@ export function HomeView({ project, patch, live, flush, navigate }) {
       live.send({ type: 'chaseStart', chaseId: item.action.id });
     }
   };
+
+  const checklist = nextStep ? (
+    <section className="card card-pad checklist" aria-label="Getting started">
+      <div className="section-bar">
+        <h2 className="section-title">Getting started</h2>
+        <span className="pill">
+          {doneCount} of {steps.length} done
+        </span>
+      </div>
+      <ol className="checklist-steps">
+        {steps.map((step) => (
+          <li key={step.id} className="checklist-step" data-done={step.isDone}>
+            <span className="checklist-mark" aria-hidden="true">
+              {step.isDone ? <Icon name="check" size={14} /> : null}
+            </span>
+            <span className="checklist-text">
+              <strong>{step.title}</strong>
+              <span>{step.isDone ? 'Done' : step.hint}</span>
+            </span>
+            {step.isDone ? null : (
+              <button type="button" className="btn" onClick={() => navigate(step.view)}>
+                {step.title}
+              </button>
+            )}
+          </li>
+        ))}
+      </ol>
+    </section>
+  ) : null;
 
   return (
     <section className="view" aria-labelledby="home-title">
@@ -120,67 +151,79 @@ export function HomeView({ project, patch, live, flush, navigate }) {
         </button>
       </div>
 
-      {nextStep ? (
-        <section className="card card-pad checklist" aria-label="Getting started">
-          <div className="section-bar">
-            <h2 className="section-title">Getting started</h2>
-            <span className="pill">
-              {doneCount} of {steps.length} done
-            </span>
-          </div>
-          <ol className="checklist-steps">
-            {steps.map((step) => (
-              <li key={step.id} className="checklist-step" data-done={step.isDone}>
-                <span className="checklist-mark" aria-hidden="true">
-                  {step.isDone ? <Icon name="check" size={14} /> : null}
-                </span>
-                <span className="checklist-text">
-                  <strong>{step.title}</strong>
-                  <span>{step.isDone ? 'Done' : step.hint}</span>
-                </span>
-                {step.isDone ? null : (
-                  <button type="button" className="btn" onClick={() => navigate(step.view)}>
-                    {step.title}
-                  </button>
-                )}
-              </li>
-            ))}
-          </ol>
-        </section>
-      ) : null}
-
-      <section className="pad-section" aria-labelledby="quick-launch">
-        <div className="pad-section-head">
-          <h2 className="section-title" id="quick-launch">
-            Quick launch
-          </h2>
-          <button type="button" className="btn btn-ghost" onClick={() => navigate('perform')}>
-            See all on Perform
-          </button>
-        </div>
-        {items.length === 0 ? (
-          <div className="empty">
-            <strong>Nothing to launch yet</strong>
-            <p>Save a look and it shows up here as a pad.</p>
-          </div>
-        ) : (
-          <div className="perform-grid perform-grid-compact">
-            {items.map((item) => (
-              <PerformTile
-                key={`${item.action.type}-${item.action.id}`}
-                name={item.name}
-                kind={item.kind}
-                gradient={item.gradient}
-                keyLabel={null}
-                midiLabel={null}
-                isPlaying={isPlaying(item)}
-                isArmed={false}
-                onPress={() => handlePlay(item)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+      {isNearlyDone ? (
+        <>
+          <section className="pad-section" aria-labelledby="quick-launch">
+            <div className="pad-section-head">
+              <h2 className="section-title" id="quick-launch">
+                Quick launch
+              </h2>
+              <button type="button" className="btn btn-ghost" onClick={() => navigate('perform')}>
+                See all on Perform
+              </button>
+            </div>
+            {items.length === 0 ? (
+              <div className="empty">
+                <strong>Nothing to launch yet</strong>
+                <p>Save a look and it shows up here as a pad.</p>
+              </div>
+            ) : (
+              <div className="perform-grid perform-grid-compact">
+                {items.map((item) => (
+                  <PerformTile
+                    key={`${item.action.type}-${item.action.id}`}
+                    name={item.name}
+                    kind={item.kind}
+                    gradient={item.gradient}
+                    keyLabel={null}
+                    midiLabel={null}
+                    isPlaying={isPlaying(item)}
+                    isArmed={false}
+                    onPress={() => handlePlay(item)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+          {checklist}
+        </>
+      ) : (
+        <>
+          {checklist}
+          <section className="pad-section" aria-labelledby="quick-launch">
+            <div className="pad-section-head">
+              <h2 className="section-title" id="quick-launch">
+                Quick launch
+              </h2>
+              <button type="button" className="btn btn-ghost" onClick={() => navigate('perform')}>
+                See all on Perform
+              </button>
+            </div>
+            {items.length === 0 ? (
+              <div className="empty">
+                <strong>Nothing to launch yet</strong>
+                <p>Save a look and it shows up here as a pad.</p>
+              </div>
+            ) : (
+              <div className="perform-grid perform-grid-compact">
+                {items.map((item) => (
+                  <PerformTile
+                    key={`${item.action.type}-${item.action.id}`}
+                    name={item.name}
+                    kind={item.kind}
+                    gradient={item.gradient}
+                    keyLabel={null}
+                    midiLabel={null}
+                    isPlaying={isPlaying(item)}
+                    isArmed={false}
+                    onPress={() => handlePlay(item)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </section>
   );
 }
