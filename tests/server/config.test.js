@@ -5,10 +5,10 @@ import { describe, it } from 'node:test';
 import { loadConfig } from '../../server/config.js';
 
 describe('loadConfig', () => {
-  it('uses safe defaults: loopback, the simulator and port 4000', () => {
-    const config = loadConfig({});
+  it('uses its defaults: every network address, the simulator and port 4000', () => {
+    const config = loadConfig({}, { ownAddresses: () => [] });
     assert.equal(config.port, 4000, 'default port');
-    assert.equal(config.host, '127.0.0.1', 'loopback only');
+    assert.equal(config.host, '0.0.0.0', 'reachable from a phone or tablet on the same network');
     assert.equal(config.dmxDriver, 'mock', 'the simulator');
     assert.equal(config.isOflEnabled, true, 'online fixture search is on');
   });
@@ -48,9 +48,17 @@ describe('trusted browser origins', () => {
     assert.ok(!allowedOrigins.includes(''), 'no blank entry');
   });
 
-  it('do not trust other addresses on the same machine or network by default', () => {
-    const { allowedOrigins } = loadConfig({});
-    assert.ok(!allowedOrigins.includes('http://192.168.1.20:4000'), 'a network address needs to be listed');
+  it("trust this computer's own network addresses and name, so a phone can open the app and its live link", () => {
+    const { allowedOrigins } = loadConfig({}, { ownAddresses: () => ['192.168.1.50', 'stage-mac.local'] });
+    assert.ok(allowedOrigins.includes('http://192.168.1.50:4000'));
+    assert.ok(allowedOrigins.includes('http://stage-mac.local:4000'));
+  });
+
+  it('do not trust other addresses on the network, other ports, or own addresses when kept to this computer', () => {
+    const { allowedOrigins } = loadConfig({}, { ownAddresses: () => ['192.168.1.50'] });
+    assert.ok(!allowedOrigins.includes('http://192.168.1.20:4000'), 'another machine needs to be listed');
     assert.ok(!allowedOrigins.includes('http://localhost:3000'), 'another local port is not trusted');
+    const local = loadConfig({ HOST: '127.0.0.1' }, { ownAddresses: () => ['192.168.1.50'] });
+    assert.ok(!local.allowedOrigins.includes('http://192.168.1.50:4000'), 'nothing to trust beyond this computer');
   });
 });

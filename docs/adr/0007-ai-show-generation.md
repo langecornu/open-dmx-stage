@@ -27,6 +27,6 @@ costs the owner money, a description of the rig, and some knowledge of the song.
 ## Consequences
 
 AI shows need an internet connection and an Anthropic account; everything else keeps working without them. Anyone who
-can reach the app can start a generation billed to the saved key, so the loopback default (ADR 0005) matters more: on a
-network that is not trusted, keep `HOST` at `127.0.0.1`. An access token for the app would remove this concern and
+can reach the app can start a generation billed to the saved key. The app listens on the network by default (ADR 0008):
+on a network that is not trusted, set `HOST` to `127.0.0.1`. An access token for the app would remove this concern and
 would be recorded in a new decision.

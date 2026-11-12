@@ -92,6 +92,11 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **The server listens on your network by default** (`HOST=0.0.0.0`), so a phone or tablet on the same network can
+  open the app at this computer's address or name and run the show, with no extra settings: the computer's own
+  addresses are now trusted for the live link. The control surface still has no login; set `HOST=127.0.0.1` to keep
+  it on this computer (ADR 0008, superseding ADR 0005).
+
 - **Perform is a denser stage console.** A status strip at the top shows the output, the MIDI controller and whether the
   page is listening to the music, each with a dot and words, and jumps to its settings. Beside it, the tempo and four
   beat lamps that pulse at its speed. Pads are smaller so more fit on screen; each shows what it is, and a sequence pad

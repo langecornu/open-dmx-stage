@@ -66,7 +66,9 @@ npm run dev
 
 Then open **http://localhost:5173**.
 
-- The API listens on port **4000**, the web app on **5173**. Both listen only on this computer (loopback) by default.
+- The API listens on port **4000** on every network address, so a phone or tablet on the same network can open
+  `http://<this computer's name or address>:4000` (after `npm run build`). The dev web app on **5173** stays on this
+  computer.
 - The top bar shows **Simulator**, which means nothing is sent to real lights yet.
 - On first run a short welcome screen helps you add your lights. See the [usage guide](USAGE.md).
 
@@ -151,7 +153,7 @@ variables, or set them in your process manager). Nothing is required.
 | Variable            | Default                     | Meaning                                                                                                                                                                                                       |
 | ------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PORT`              | `4000`                      | API and WebSocket port.                                                                                                                                                                                       |
-| `HOST`              | `127.0.0.1`                 | Address to listen on. Use `0.0.0.0` only on a trusted network (see above).                                                                                                                                    |
+| `HOST`              | `0.0.0.0`                   | Address to listen on. The default reaches every device on your network; set `127.0.0.1` to keep the app on this computer (see the security note).                                                             |
 | `ALLOWED_ORIGINS`   | `http://localhost:5173`     | Comma-separated browser origins allowed to talk to the API, besides this server's own address (`localhost`, `127.0.0.1` and `[::1]` on `PORT`), which is always allowed.                                      |
 | `DMX_DRIVER`        | `mock`                      | `mock` (simulator), `open-dmx`, `enttec-pro`, `artnet` or `sacn`. You can also choose this in the app, on the Output screen.                                                                                  |
 | `DMX_SERIAL_PATH`   | _(empty)_                   | Serial port for `open-dmx` and `enttec-pro`.                                                                                                                                                                  |
@@ -198,6 +200,7 @@ The server also answers `GET /healthz` (is it up) and `GET /readyz` (and which o
 
 ## Security note
 
-The server has **no login**. It listens only on the loopback address unless you set `HOST`. Run it on your own machine
-or a trusted local network, and do not expose it to the internet. To report a vulnerability, see
+The server has **no login** and listens on your network by default, so anyone on the same network can control the
+lights and start AI shows on your saved key. Use a network you trust, or set `HOST=127.0.0.1` to keep it on this
+computer, and do not expose it to the internet. To report a vulnerability, see
 [SECURITY.md](../SECURITY.md).

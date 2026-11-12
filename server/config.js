@@ -1,4 +1,5 @@
 // Central configuration. This is the only module allowed to read process.env; it validates at startup.
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,8 +11,9 @@ const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
-  // The control surface has no login, so it listens on loopback unless you opt in (ADR 0005).
-  HOST: z.string().min(1).max(253).default('127.0.0.1'),
+  // Every network address by default, so a phone or tablet on the same network can run the show (ADR 0008). The
+  // control surface has no login: set 127.0.0.1 to keep it on this computer.
+  HOST: z.string().min(1).max(253).default('0.0.0.0'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error', 'silent']).default('info'),
   LOG_FORMAT: z.enum(['text', 'json']).optional(),
@@ -32,18 +34,38 @@ const envSchema = z.object({
  * live link is refused and the app says "Server offline".
  * @param {string} listed comma-separated origins from ALLOWED_ORIGINS
  * @param {number} port the port this server listens on
+ * @param {string[]} ownAddresses this computer's network addresses and name, when it listens beyond itself
  * @returns {string[]}
  */
-function trustedOrigins(listed, port) {
+function trustedOrigins(listed, port, ownAddresses) {
   const configured = listed
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
-  const own = [`http://localhost:${port}`, `http://127.0.0.1:${port}`, `http://[::1]:${port}`];
+  const own = ['localhost', '127.0.0.1', '[::1]', ...ownAddresses].map((address) => `http://${address}:${port}`);
   return [...new Set([...configured, ...own])];
 }
 
-export function loadConfig(env = process.env) {
+const LOOPBACK = new Set(['127.0.0.1', 'localhost', '::1']);
+
+/**
+ * This computer's addresses on its networks (IPv4) and its name, which a phone or tablet uses to open the app.
+ * @returns {string[]}
+ */
+export function networkAddresses() {
+  const addresses = Object.values(os.networkInterfaces())
+    .flat()
+    .filter((entry) => entry && entry.family === 'IPv4' && !entry.internal)
+    .map((entry) => /** @type {os.NetworkInterfaceInfo} */ (entry).address);
+  const name = os.hostname();
+  return [...addresses, name, name.endsWith('.local') ? name : `${name}.local`];
+}
+
+/**
+ * @param {NodeJS.ProcessEnv} [env]
+ * @param {{ ownAddresses?: () => string[] }} [options] this computer's network addresses, replaceable for tests
+ */
+export function loadConfig(env = process.env, { ownAddresses = networkAddresses } = {}) {
   const parsed = envSchema.safeParse(env);
   if (!parsed.success) {
     throw new Error(`[config] Invalid environment: ${parsed.error.message}`);
@@ -55,7 +77,13 @@ export function loadConfig(env = process.env) {
     nodeEnv: values.NODE_ENV,
     logLevel: values.LOG_LEVEL,
     logFormat: values.LOG_FORMAT ?? (values.NODE_ENV === 'production' ? 'json' : 'text'),
-    allowedOrigins: trustedOrigins(values.ALLOWED_ORIGINS, values.PORT),
+    // A page opened from one of this computer's own addresses is this app, so its live link is trusted too; listening
+    // on loopback only, there are none to add.
+    allowedOrigins: trustedOrigins(
+      values.ALLOWED_ORIGINS,
+      values.PORT,
+      LOOPBACK.has(values.HOST) ? [] : ownAddresses(),
+    ),
     dmxDriver: values.DMX_DRIVER,
     dmxSerialPath: values.DMX_SERIAL_PATH,
     dmxNetHost: values.DMX_NET_HOST,
