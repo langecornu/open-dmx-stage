@@ -12,6 +12,7 @@ import { DEFAULT_STYLE, SNAPS, drawBlocks, repeatBlocks, shorteningLoss } from '
 import { BlockInspector } from './BlockInspector.jsx';
 import { Icon } from './Icon.jsx';
 import { TimelineGrid } from './TimelineGrid.jsx';
+import { makeId } from '../utils/ids.js';
 
 const STYLE_KEYS = Object.keys(DEFAULT_STYLE);
 
@@ -111,7 +112,7 @@ export function SequenceTimelineView({ project, library = [], patch, chase, patc
     }));
 
   const handleDraw = (fixtureIds, span) => {
-    const drawn = drawBlocks(fixtureIds, span, style, () => crypto.randomUUID());
+    const drawn = drawBlocks(fixtureIds, span, style, makeId);
     patchChase((item) => ({ blocks: [...(item.blocks ?? []), ...drawn] }));
     setSelectedBlockIds(drawn.map((block) => block.id));
     setSelectedStepId(null);
@@ -162,7 +163,7 @@ export function SequenceTimelineView({ project, library = [], patch, chase, patc
     const copies = repeatBlocks(
       blocks.filter((block) => selectedBlockIds.includes(block.id)),
       MAX_SEQUENCE_UNITS,
-      () => crypto.randomUUID(),
+      makeId,
     );
     if (copies.length > 0) {
       patchChase((item) => ({ blocks: [...(item.blocks ?? []), ...copies] }));
@@ -220,7 +221,7 @@ export function SequenceTimelineView({ project, library = [], patch, chase, patc
     const scene = project.scenes[(lastIndex + 1) % project.scenes.length];
     const timing = last ?? { fadeMs: 1000, holdMs: 2000, fadeBeats: 2, holdBeats: 4 };
     const step = {
-      id: crypto.randomUUID(),
+      id: makeId(),
       sceneId: scene.id,
       fadeMs: timing.fadeMs,
       holdMs: timing.holdMs,

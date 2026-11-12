@@ -121,6 +121,9 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **A phone or tablet showed a black page** when opening the app at this computer's network address: the security
+  headers told it to fetch the app over https. They no longer do, new looks and sequences get ids on such pages too,
+  and listening to the music or connecting a MIDI controller there says to use the computer running the app instead.
 - **Look cards counted every light in the rig** ("4 fixtures") instead of the lights the look sets. They now say, for
   example, **2 of 4 lights**, and name the lights the look leaves dark.
 - **A look left on stage can be stopped.** When a sequence that plays once ends, or after a look is played, the On

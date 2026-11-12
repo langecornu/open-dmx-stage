@@ -1,6 +1,9 @@
 // MIDI controls for the Perform screen: turn MIDI on, see the connected controllers, and learn or clear mappings.
 const STATUS_TEXT = {
-  unsupported: 'This browser does not support MIDI. Use Chrome or Edge to connect a controller.',
+  unsupported:
+    typeof window !== 'undefined' && window.isSecureContext === false
+      ? 'MIDI controllers work on the computer running Open DMX Stage: plug the controller in there and open the app at localhost. Browsers only allow MIDI on secure pages.'
+      : 'This browser does not support MIDI. Use Chrome or Edge to connect a controller.',
   idle: 'Connect a MIDI controller to play looks and sequences from its pads, keys and knobs.',
   requesting: 'Waiting for the browser to allow MIDI…',
   denied: 'The browser did not allow MIDI. Allow it in the site settings, then try again.',

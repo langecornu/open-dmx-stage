@@ -38,8 +38,14 @@ export function createApp({ config, engine, projectService, outputManager, ofl =
           styleSrc: ["'self'", "'unsafe-inline'"],
           fontSrc: ["'self'", 'data:'],
           imgSrc: ["'self'", 'data:'],
+          // The app is served over plain http on your own network (ADR 0008). Asking browsers to upgrade requests to
+          // https would make a phone at this computer's address fetch the scripts over https, which nothing serves,
+          // and show a blank page. Browsers only skip the upgrade for localhost.
+          upgradeInsecureRequests: null,
         },
       },
+      // Likewise, no Strict-Transport-Security: it would tell a browser to use only https for this address.
+      strictTransportSecurity: false,
     }),
   );
   app.use(cors({ origin: config.allowedOrigins }));

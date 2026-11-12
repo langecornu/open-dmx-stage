@@ -56,6 +56,18 @@ describe('useBeatFollower', () => {
     expect(result.current.error).toBeNull();
   });
 
+  it("explains that a phone at this computer's network address cannot listen, without asking for the microphone", async () => {
+    Object.defineProperty(window, 'isSecureContext', { configurable: true, value: false });
+    try {
+      const { result } = await startedHook();
+      expect(audio.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+      expect(result.current.status).not.toBe('listening');
+      expect(result.current.error).toMatch(/works on the computer running Open DMX Stage/);
+    } finally {
+      delete window.isSecureContext;
+    }
+  });
+
   it('uses the chosen microphone', async () => {
     await startedHook({ source: SOURCES.MICROPHONE, deviceId: 'loop-2' });
     expect(audio.mediaDevices.getUserMedia.mock.calls[0][0].audio.deviceId).toEqual({ exact: 'loop-2' });

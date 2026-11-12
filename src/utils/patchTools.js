@@ -1,5 +1,6 @@
 // Patch helpers shared by Setup and the welcome flow: find free DMX addresses and plan new fixtures.
 import { DMX_CHANNELS } from '../../shared/patch.js';
+import { makeId } from './ids.js';
 
 export function nextFreeAddress(patch, footprint) {
   const taken = new Set(patch.channels.keys());
@@ -34,7 +35,7 @@ export function planFixtures({ project, patch, type, modeIndex, quantity }) {
       break;
     }
     additions.push({
-      id: crypto.randomUUID(),
+      id: makeId(),
       name: `${type.name} ${project.fixtures.length + i + 1}`,
       typeId: type.id,
       mode: modeIndex,

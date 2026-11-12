@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { MAX_VENUES, addVenue, removeVenue, renameVenue, venuesOf } from '../../shared/venues.js';
 import { confirmVenueSwitch, describeOutput } from '../utils/venueSwitch.js';
 import { Icon } from './Icon.jsx';
+import { makeId } from '../utils/ids.js';
 
 const plural = (count, word) => `${count} ${count === 1 ? word : `${word}s`}`;
 
@@ -25,9 +26,7 @@ export function VenuesCard({ project, library, update, output = null }) {
     if (!name.trim() || isFull) {
       return;
     }
-    update(
-      (current) => addVenue(current, name, { copyActive: start === 'copy', makeId: () => crypto.randomUUID() }).project,
-    );
+    update((current) => addVenue(current, name, { copyActive: start === 'copy', makeId: makeId }).project);
     setName('');
   };
 
