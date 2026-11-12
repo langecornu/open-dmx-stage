@@ -6,13 +6,7 @@ import { EFFECT_BEATS, EFFECT_TYPES, MAX_BPM, MIN_BPM } from '../../shared/effec
 import { CAPABILITY_TYPES } from '../../shared/capabilities.js';
 import { DEVICE_CATEGORIES } from '../../shared/categories.js';
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
-import {
-  BLOCK_EFFECTS,
-  MAX_TIMELINE_BEATS,
-  MIN_BLOCK_BEATS,
-  TRANSITIONS,
-  isTimelineLength,
-} from '../../shared/timeline.js';
+import { BLOCK_EFFECTS, MAX_SEQUENCE_UNITS, MIN_BLOCK_BEATS, TRANSITIONS } from '../../shared/timeline.js';
 import { HOST_HELP, isAllowedHost } from '../utils/networkHost.js';
 
 const id = z.string().min(1).max(64);
@@ -84,6 +78,37 @@ export const sceneSchema = z
 /** Bump with every change to the saved show format, and add a migration in server/services/projectMigrations.js. */
 export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (5);
 
+
+export const groupSchema = z.object({ id, name: label, fixtureIds: z.array(id).max(256) }).strict();
+
+const percent = z.number().min(0).max(100);
+const controlValue = z.union([percent, z.object({ option: z.number().int().min(0).max(63), level: percent }).strict()]);
+const blockSettings = z
+  .record(z.string().min(1).max(100), controlValue)
+  .refine((settings) => Object.keys(settings).length <= 64, 'Too many settings');
+
+/** A block on a timeline lane: a light, a span of beats, a colour and intensity, a transition and an effect. */
+export const timelineBlockSchema = z
+  .object({
+    id,
+    fixtureId: id,
+    start: z.number().min(0).max(MAX_SEQUENCE_UNITS),
+    length: z.number().min(MIN_BLOCK_BEATS / 4).max(MAX_SEQUENCE_UNITS),
+    color: hexColour,
+    intensity: percent,
+    transition: z.enum(TRANSITIONS),
+    endColor: hexColour,
+    endIntensity: percent,
+    effect: z.enum(BLOCK_EFFECTS),
+    strobeSpeed: z.number().min(1).max(100),
+    // What else the block sets on its light, by control key (see shared/capabilities.js): a level from 0 to 100, or a
+    // choice and its level. `endSettings` are where a fade ends, for the controls that fade (pan, tilt, zoom…).
+    settings: blockSettings.optional(),
+    endSettings: blockSettings.optional(),
+  })
+  .strict();
+
+/** A sequence: a chain of looks with fades (its steps), and free blocks per light drawn over them. */
 export const chaseSchema = z
   .object({
     id,
@@ -105,47 +130,14 @@ export const chaseSchema = z
           .strict(),
       )
       .max(256),
+    // Free blocks drawn over the looks, one light each, in the sequence's units (beats, or seconds); see
+    // shared/timeline.js. While a block runs, it replaces the look on its light.
+    blocks: z.array(timelineBlockSchema).max(2000).default([]),
+    // How long the sequence runs when that is longer than its steps and blocks, in its units.
+    length: z.number().min(0).max(MAX_SEQUENCE_UNITS).optional(),
   })
   .strict();
 
-export const groupSchema = z.object({ id, name: label, fixtureIds: z.array(id).max(256) }).strict();
-
-const percent = z.number().min(0).max(100);
-const controlValue = z.union([percent, z.object({ option: z.number().int().min(0).max(63), level: percent }).strict()]);
-const blockSettings = z
-  .record(z.string().min(1).max(100), controlValue)
-  .refine((settings) => Object.keys(settings).length <= 64, 'Too many settings');
-
-/** A block on a timeline lane: a light, a span of beats, a colour and intensity, a transition and an effect. */
-export const timelineBlockSchema = z
-  .object({
-    id,
-    fixtureId: id,
-    start: z.number().min(0).max(MAX_TIMELINE_BEATS),
-    length: z.number().min(MIN_BLOCK_BEATS).max(MAX_TIMELINE_BEATS),
-    color: hexColour,
-    intensity: percent,
-    transition: z.enum(TRANSITIONS),
-    endColor: hexColour,
-    endIntensity: percent,
-    effect: z.enum(BLOCK_EFFECTS),
-    strobeSpeed: z.number().min(1).max(100),
-    // What else the block sets on its light, by control key (see shared/capabilities.js): a level from 0 to 100, or a
-    // choice and its level. `endSettings` are where a fade ends, for the controls that fade (pan, tilt, zoom…).
-    settings: blockSettings.optional(),
-    endSettings: blockSettings.optional(),
-  })
-  .strict();
-
-/** A timeline: one lane per light, a length in beats, and the blocks drawn on it. It loops, following the tempo. */
-export const timelineSchema = z
-  .object({
-    id,
-    name: label,
-    beats: z.number().refine(isTimelineLength, 'A timeline is 1 to 64 bars long'),
-    blocks: z.array(timelineBlockSchema).max(2000),
-  })
-  .strict();
 
 export const projectSchema = z
   .object({
@@ -156,7 +148,6 @@ export const projectSchema = z
     scenes: z.array(sceneSchema).max(500),
     chases: z.array(chaseSchema).max(100),
     groups: z.array(groupSchema).max(100),
-    timelines: z.array(timelineSchema).max(100),
   })
   .strict();
 
@@ -168,7 +159,6 @@ export const liveMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('recall'), sceneId: id, fadeMs: z.number().int().min(0).max(60000).default(0) }).strict(),
   z.object({ type: z.literal('chaseStart'), chaseId: id }).strict(),
   z.object({ type: z.literal('chaseStop') }).strict(),
-  z.object({ type: z.literal('timelineStart'), timelineId: id }).strict(),
   z.object({ type: z.literal('release'), fadeMs: z.number().int().min(0).max(60000).default(0) }).strict(),
   z
     .object({ type: z.literal('tempo'), bpm: z.number().min(MIN_BPM).max(MAX_BPM), sync: z.boolean().default(false) })
@@ -245,6 +235,5 @@ export function createEmptyProject() {
     scenes: [],
     chases: [],
     groups: [],
-    timelines: [],
   };
 }

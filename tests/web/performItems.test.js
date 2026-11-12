@@ -37,17 +37,22 @@ describe('buildPerformItems', () => {
     expect(loop.steps[1].colour).toBe('var(--surface-3)'); // a dark step shows as an empty segment
   });
 
-  it('makes a pad for each timeline, as a sequence', () => {
-    const withTimeline = {
-      ...project,
-      timelines: [{ id: 't1', name: 'Groove', beats: 4, blocks: [{ id: 'b', start: 0, color: '#ff0000' }] }],
+  it('shows a sequence drawn only on the timeline by its blocks and their colours', () => {
+    const groove = {
+      id: 't1',
+      name: 'Groove',
+      loop: true,
+      timing: 'beats',
+      steps: [],
+      blocks: [{ id: 'b', start: 0, length: 4, color: '#ff0000' }],
     };
+    const withTimeline = { ...project, chases: [...project.chases, groove] };
     const pad = buildPerformItems(withTimeline, buildPatch(withTimeline, BUILTIN_TYPES)).at(-1);
     expect(pad).toMatchObject({
-      action: { type: 'timeline', id: 't1' },
+      action: { type: 'sequence', id: 't1' },
       name: 'Groove',
       kind: 'Sequence',
-      detail: 'Timeline · 1 bar · loops',
+      detail: '1 block · loops',
       gradient: '#ff0000',
     });
   });

@@ -5,7 +5,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import {
-  beatLabel,
+  spanLabel,
   blockBackground,
   clampLength,
   describeBlock,
@@ -23,6 +23,11 @@ export function TimelineGrid({
   timeline,
   fixtures,
   categories = new Map(),
+  unit = 'beats',
+  steps = null,
+  selectedStepId = null,
+  onSelectStep = () => {},
+  onResizeStep = () => {},
   snap,
   selectedIds,
   playheadBeat,
@@ -197,11 +202,29 @@ export function TimelineGrid({
     }
   };
 
+  const startStepResize = (event, step) => {
+    if (event.button !== 0) {
+      return;
+    }
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    onSelectStep(step.id);
+    setDrag({ kind: 'step-resize', stepId: step.id, fromBeat: beatAt(event.clientX), delta: 0 });
+  };
+
   const handleUp = () => {
     if (!drag) {
       return;
     }
     if (drag.kind === 'pan') {
+      setDrag(null);
+      return;
+    }
+    if (drag.kind === 'step-resize') {
+      const step = steps?.find((candidate) => candidate.id === drag.stepId);
+      if (step && drag.delta !== 0) {
+        onResizeStep(step.id, Math.max(snap, step.length + drag.delta));
+      }
       setDrag(null);
       return;
     }
@@ -233,7 +256,7 @@ export function TimelineGrid({
 
   // What a block looks like while it is being dragged, before the change is saved.
   const preview = (block) => {
-    if (!drag || drag.kind === 'draw' || drag.kind === 'pan' || drag.delta === 0) {
+    if (!drag || drag.kind === 'draw' || drag.kind === 'pan' || drag.kind === 'step-resize' || drag.delta === 0) {
       return block;
     }
     if (drag.kind === 'move' && drag.ids.includes(block.id)) {
@@ -314,7 +337,11 @@ export function TimelineGrid({
         ref={rootRef}
         className="tl"
         role="group"
-        aria-label={`Timeline, ${bars} ${bars === 1 ? 'bar' : 'bars'}`}
+        aria-label={
+          unit === 'beats'
+            ? `Timeline, ${bars} ${bars === 1 ? 'bar' : 'bars'}`
+            : `Timeline, ${beats} ${beats === 1 ? 'second' : 'seconds'}`
+        }
         data-dense={zoomPx === null ? beats > 64 : zoomPx < 7}
         style={{ '--tl-beats': beats, '--tl-beat-px': `${beatPx}px` }}
         onPointerMove={handleMove}
@@ -324,18 +351,60 @@ export function TimelineGrid({
         <div className="tl-row tl-ruler" aria-hidden="true">
           <span className="tl-label" />
           <div className="tl-track tl-ruler-track" data-pannable={zoomPx !== null} onPointerDown={startPan}>
-            {Array.from({ length: beats }, (_, beat) => (
-              <span
-                key={beat}
-                className="tl-tick"
-                data-bar={beat % 4 === 0 && (beat / 4) % labelEvery === 0}
-                style={{ left: pct(beat) }}
-              >
-                {beat % 4 === 0 && (beat / 4) % labelEvery === 0 ? beat / 4 + 1 : ''}
-              </span>
-            ))}
+            {Array.from({ length: beats }, (_, beat) => {
+              // Bars of four beats, or groups of five seconds.
+              const group = unit === 'beats' ? 4 : 5;
+              const isLabelled = beat % group === 0 && (beat / group) % labelEvery === 0;
+              return (
+                <span key={beat} className="tl-tick" data-bar={isLabelled} style={{ left: pct(beat) }}>
+                  {isLabelled ? (unit === 'beats' ? beat / 4 + 1 : `${beat}s`) : ''}
+                </span>
+              );
+            })}
           </div>
         </div>
+
+        {steps ? (
+          <div className="tl-row tl-looks">
+            <div className="tl-label">
+              <span className="tl-lane-name">Looks</span>
+            </div>
+            <div className="tl-track tl-looks-track">
+              {steps.length === 0 ? (
+                <span className="tl-looks-empty">No looks yet: add steps in the Steps view, or with Add step.</span>
+              ) : null}
+              {steps.map((stored) => {
+                const step =
+                  drag?.kind === 'step-resize' && drag.stepId === stored.id && drag.delta !== 0
+                    ? { ...stored, length: Math.max(snap, stored.length + drag.delta) }
+                    : stored;
+                const label = `Step ${step.number}: ${step.label}, ${spanLabel(step.start, step.start + step.length, unit)}`;
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    className="tl-step"
+                    aria-pressed={selectedStepId === step.id}
+                    aria-label={label}
+                    title={label}
+                    style={{ left: pct(step.start), width: pct(step.length), background: step.background }}
+                    onClick={() => onSelectStep(step.id)}
+                  >
+                    <span className="tl-step-name">{step.label}</span>
+                    {step.fade > 0 ? (
+                      <span className="tl-step-fade" style={{ width: `${(step.fade / step.length) * 100}%` }} />
+                    ) : null}
+                    <span
+                      className="tl-block-resize"
+                      aria-hidden="true"
+                      onPointerDown={(event) => startStepResize(event, stored)}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
 
         {fixtures.map((fixture, laneIndex) => (
           <div key={fixture.id} className="tl-row">
@@ -369,8 +438,8 @@ export function TimelineGrid({
                       type="button"
                       className="tl-block"
                       aria-pressed={selected.has(block.id)}
-                      aria-label={describeBlock(block, fixture.name)}
-                      title={describeBlock(block, fixture.name)}
+                      aria-label={describeBlock(block, fixture.name, unit)}
+                      title={describeBlock(block, fixture.name, unit)}
                       data-strobe={block.effect === 'strobe'}
                       style={{
                         left: pct(block.start),
@@ -404,7 +473,7 @@ export function TimelineGrid({
       </div>
       <p className="tl-beat-help" aria-live="polite">
         {ghost
-          ? `Beats ${beatLabel(ghost.start)} to ${beatLabel(ghost.start + ghost.length)}`
+          ? spanLabel(ghost.start, ghost.start + ghost.length, unit, true)
           : 'Drag across beats, and across lights, to draw a block.'}
       </p>
     </div>

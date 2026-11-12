@@ -69,16 +69,17 @@ describe('buildCommands', () => {
     expect(ctx.send).toHaveBeenLastCalledWith({ type: 'autoStop' });
   });
 
-  it('starts a timeline after saving, and stops it while it plays', async () => {
+  it('starts a sequence drawn on the timeline after saving, and stops it while it plays', async () => {
     const ctx = context();
-    const withTimeline = { ...project, timelines: [{ id: 't1', name: 'Groove', beats: 8 }] };
-    const start = find(buildCommands({ project: withTimeline, engine: idle, theme: 'dark' }), 'timeline-t1');
-    expect(start).toMatchObject({ label: 'Start Groove', hint: 'Sequence · timeline · 2 bars' });
+    const groove = { id: 't1', name: 'Groove', loop: true, timing: 'beats', steps: [], blocks: [{ id: 'b' }] };
+    const withTimeline = { ...project, chases: [...project.chases, groove] };
+    const start = find(buildCommands({ project: withTimeline, engine: idle, theme: 'dark' }), 'sequence-t1');
+    expect(start.label).toBe('Start Groove');
     await start.run(ctx);
     expect(ctx.flush).toHaveBeenCalled();
-    expect(ctx.send).toHaveBeenLastCalledWith({ type: 'timelineStart', timelineId: 't1' });
-    const playing = { ...idle, activeTimelineId: 't1' };
-    const stop = find(buildCommands({ project: withTimeline, engine: playing, theme: 'dark' }), 'timeline-t1');
+    expect(ctx.send).toHaveBeenLastCalledWith({ type: 'chaseStart', chaseId: 't1' });
+    const playing = { ...idle, activeChaseId: 't1' };
+    const stop = find(buildCommands({ project: withTimeline, engine: playing, theme: 'dark' }), 'sequence-t1');
     expect(stop.label).toBe('Stop Groove');
     await stop.run(ctx);
     expect(ctx.send).toHaveBeenLastCalledWith({ type: 'chaseStop' });

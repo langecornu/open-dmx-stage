@@ -85,7 +85,7 @@ export function PerformView({ project, patch, live, flush, library = [] }) {
   }, [items]);
 
   const perform = async (action, value) => {
-    if (action.type === 'look' || action.type === 'sequence' || action.type === 'timeline') {
+    if (action.type === 'look' || action.type === 'sequence') {
       await playAction({ action, engine: live.engine, send: live.send, flush, fadeMs });
     } else if (action.type === 'blackout') {
       live.send({ type: 'blackout', enabled: !live.engine.blackout });

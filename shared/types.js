@@ -7,7 +7,7 @@
 /** @typedef {Project['fixtures'][number]} Fixture */
 /** @typedef {Project['scenes'][number]} Scene */
 /** @typedef {Project['chases'][number]} Chase */
-/** @typedef {Project['timelines'][number]} Timeline */
+/** @typedef {Chase['blocks'][number]} SequenceBlock */
 /** @typedef {import('zod').z.infer<typeof import('../server/schemas/projectSchema.js').outputSettingsSchema>} OutputSettings */
 
 /** @typedef {OutputSettings & { universe: number }} ResolvedOutputSettings output settings with the universe filled in */

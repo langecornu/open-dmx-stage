@@ -112,14 +112,27 @@ export function clampLength(block, length, beats) {
 export const beatLabel = (beat) => String(round(beat + 1));
 
 /**
+ * A stretch of a sequence in words: "beats 1 to 5" when it follows the tempo, "0 s to 4 s" when it is in seconds.
+ * @param {number} from
+ * @param {number} to
+ * @param {'beats' | 'seconds'} unit
+ * @param {boolean} [capital] start with a capital letter
+ * @returns {string}
+ */
+export function spanLabel(from, to, unit, capital = false) {
+  const text = unit === 'beats' ? `beats ${beatLabel(from)} to ${beatLabel(to)}` : `${round(from)} s to ${round(to)} s`;
+  return capital ? text[0].toUpperCase() + text.slice(1) : text;
+}
+
+/**
  * A block in words, for its accessible name and tooltips.
  * @param {import('../../shared/timeline.js').TimelineBlock} block
  * @param {string} fixtureName
  * @returns {string}
  */
-export function describeBlock(block, fixtureName) {
+export function describeBlock(block, fixtureName, unit = 'beats') {
   const colour = SWATCHES.find((swatch) => swatch.hex === block.color.toLowerCase())?.name ?? block.color;
-  const parts = [`${fixtureName}, beats ${beatLabel(block.start)} to ${beatLabel(block.start + block.length)}`];
+  const parts = [`${fixtureName}, ${spanLabel(block.start, block.start + block.length, unit)}`];
   parts.push(`${colour} at ${Math.round(block.intensity)}%`);
   if (block.transition === 'fade') {
     const end = SWATCHES.find((swatch) => swatch.hex === block.endColor.toLowerCase())?.name ?? block.endColor;
@@ -143,25 +156,17 @@ export function blockBackground(block) {
 
 /**
  * A small gradient of a timeline's colours, in time order, for its thumbnail and pad.
- * @param {{ blocks: import('../../shared/timeline.js').TimelineBlock[] }} timeline
+ * @param {{ blocks?: import('../../shared/timeline.js').TimelineBlock[] }} timeline
  * @returns {string}
  */
 export function timelineGradient(timeline) {
-  const colours = [...timeline.blocks].sort((a, b) => a.start - b.start).map((block) => block.color);
+  const colours = [...(timeline.blocks ?? [])].sort((a, b) => a.start - b.start).map((block) => block.color);
   if (colours.length === 0) {
     return 'linear-gradient(135deg, var(--surface-3), var(--surface-2))';
   }
   return colours.length === 1 ? colours[0] : `linear-gradient(120deg, ${colours.slice(0, 8).join(', ')})`;
 }
 
-/**
- * @param {number} count timelines already in the show
- * @param {() => string} makeId
- * @returns {import('../../shared/types.js').Timeline} an empty 4-bar timeline
- */
-export function newTimeline(count, makeId) {
-  return { id: makeId(), name: `Timeline ${count + 1}`, beats: 16, blocks: [] };
-}
 
 /**
  * Copies of the selected blocks placed straight after them, so a pattern carries on: blocks covering beats 1 to 4 are

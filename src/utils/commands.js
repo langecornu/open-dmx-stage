@@ -13,7 +13,7 @@ const PALETTE_AUTO = /** @type {const} */ ({ source: 'looks', beats: 8, order: '
  */
 
 /**
- * @param {{ project: { scenes: { id: string, name: string }[], chases: { id: string, name: string, steps: unknown[] }[], timelines?: { id: string, name: string, beats: number }[] },
+ * @param {{ project: { scenes: { id: string, name: string }[], chases: { id: string, name: string, steps: unknown[] }[] },
  *   engine: import('../hooks/useLive.js').EngineState, theme: string }} input
  * @returns {Command[]}
  */
@@ -128,24 +128,6 @@ export function buildCommands({ project, engine, theme }) {
       run: async ({ send, flush }) => {
         await flush();
         send({ type: 'recall', sceneId: scene.id, fadeMs: LOOK_FADE_MS });
-      },
-    });
-  }
-  for (const timeline of project.timelines ?? []) {
-    const isPlaying = engine.activeTimelineId === timeline.id;
-    commands.push({
-      id: `timeline-${timeline.id}`,
-      group: 'Sequences',
-      label: `${isPlaying ? 'Stop' : 'Start'} ${timeline.name}`,
-      hint: `Sequence · timeline · ${timeline.beats / 4} ${timeline.beats === 4 ? 'bar' : 'bars'}`,
-      keywords: 'chase play timeline',
-      run: async ({ send, flush }) => {
-        if (isPlaying) {
-          send({ type: 'chaseStop' });
-        } else {
-          await flush();
-          send({ type: 'timelineStart', timelineId: timeline.id });
-        }
       },
     });
   }

@@ -7,14 +7,33 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **One sequence, two views**: Steps and Timeline are now two views of the same sequence instead of two kinds. A
+  sequence is a chain of looks (steps) and, optionally, blocks drawn per light over them; switch views at any time and
+  edit either. The Timeline view shows the steps on a **Looks** lane (click one to edit its look, fade and hold, drag
+  its edge to hold longer, **Add step**), with the light lanes under it; the Steps view says under each step which
+  blocks play during it. Where a light has no block, the look shows. Sequences timed in seconds draw on a grid of
+  seconds. Existing timelines become sequences of blocks, with nothing lost; the saved show format moves to version 5.
+- **Export and import a sequence**: **Export** saves one sequence, with its looks and lights, as a file of its own;
+  **Import sequence** adds it to another show and matches its lights to that rig (by name, then by fixture and mode),
+  moving looks and blocks onto the rig's addresses, so a sequence made for one venue plays at another. Identical looks
+  are reused, and the app says which lights had no match.
+- **Everything a light can do**: fixtures now describe what each range of a channel's values does (from the Open
+  Fixture Library, QLC+ files and maker manuals, or entered under **Ranges** in the fixture editor), and many more
+  channel kinds are known (cold and warm white, lime, CMY, colour temperature and macros, fine pan and tilt, prisms,
+  frost, iris, zoom, focus, fog, fans and more). Lights gets **More controls** for the selected lights, and timeline
+  blocks get **What else the lights do**: pan, tilt, gobos, colour wheel slots, shutter, zoom, fog output and the rest,
+  grouped, with start and end values that fade across a block. New built-in smoke machine and hazer.
+- **Device types with icons**: every light has a type (par, spot, moving head, scanner, LED bar, matrix, strobe,
+  blinder, effect, flower, mirror ball, laser, smoke machine, hazer, fan, special effect, dimmer, or other), guessed
+  from its fixture and changeable when adding it, in Setup and in the fixture editor. An icon of the type shows beside
+  the light's name everywhere, with its light-emitting part in colour.
 - **Longer timelines**: a timeline can be up to 64 bars long (was 16). It opens fitted to the width, with thin beats;
   **+** and **−** (or Ctrl or ⌘ and the mouse wheel) zoom in and out. Zoomed in, the mouse wheel, dragging the bar numbers
   or the always-visible scrollbar move along the timeline, the light names stay in view, and the grid follows the
   playhead. Timeline mode uses the whole width of the window.
   **Repeat** copies the selected blocks straight after themselves to carry a pattern on. Shortening a timeline asks
-  before removing or cutting blocks. The saved show format moves to version 5, so an older version of the app refuses
-  a show with a long timeline instead of treating it as damaged.
-- **Timeline sequences**: a second way to make a sequence, chosen with a **Steps / Timeline** toggle on Sequences. A
+  before removing or cutting blocks.
+- **Timeline sequences**: draw a sequence instead of listing it, with a **Steps / Timeline** toggle on Sequences. A
   timeline has a lane for each light on a grid of beats: drag across lanes to draw blocks, then set their colour,
   intensity, a fade to another colour and intensity, and a strobe with its speed. Blocks can be moved and resized by
   dragging or from the keyboard. Timelines loop to the tempo, play from Perform, Home, the search palette and MIDI, and

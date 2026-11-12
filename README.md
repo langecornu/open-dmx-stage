@@ -13,7 +13,7 @@ fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a
   with a live view of every light in the colour it is really sending.
 - **Colour studio:** quick colours, a custom colour picker and brightness, applied to all or selected fixtures.
 - **Looks:** save what is on stage and recall it with a configurable fade.
-- **Sequences:** chain looks with fade and hold times, or draw coloured blocks per light on a timeline of beats, with
+- **Sequences:** chain looks with fade and hold times, and draw coloured blocks per light over them on a timeline, as two views of the same sequence, with
   fades and strobes; both loop and can follow the tempo.
 - **Setup:** auto-addressing, conflict warnings, and fixture import from QLC+ (`.qxf`) and Open Fixture Library
   (`.json`) files.

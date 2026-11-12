@@ -8,18 +8,6 @@ export const BEATS_PER_BAR = 4;
 /** Lengths offered in the editor, in bars of four beats. Any whole number of bars up to the maximum is valid. */
 export const TIMELINE_BARS = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64];
 
-/** The longest timeline: 64 bars. */
-export const MAX_TIMELINE_BEATS = 64 * BEATS_PER_BAR;
-
-/**
- * @param {number} beats
- * @returns {boolean} whether a timeline can be this long: a whole number of bars, from one bar to the maximum
- */
-export function isTimelineLength(beats) {
-  return (
-    Number.isInteger(beats) && beats % BEATS_PER_BAR === 0 && beats >= BEATS_PER_BAR && beats <= MAX_TIMELINE_BEATS
-  );
-}
 
 /** The shortest block, and the finest grid step, in beats. */
 export const MIN_BLOCK_BEATS = 0.25;
@@ -178,4 +166,35 @@ export function blockControlWrites(block, beat, shown, controls, hasRgb) {
     }
   }
   return writes;
+}
+
+/** The longest a sequence can run: an hour, in its units (beats or seconds). */
+export const MAX_SEQUENCE_UNITS = 3600;
+
+/**
+ * How long one step lasts, in the sequence's units: beats when it follows the tempo, else seconds.
+ * @param {{ fadeMs: number, holdMs: number, fadeBeats?: number, holdBeats?: number }} step
+ * @param {'seconds' | 'beats'} timing
+ * @returns {{ fade: number, hold: number }}
+ */
+export function stepUnits(step, timing) {
+  return timing === 'beats'
+    ? { fade: step.fadeBeats ?? 0, hold: step.holdBeats ?? 1 }
+    : { fade: step.fadeMs / 1000, hold: step.holdMs / 1000 };
+}
+
+/**
+ * How long a whole sequence runs, in its units: its chain of looks, its blocks, or the length it was given, whichever is
+ * longest, and never nothing.
+ * @param {{ timing?: 'seconds' | 'beats', steps: Parameters<typeof stepUnits>[0][], blocks?: { start: number, length: number }[], length?: number }} sequence
+ * @returns {number}
+ */
+export function sequenceLength(sequence) {
+  const timing = sequence.timing ?? 'seconds';
+  const steps = sequence.steps.reduce((sum, step) => {
+    const { fade, hold } = stepUnits(step, timing);
+    return sum + fade + hold;
+  }, 0);
+  const blocks = Math.max(0, ...(sequence.blocks ?? []).map((block) => block.start + block.length));
+  return Math.max(steps, blocks, sequence.length ?? 0, timing === 'beats' ? 1 : 0.1);
 }

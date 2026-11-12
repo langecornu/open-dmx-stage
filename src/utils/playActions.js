@@ -1,20 +1,17 @@
-// Playing a pad: a look, a step sequence or a timeline sequence. Shared by Perform and Home so a pad behaves the same
+// Playing a pad: a look or a sequence. Shared by Perform and Home so a pad behaves the same
 // everywhere: a look plays with a fade, and a playing sequence stops when its pad is pressed again.
 
 /**
  * @param {{ type: string, id?: string }} action
- * @param {{ activeSceneId: string | null, activeChaseId: string | null, activeTimelineId?: string | null }} engine
+ * @param {{ activeSceneId: string | null, activeChaseId: string | null }} engine
  * @returns {boolean} whether this pad's look or sequence is what is on stage
  */
 export function isActionPlaying(action, engine) {
   if (action.type === 'look') {
-    return engine.activeSceneId === action.id && engine.activeChaseId === null && !engine.activeTimelineId;
+    return engine.activeSceneId === action.id && engine.activeChaseId === null;
   }
   if (action.type === 'sequence') {
     return engine.activeChaseId === action.id;
-  }
-  if (action.type === 'timeline') {
-    return (engine.activeTimelineId ?? null) === action.id;
   }
   return false;
 }
@@ -41,7 +38,5 @@ export async function playAction({ action, engine, send, flush, fadeMs }) {
     send({ type: 'recall', sceneId: action.id, fadeMs });
   } else if (action.type === 'sequence') {
     send({ type: 'chaseStart', chaseId: action.id });
-  } else if (action.type === 'timeline') {
-    send({ type: 'timelineStart', timelineId: action.id });
   }
 }
