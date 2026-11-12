@@ -335,7 +335,10 @@ When you switch, each light is matched to one of the same fixture and mode at th
 (in a copied venue), then one with the same name, then the next of its kind. Looks and sequence blocks move onto the
 matched lights' addresses. A light with no match there loses nothing: what your looks do with it is kept aside and
 comes back when you switch to a venue that has it. Rename a venue by editing its name; remove one with the bin (not
-the one you are at). Output settings (cable, Art-Net and so on) are the same for every venue.
+the one you are at). Each venue also remembers its **output**: how DMX leaves the computer there (the simulator, a USB cable on its port,
+Art-Net or sACN to an address and universe). When you leave a venue, the output you were using is remembered with it;
+when you switch to a venue that has one, the app sets it again, and the question before switching says so. The Venues
+card shows each venue's output. A new venue keeps the output as it is until you leave it.
 
 Make sure each fixture's real DMX address and mode match what is shown here.
 

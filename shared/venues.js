@@ -3,7 +3,9 @@
 // `groups`, and the others wait in `venues`. Switching venue matches each light to one of the same kind in the other
 // rig (the same light first, then the same name, then the next of its kind) and moves every look value and block onto
 // it. A light with no match loses nothing: its look values are set aside on the look (`parked`) and come back at a
-// venue that has that light again, and its blocks keep pointing at it. Pure, so the rules are easy to test.
+// venue that has that light again, and its blocks keep pointing at it. A venue also remembers how DMX leaves the
+// computer there (its output), which the app sets again on the server when the show comes back. Pure, so the rules are
+// easy to test.
 import { buildPatch } from './patch.js';
 import { kindOf, matchLights } from './lightMatch.js';
 
@@ -16,7 +18,8 @@ export const MAX_VENUES = 20;
 /**
  * @typedef {import('./types.js').Project} Project
  * @typedef {import('./types.js').Fixture} Fixture
- * @typedef {{ id: string, name: string, fixtures: Fixture[], groups: Project['groups'] }} Venue
+ * @typedef {import('./types.js').OutputSettings} OutputSettings
+ * @typedef {{ id: string, name: string, fixtures: Fixture[], groups: Project['groups'], output?: OutputSettings }} Venue
  */
 
 /**
@@ -61,9 +64,11 @@ export function planVenueSwitch(project, venueId) {
  * @param {Project} project
  * @param {string} venueId
  * @param {import('./types.js').FixtureType[]} builtinTypes the fixture types that come with the app
+ * @param {{ currentOutput?: OutputSettings | null }} [options] how DMX leaves the computer now, remembered with the
+ *   venue being left so it comes back with it
  * @returns {Project}
  */
-export function switchVenue(project, venueId, builtinTypes) {
+export function switchVenue(project, venueId, builtinTypes, { currentOutput = null } = {}) {
   const { venue } = planVenueSwitch(project, venueId);
   const matches = matchLights(project.fixtures, venue.fixtures, { byId: true });
   const from = buildPatch(project, builtinTypes);
@@ -125,6 +130,7 @@ export function switchVenue(project, venueId, builtinTypes) {
     }),
   }));
 
+  // The venue's own output, if it has one, is set by the caller on the server; it is not part of the active rig.
   return {
     ...project,
     fixtures: venue.fixtures,
@@ -132,7 +138,13 @@ export function switchVenue(project, venueId, builtinTypes) {
     venue: { id: venue.id, name: venue.name },
     venues: [
       ...(project.venues ?? []).filter((candidate) => candidate.id !== venue.id),
-      { id: active.id, name: active.name, fixtures: project.fixtures, groups: project.groups },
+      {
+        id: active.id,
+        name: active.name,
+        fixtures: project.fixtures,
+        groups: project.groups,
+        ...(currentOutput ? { output: currentOutput } : {}),
+      },
     ],
     scenes,
     chases,

@@ -172,12 +172,81 @@ describe('describeVenueSwitch', () => {
       const update = (mutate) => {
         project = mutate(project);
       };
-      expect(confirmVenueSwitch({ project, venueId: 'one', library: BUILTIN_TYPES, update })).toBe(false);
+      expect(await confirmVenueSwitch({ project, venueId: 'one', library: BUILTIN_TYPES, update })).toEqual({
+        switched: false,
+        problem: null,
+      });
       expect(project.venue.name).toBe('My venue');
-      expect(confirmVenueSwitch({ project, venueId: 'one', library: BUILTIN_TYPES, update })).toBe(true);
+      expect(await confirmVenueSwitch({ project, venueId: 'one', library: BUILTIN_TYPES, update })).toEqual({
+        switched: true,
+        problem: null,
+      });
       expect(project.venue.name).toBe('Bar');
     } finally {
       window.confirm = original;
+    }
+  });
+});
+
+describe('venue outputs', () => {
+  const cable = { driver: 'open-dmx', serialPath: '/dev/cu.usbserial-1', host: '' };
+  const artnet = { driver: 'artnet', serialPath: '', host: '192.168.1.50', universe: 0 };
+
+  it('remembers the output of the venue being left, and the one coming back carries its own', () => {
+    const club = { id: 'club', name: 'Club', fixtures: home.fixtures, groups: [], output: artnet };
+    const atClub = switchVenue({ ...home, venues: [club] }, 'club', BUILTIN_TYPES, { currentOutput: cable });
+    expect(atClub.venues).toEqual([expect.objectContaining({ id: 'main', output: cable })]);
+    expect(atClub.venue).toEqual({ id: 'club', name: 'Club' });
+    const back = switchVenue(atClub, 'main', BUILTIN_TYPES, { currentOutput: artnet });
+    expect(back.venues).toEqual([expect.objectContaining({ id: 'club', output: artnet })]);
+  });
+
+  it('says in the question when the output changes, and in words people know', async () => {
+    const { describeOutput, describeVenueSwitch } = await import('../../src/utils/venueSwitch.js');
+    const club = { id: 'club', name: 'Club', fixtures: home.fixtures, groups: [], output: artnet };
+    const show = { ...home, venues: [club] };
+    expect(describeVenueSwitch(show, 'club', cable)).toContain(
+      'The output changes to Art-Net to 192.168.1.50, universe 0.',
+    );
+    expect(describeVenueSwitch(show, 'club', artnet)).not.toContain('output');
+    expect(describeOutput(cable)).toBe('USB-DMX cable on /dev/cu.usbserial-1');
+    expect(describeOutput({ driver: 'mock', serialPath: '', host: '' })).toBe('Simulator');
+    expect(describeOutput({ driver: 'sacn', serialPath: '', host: '', universe: 1 })).toBe('sACN (E1.31), universe 1');
+    expect(describeOutput(null)).toBe('the output as it is');
+  });
+
+  it('sets the new venue output on the server, and says so when it cannot', async () => {
+    const { api } = await import('../../src/api.js');
+    const { confirmVenueSwitch } = await import('../../src/utils/venueSwitch.js');
+    const club = { id: 'club', name: 'Club', fixtures: home.fixtures, groups: [], output: artnet };
+    const original = window.confirm;
+    const save = api.saveOutputSettings;
+    window.confirm = () => true;
+    try {
+      let project = { ...home, venues: [club] };
+      const update = (mutate) => {
+        project = mutate(project);
+      };
+      const sent = [];
+      api.saveOutputSettings = async (settings) => {
+        sent.push(settings);
+        return {};
+      };
+      const options = { venueId: 'club', library: BUILTIN_TYPES, update, currentOutput: cable };
+      expect(await confirmVenueSwitch({ project, ...options })).toEqual({ switched: true, problem: null });
+      expect(sent).toEqual([artnet]);
+
+      project = { ...home, venues: [club] };
+      api.saveOutputSettings = async () => {
+        throw new Error('That address is not on this network.');
+      };
+      const result = await confirmVenueSwitch({ project, ...options });
+      expect(result.switched).toBe(true);
+      expect(result.problem).toContain('could not be set: That address is not on this network.');
+      expect(project.venue.name).toBe('Club');
+    } finally {
+      window.confirm = original;
+      api.saveOutputSettings = save;
     }
   });
 });

@@ -4,13 +4,18 @@
 import { useState } from 'react';
 
 import { MAX_VENUES, addVenue, removeVenue, renameVenue, venuesOf } from '../../shared/venues.js';
-import { confirmVenueSwitch } from '../utils/venueSwitch.js';
+import { confirmVenueSwitch, describeOutput } from '../utils/venueSwitch.js';
 import { Icon } from './Icon.jsx';
 
 const plural = (count, word) => `${count} ${count === 1 ? word : `${word}s`}`;
 
-export function VenuesCard({ project, library, update }) {
+/**
+ * @param {{ project: any, library: any[], update: (mutate: (project: any) => any) => void,
+ *   output?: import('../../shared/types.js').OutputSettings | null }} props `output`: how DMX leaves the computer now
+ */
+export function VenuesCard({ project, library, update, output = null }) {
   const [name, setName] = useState('');
+  const [problem, setProblem] = useState(/** @type {string | null} */ (null));
   const [start, setStart] = useState('copy');
   const venues = venuesOf(project);
   const isFull = venues.length >= MAX_VENUES;
@@ -35,7 +40,8 @@ export function VenuesCard({ project, library, update }) {
         <p className="view-sub">
           Where this show plays, each with its own lights and addresses. Your looks and sequences go with the show: when
           you switch, they move onto that venue&apos;s lights. A light the venue does not have keeps its settings for
-          when you come back.
+          when you come back. Each venue also remembers its output (a USB cable here, Art-Net there) and sets it again
+          when you switch to it.
         </p>
       </div>
       <ul className="venues-list">
@@ -52,6 +58,12 @@ export function VenuesCard({ project, library, update }) {
             <span className="fixture-meta">
               {plural(venue.fixtures.length, 'light')}
               {venue.groups.length > 0 ? ` · ${plural(venue.groups.length, 'group')}` : ''}
+              {' · '}
+              {venue.isActive
+                ? `output: ${describeOutput(output)}`
+                : venue.output
+                  ? `output: ${describeOutput(venue.output)}`
+                  : 'keeps the output as it is'}
             </span>
             {venue.isActive ? (
               <span className="badge badge-live">Here now</span>
@@ -60,7 +72,16 @@ export function VenuesCard({ project, library, update }) {
                 <button
                   type="button"
                   className="btn btn-compact"
-                  onClick={() => confirmVenueSwitch({ project, venueId: venue.id, library, update })}
+                  onClick={async () => {
+                    const result = await confirmVenueSwitch({
+                      project,
+                      venueId: venue.id,
+                      library,
+                      update,
+                      currentOutput: output,
+                    });
+                    setProblem(result.problem);
+                  }}
                 >
                   Switch here
                 </button>
@@ -104,6 +125,11 @@ export function VenuesCard({ project, library, update }) {
           Add venue
         </button>
       </form>
+      {problem ? (
+        <p className="error-banner" role="alert">
+          {problem}
+        </p>
+      ) : null}
       {isFull ? <p className="fixture-meta">A show can have up to {MAX_VENUES} venues.</p> : null}
     </section>
   );

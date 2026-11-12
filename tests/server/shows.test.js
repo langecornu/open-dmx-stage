@@ -135,3 +135,24 @@ describe('Show list', () => {
     assert.ok((await readdir(path.join(dataDir, 'shows'))).includes('broken.json'), 'the damaged file is left alone');
   });
 });
+
+describe('Venue outputs in a saved show', () => {
+  const withVenue = (output) => ({
+    ...clubShow,
+    venue: { id: 'main', name: 'Home' },
+    venues: [{ id: 'hall', name: 'Hall', fixtures: clubShow.fixtures, groups: [], output }],
+  });
+
+  it('keeps the output a venue remembers, checked like the Output screen', async () => {
+    const saved = await call('PUT', '/project', withVenue({ driver: 'artnet', host: '192.168.1.50', universe: 0 }));
+    assert.equal(saved.status, 200);
+    assert.deepEqual(saved.body.venues[0].output, {
+      driver: 'artnet',
+      serialPath: '',
+      host: '192.168.1.50',
+      universe: 0,
+    });
+    assert.equal((await call('PUT', '/project', withVenue({ driver: 'artnet', host: 'example.com' }))).status, 400);
+    assert.equal((await call('PUT', '/project', withVenue({ driver: 'laser-beam' }))).status, 400);
+  });
+});

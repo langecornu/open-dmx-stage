@@ -29,7 +29,7 @@ function RigLamp({ range, patch, category }) {
   );
 }
 
-export function PatchView({ project, library, patch, update, openShows }) {
+export function PatchView({ project, library, patch, update, openShows, live }) {
   const typesById = useMemo(() => indexFixtureTypes(project, library), [project, library]);
   const allTypes = [...library, ...project.fixtureTypes];
   const [typeId, setTypeId] = useState(allTypes[0]?.id ?? '');
@@ -249,7 +249,7 @@ export function PatchView({ project, library, patch, update, openShows }) {
           })}
         </div>
       )}
-      <VenuesCard project={project} library={library} update={update} />
+      <VenuesCard project={project} library={library} update={update} output={live?.output?.settings ?? null} />
       {project.fixtures.length > 0 ? <GroupsCard project={project} library={library} update={update} /> : null}
       <ShowFileCard onOpenShows={openShows} />
     </section>

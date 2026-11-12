@@ -166,6 +166,28 @@ export const chaseSchema = z
   })
   .strict();
 
+export const DRIVER_NAMES = ['mock', 'enttec-pro', 'open-dmx', 'artnet', 'sacn'];
+
+export const outputSettingsSchema = z
+  .object({
+    driver: z.enum(DRIVER_NAMES),
+    serialPath: z.string().max(200).default(''),
+    host: z.string().max(253).default('').refine(isAllowedHost, HOST_HELP),
+    universe: z.number().int().min(0).max(63999).optional(),
+  })
+  .strict()
+  .superRefine((settings, context) => {
+    if (settings.universe === undefined) {
+      return;
+    }
+    if (settings.driver === 'artnet' && settings.universe > 32767) {
+      context.addIssue({ code: 'custom', path: ['universe'], message: 'Art-Net universe must be 0 to 32767' });
+    }
+    if (settings.driver === 'sacn' && settings.universe < 1) {
+      context.addIssue({ code: 'custom', path: ['universe'], message: 'sACN universe must be 1 to 63999' });
+    }
+  });
+
 /** A rig that is not the active one: its lights and groups, waiting for the show to move there. */
 export const venueSchema = z
   .object({
@@ -173,6 +195,8 @@ export const venueSchema = z
     name: label,
     fixtures: z.array(fixtureSchema).max(256),
     groups: z.array(groupSchema).max(100),
+    // How DMX leaves the computer at this venue (a USB cable, Art-Net…), set again when the show moves there.
+    output: outputSettingsSchema.optional(),
   })
   .strict();
 
@@ -303,28 +327,6 @@ export const oflDetailsSchema = z.object({ key: z.string().regex(FIXTURE_KEY_PAT
 export const oflImportSchema = z.object({ key: z.string().regex(FIXTURE_KEY_PATTERN) }).strict();
 
 export const importQlcSchema = z.object({ xml: z.string().min(1).max(300_000) }).strict();
-
-export const DRIVER_NAMES = ['mock', 'enttec-pro', 'open-dmx', 'artnet', 'sacn'];
-
-export const outputSettingsSchema = z
-  .object({
-    driver: z.enum(DRIVER_NAMES),
-    serialPath: z.string().max(200).default(''),
-    host: z.string().max(253).default('').refine(isAllowedHost, HOST_HELP),
-    universe: z.number().int().min(0).max(63999).optional(),
-  })
-  .strict()
-  .superRefine((settings, context) => {
-    if (settings.universe === undefined) {
-      return;
-    }
-    if (settings.driver === 'artnet' && settings.universe > 32767) {
-      context.addIssue({ code: 'custom', path: ['universe'], message: 'Art-Net universe must be 0 to 32767' });
-    }
-    if (settings.driver === 'sacn' && settings.universe < 1) {
-      context.addIssue({ code: 'custom', path: ['universe'], message: 'sACN universe must be 1 to 63999' });
-    }
-  });
 
 /** @returns {import('../../shared/types.js').Project} an empty show at the current schema version */
 export function createEmptyProject() {

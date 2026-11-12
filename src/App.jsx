@@ -142,7 +142,18 @@ export function App() {
         onRename={(name) => update((current) => ({ ...current, name: name.trim() === '' ? 'Untitled show' : name }))}
         onOpenShows={openShows}
         venues={venuesOf(project)}
-        onSwitchVenue={(venueId) => confirmVenueSwitch({ project, venueId, library, update })}
+        onSwitchVenue={async (venueId) => {
+          const { problem } = await confirmVenueSwitch({
+            project,
+            venueId,
+            library,
+            update,
+            currentOutput: live.output?.settings ?? null,
+          });
+          if (problem) {
+            notify(problem);
+          }
+        }}
         onManageVenues={() => setView('patch')}
         saveStatus={saveStatus}
         connected={live.connected}
