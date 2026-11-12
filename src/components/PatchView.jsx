@@ -10,6 +10,7 @@ import { EmptyState } from './EmptyState.jsx';
 import { DmxMap } from './DmxMap.jsx';
 import { GroupsCard } from './GroupsCard.jsx';
 import { ShowFileCard } from './ShowFileCard.jsx';
+import { VenuesCard } from './VenuesCard.jsx';
 import { categoryOf, guessCategory } from '../../shared/categories.js';
 import { CategorySelect } from './CategorySelect.jsx';
 import { DeviceIcon } from './DeviceIcon.jsx';
@@ -28,7 +29,7 @@ function RigLamp({ range, patch, category }) {
   );
 }
 
-export function PatchView({ project, library, patch, update, replaceProject }) {
+export function PatchView({ project, library, patch, update, openShows }) {
   const typesById = useMemo(() => indexFixtureTypes(project, library), [project, library]);
   const allTypes = [...library, ...project.fixtureTypes];
   const [typeId, setTypeId] = useState(allTypes[0]?.id ?? '');
@@ -97,7 +98,10 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
           <h1 className="view-title" id="patch-title">
             Setup
           </h1>
-          <p className="view-sub">Tell the studio which lights you have and where they sit on the DMX line.</p>
+          <p className="view-sub">
+            The lights at <strong>{project.venue?.name ?? 'your venue'}</strong> and where they sit on the DMX line.
+            Other venues are under Venues, below.
+          </p>
         </div>
       </div>
 
@@ -245,8 +249,9 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
           })}
         </div>
       )}
+      <VenuesCard project={project} library={library} update={update} />
       {project.fixtures.length > 0 ? <GroupsCard project={project} library={library} update={update} /> : null}
-      <ShowFileCard onImported={replaceProject} />
+      <ShowFileCard onOpenShows={openShows} />
     </section>
   );
 }

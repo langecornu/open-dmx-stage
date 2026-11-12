@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { buildPatch } from '../shared/patch.js';
+import { venuesOf } from '../shared/venues.js';
 import { ChasesView } from './components/ChasesView.jsx';
 import { CommandPalette } from './components/CommandPalette.jsx';
 import { ControlView } from './components/ControlView.jsx';
@@ -13,6 +14,7 @@ import { PatchView } from './components/PatchView.jsx';
 import { PerformView } from './components/PerformView.jsx';
 import { ScenesView } from './components/ScenesView.jsx';
 import { ShortcutsDialog } from './components/ShortcutsDialog.jsx';
+import { ShowsDialog } from './components/ShowsDialog.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
 import { StageBar } from './components/StageBar.jsx';
 import { StageView } from './components/StageView.jsx';
@@ -21,6 +23,7 @@ import { TopBar } from './components/TopBar.jsx';
 import { Welcome } from './components/Welcome.jsx';
 import { buildCommands } from './utils/commands.js';
 import { isTypingTarget } from './utils/performKeys.js';
+import { confirmVenueSwitch } from './utils/venueSwitch.js';
 import { useLive } from './hooks/useLive.js';
 import { useProject } from './hooks/useProject.js';
 import { useToasts } from './hooks/useToasts.js';
@@ -54,6 +57,7 @@ export function App() {
   const [view, setView] = useState('home');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isShowsOpen, setIsShowsOpen] = useState(false);
   const [welcomed, setWelcomed] = useState(hasSeenWelcome);
   const { project, library, update, flush, replace, saveStatus, error } = useProject();
   const live = useLive();
@@ -109,7 +113,8 @@ export function App() {
     setView('home');
   };
 
-  const shared = { project, library, patch, update, flush, live, replaceProject: replace };
+  const openShows = () => setIsShowsOpen(true);
+  const shared = { project, library, patch, update, flush, live, openShows };
   return (
     <div className="shell">
       {!welcomed && startedEmpty.current ? (
@@ -133,6 +138,10 @@ export function App() {
       <TopBar
         projectName={project.name}
         onRename={(name) => update((current) => ({ ...current, name: name.trim() === '' ? 'Untitled show' : name }))}
+        onOpenShows={openShows}
+        venues={venuesOf(project)}
+        onSwitchVenue={(venueId) => confirmVenueSwitch({ project, venueId, library, update })}
+        onManageVenues={() => setView('patch')}
         saveStatus={saveStatus}
         connected={live.connected}
         output={live.output}
@@ -183,6 +192,13 @@ export function App() {
         <StageView project={project} patch={patch} />
       </div>
       <ShortcutsDialog isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+      <ShowsDialog
+        isOpen={isShowsOpen}
+        onClose={() => setIsShowsOpen(false)}
+        project={project}
+        flush={flush}
+        onReplace={replace}
+      />
       <ToastRegion toasts={toasts} />
     </div>
   );

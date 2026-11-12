@@ -1,4 +1,4 @@
-// Top bar: show name, status, master brightness, theme switch and blackout.
+// Top bar: show name with the show list, the venue, status, master brightness, theme switch and blackout.
 import { describeOutput } from '../utils/outputStatus.js';
 import { Icon } from './Icon.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
@@ -10,6 +10,10 @@ const SAVE_LABELS = { saved: 'Saved', saving: 'Saving…', pending: 'Unsaved', e
 export function TopBar({
   projectName,
   onRename,
+  onOpenShows,
+  venues = [],
+  onSwitchVenue,
+  onManageVenues,
   saveStatus,
   connected,
   output,
@@ -31,6 +35,37 @@ export function TopBar({
         aria-label="Show name"
         onChange={(event) => onRename(event.target.value)}
       />
+      {onOpenShows ? (
+        <button type="button" className="btn btn-ghost btn-compact topbar-shows" onClick={onOpenShows}>
+          <Icon name="folder" size={16} />
+          <span className="btn-label">Shows</span>
+        </button>
+      ) : null}
+      {venues.length > 0 ? (
+        <label className="venue-picker">
+          <Icon name="pin" size={16} />
+          <span className="sr-only">Venue</span>
+          <select
+            className="select select-compact"
+            aria-label="Venue"
+            value={venues.find((venue) => venue.isActive)?.id}
+            onChange={(event) => {
+              if (event.target.value === '__manage') {
+                onManageVenues?.();
+              } else {
+                onSwitchVenue?.(event.target.value);
+              }
+            }}
+          >
+            {venues.map((venue) => (
+              <option key={venue.id} value={venue.id}>
+                {venue.name}
+              </option>
+            ))}
+            <option value="__manage">Add or change venues…</option>
+          </select>
+        </label>
+      ) : null}
       <span className="pill" role="status">
         <span className={`dot ${outputReady ? 'dot-ok' : 'dot-bad'}`} />
         <span className="pill-text">{outputLabel}</span>

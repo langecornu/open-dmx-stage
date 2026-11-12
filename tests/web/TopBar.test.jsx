@@ -1,4 +1,5 @@
-// Component tests for the top bar: connection status, save status, show name, master, theme switch and blackout.
+// Component tests for the top bar: connection status, save status, show name, the show list, the venue, master, theme
+// switch and blackout.
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -24,6 +25,30 @@ function renderBar(props = {}) {
 }
 
 describe('TopBar', () => {
+  it('opens the show list, and switches venue or goes to manage venues from the venue picker', async () => {
+    const user = userEvent.setup();
+    const onOpenShows = vi.fn();
+    const onSwitchVenue = vi.fn();
+    const onManageVenues = vi.fn();
+    renderBar({
+      onOpenShows,
+      onSwitchVenue,
+      onManageVenues,
+      venues: [
+        { id: 'main', name: 'Home', isActive: true },
+        { id: 'club', name: 'Club', isActive: false },
+      ],
+    });
+    await user.click(screen.getByRole('button', { name: 'Shows' }));
+    expect(onOpenShows).toHaveBeenCalled();
+    const picker = screen.getByRole('combobox', { name: 'Venue' });
+    expect(picker).toHaveValue('main');
+    await user.selectOptions(picker, 'Club');
+    expect(onSwitchVenue).toHaveBeenCalledWith('club');
+    await user.selectOptions(picker, 'Add or change venues…');
+    expect(onManageVenues).toHaveBeenCalled();
+  });
+
   it.each([
     [{ connected: false, output: null }, 'Server offline'],
     [{ connected: true, output: { driver: 'mock', connected: true } }, 'Simulator'],

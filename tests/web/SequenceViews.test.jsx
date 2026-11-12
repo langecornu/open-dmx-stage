@@ -23,7 +23,7 @@ beforeAll(() => {
 });
 
 const start = {
-  schemaVersion: 5,
+  schemaVersion: 6,
   name: 'Test',
   fixtureTypes: [],
   fixtures: [

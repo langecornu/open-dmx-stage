@@ -112,6 +112,19 @@ describe('migrateProject', () => {
     assert.doesNotThrow(() => projectSchema.parse(migrated), 'the result is a valid show');
   });
 
+  it('upgrades a version 5 show: it gets an id, and its rig becomes its first venue', () => {
+    const version5 = { ...migrateProject(VERSION_1), schemaVersion: 5 };
+    delete version5.id;
+    delete version5.venue;
+    delete version5.venues;
+    const migrated = migrateProject(version5);
+    assert.match(String(migrated.id), /^[0-9a-f-]{36}$/);
+    assert.deepEqual(migrated.venue, { id: 'main', name: 'My venue' });
+    assert.deepEqual(migrated.venues, []);
+    assert.deepEqual(migrated.fixtures, version5.fixtures, 'the lights are untouched');
+    assert.doesNotThrow(() => projectSchema.parse(migrated), 'the result is a valid show');
+  });
+
   it('is a no-op for a current show, and refuses newer or non-show input', () => {
     const current = { ...VERSION_1, schemaVersion: CURRENT_SCHEMA_VERSION };
     assert.equal(migrateProject(current).schemaVersion, CURRENT_SCHEMA_VERSION, 'current files pass through');

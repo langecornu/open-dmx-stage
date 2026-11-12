@@ -7,6 +7,15 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Shows: open, new, save as, import**: a **Shows** button beside the show name opens the show list. Open another
+  show, start a **New show**, **Save as** to carry on in a copy under another name, delete a show, export the open one
+  or import a file. Importing a file now adds it as a show of its own instead of replacing yours, and the show you
+  were on always goes to the list, saved. The other shows live in `server/data/shows/`.
+- **Venues**: one show, several rigs. Each venue has its own lights, addresses and groups; looks and sequences are
+  shared. Add a venue empty or as a copy of this one, then switch with the venue picker in the top bar or the new
+  **Venues** card on Setup. Switching says which lights match, then moves looks and blocks onto that venue's addresses;
+  what a light without a match does is kept aside and comes back at a venue that has it. The saved show format moves
+  to version 6; older shows get one venue, "My venue".
 - **One sequence, two views**: Steps and Timeline are now two views of the same sequence instead of two kinds. A
   sequence is a chain of looks (steps) and, optionally, blocks drawn per light over them; switch views at any time and
   edit either. The Timeline view shows the steps on a **Looks** lane (click one to edit its look, fade and hold, drag
