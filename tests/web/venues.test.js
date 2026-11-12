@@ -139,3 +139,45 @@ describe('venues', () => {
     expect(() => planVenueSwitch(show, 'nothing')).toThrow();
   });
 });
+
+describe('describeVenueSwitch', () => {
+  it('says how many lights match, which have no match, and which have nothing to do yet', async () => {
+    const { describeVenueSwitch } = await import('../../src/utils/venueSwitch.js');
+    const many = {
+      id: 'big',
+      name: 'Big hall',
+      fixtures: [
+        par('x', 'Left', 1),
+        ...['W', 'X', 'Y', 'Z'].map((name, at) => ({ ...par(name, name, 50 + at * 3), typeId: 'generic-dimmer' })),
+      ],
+      groups: [],
+    };
+    const text = describeVenueSwitch({ ...home, venues: [many] }, 'big');
+    expect(text).toContain('Move the show to Big hall?');
+    expect(text).toContain('1 of 3 lights match a light there');
+    expect(text).toContain('No match for Centre, Right: what they do is kept for when you come back.');
+    expect(text).toContain('W, X, Y and 1 more have nothing to do yet.');
+  });
+
+  it('only asks when there are no lights here yet, and switches after a yes', async () => {
+    const { confirmVenueSwitch, describeVenueSwitch } = await import('../../src/utils/venueSwitch.js');
+    const one = { id: 'one', name: 'Bar', fixtures: [par('b', 'Spot', 1)], groups: [] };
+    const empty = { ...home, fixtures: [], venues: [one] };
+    expect(describeVenueSwitch(empty, 'one')).toBe('Move the show to Bar?\n\nSpot has nothing to do yet.');
+    const answers = [false, true];
+    const original = window.confirm;
+    window.confirm = () => answers.shift();
+    try {
+      let project = empty;
+      const update = (mutate) => {
+        project = mutate(project);
+      };
+      expect(confirmVenueSwitch({ project, venueId: 'one', library: BUILTIN_TYPES, update })).toBe(false);
+      expect(project.venue.name).toBe('My venue');
+      expect(confirmVenueSwitch({ project, venueId: 'one', library: BUILTIN_TYPES, update })).toBe(true);
+      expect(project.venue.name).toBe('Bar');
+    } finally {
+      window.confirm = original;
+    }
+  });
+});
