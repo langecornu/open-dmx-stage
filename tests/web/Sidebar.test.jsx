@@ -12,6 +12,7 @@ describe('Sidebar', () => {
     const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(VIEWS.map((view) => view.label)).toEqual([
       'Home',
+      'File',
       'Lights',
       'Looks',
       'Sequences',

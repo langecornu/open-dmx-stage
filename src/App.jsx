@@ -8,6 +8,7 @@ import { ChasesView } from './components/ChasesView.jsx';
 import { CommandPalette } from './components/CommandPalette.jsx';
 import { ControlView } from './components/ControlView.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
+import { FileView } from './components/FileView.jsx';
 import { FixturesView } from './components/FixturesView.jsx';
 import { HomeView } from './components/HomeView.jsx';
 import { MonitorView } from './components/MonitorView.jsx';
@@ -16,7 +17,6 @@ import { PerformView } from './components/PerformView.jsx';
 import { ScenesView } from './components/ScenesView.jsx';
 import { SettingsView } from './components/SettingsView.jsx';
 import { ShortcutsDialog } from './components/ShortcutsDialog.jsx';
-import { ShowsDialog } from './components/ShowsDialog.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
 import { StageBar } from './components/StageBar.jsx';
 import { StageView } from './components/StageView.jsx';
@@ -59,7 +59,6 @@ export function App() {
   const [view, setView] = useState('home');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
-  const [isShowsOpen, setIsShowsOpen] = useState(false);
   const [welcomed, setWelcomed] = useState(hasSeenWelcome);
   const { project, library, update, flush, replace, saveStatus, error } = useProject();
   const live = useLive();
@@ -115,8 +114,8 @@ export function App() {
     setView('home');
   };
 
-  const openShows = () => setIsShowsOpen(true);
-  const shared = { project, library, patch, update, flush, live, openShows };
+  const openShows = () => setView('file');
+  const shared = { project, library, patch, update, flush, live, openShows, replaceProject: replace };
   return (
     <div className="shell">
       {!welcomed && startedEmpty.current ? (
@@ -178,6 +177,7 @@ export function App() {
         ) : null}
         <ErrorBoundary key={view} label="this screen">
           {view === 'home' ? <HomeView {...shared} navigate={setView} /> : null}
+          {view === 'file' ? <FileView {...shared} /> : null}
           {view === 'control' ? <ControlView {...shared} /> : null}
           {view === 'scenes' ? <ScenesView {...shared} /> : null}
           {view === 'chases' ? <ChasesView {...shared} /> : null}
@@ -207,13 +207,6 @@ export function App() {
         <StageView project={project} patch={patch} />
       </div>
       <ShortcutsDialog isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
-      <ShowsDialog
-        isOpen={isShowsOpen}
-        onClose={() => setIsShowsOpen(false)}
-        project={project}
-        flush={flush}
-        onReplace={replace}
-      />
       <ToastRegion toasts={toasts} />
     </div>
   );

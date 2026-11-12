@@ -1731,7 +1731,7 @@ kbd {
   font-size: 12px;
 }
 
-/* Shows: the show list dialog, and its button and the venue picker in the top bar. */
+/* The File button and the venue picker in the top bar, and the Venues card. */
 /* A link that looks like a button (Export), not like a link. */
 a.btn {
   color: var(--text);
@@ -1758,52 +1758,6 @@ a.btn {
   max-width: 180px;
 }
 
-.shows {
-  width: min(720px, 100%);
-  max-height: 80vh;
-}
-
-.shows-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4);
-  overflow-y: auto;
-}
-
-.shows-current {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface-2);
-}
-
-.shows-name {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.shows-forms {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-3);
-}
-
-.shows-form {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-2);
-}
-
-.shows-form .field {
-  flex: 1;
-}
-
-.shows-list,
 .venues-list {
   display: flex;
   flex-direction: column;
@@ -1813,7 +1767,6 @@ a.btn {
   list-style: none;
 }
 
-.shows-row,
 .venues-row {
   display: flex;
   align-items: center;
@@ -1821,17 +1774,6 @@ a.btn {
   padding: var(--space-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-}
-
-.shows-row-text {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.shows-row-name {
-  font-weight: 600;
 }
 
 .venues {
@@ -2016,4 +1958,111 @@ a.btn {
   flex: 1 1 320px;
   margin: 0;
   color: var(--text);
+}
+
+/* File: save into a folder tree, open from the list. */
+.file-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.file-save {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.file-save .field {
+  max-width: 480px;
+}
+
+.file-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.file-tree legend {
+  padding: 0 var(--space-1);
+  font-weight: 600;
+}
+
+.file-folder {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.file-folder:has(input:checked) {
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.file-folder .fixture-meta {
+  margin-left: auto;
+  padding-right: var(--space-2);
+}
+
+.file-group .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--space-2) 0;
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.file-row[data-open='true'] {
+  border-color: var(--accent);
+}
+
+.file-row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.file-row-name {
+  font-weight: 600;
+}
+
+.file-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--space-3);
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.file-details > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
