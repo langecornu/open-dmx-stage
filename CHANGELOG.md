@@ -50,6 +50,9 @@ the project follows [Semantic Versioning](https://semver.org/).
   playhead. Timeline mode uses the whole width of the window.
   **Repeat** copies the selected blocks straight after themselves to carry a pattern on. Shortening a timeline asks
   before removing or cutting blocks.
+- **Looks: fill lights added later**: when lights were added after your looks were saved, the Looks screen offers to
+  set them in every look like a light of the same kind, in rig order (Par 1 → Par 3, Par 2 → Par 4), keeping each
+  look's pattern. Setup names the lights that are in no group.
 - **Timeline sequences**: draw a sequence instead of listing it, with a **Steps / Timeline** toggle on Sequences. A
   timeline has a lane for each light on a grid of beats: drag across lanes to draw blocks, then set their colour,
   intensity, a fade to another colour and intensity, and a strobe with its speed. Blocks can be moved and resized by
@@ -113,6 +116,8 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Look cards counted every light in the rig** ("4 fixtures") instead of the lights the look sets. They now say, for
+  example, **2 of 4 lights**, and name the lights the look leaves dark.
 - **A look left on stage can be stopped.** When a sequence that plays once ends, or after a look is played, the On
   stage bar now has a **Stop** button (and the search palette a **Stop the look** command) that takes the look off
   stage and returns the lights to rest. Before, the bar showed the look with no way to stop it.

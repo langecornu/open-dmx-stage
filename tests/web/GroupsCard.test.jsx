@@ -60,6 +60,16 @@ describe('groups', () => {
     expect(update.mock.calls.at(-1)[0](project).groups).toEqual([]);
   });
 
+  it('names the lights that are in no group, once there are groups', () => {
+    renderSetup(makeProject([{ id: 'g1', name: 'Front', fixtureIds: ['a'] }]));
+    expect(screen.getByRole('note')).toHaveTextContent('Not in any group: Par 2.');
+  });
+
+  it('says nothing about ungrouped lights before the first group is made', () => {
+    renderSetup(makeProject([]));
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
+  });
+
   it('takes a removed light out of every group', async () => {
     const user = userEvent.setup();
     const project = makeProject([{ id: 'g', name: 'Front', fixtureIds: ['a', 'b'] }]);

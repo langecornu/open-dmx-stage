@@ -2,14 +2,29 @@
 import { useState } from 'react';
 
 import { frameStore, useFrame } from '../hooks/frameStore.js';
+import { fillLooks, lightsInLook, listNames, planFill } from '../utils/lookCoverage.js';
 import { fixtureColors, sceneGradient } from '../utils/sceneColors.js';
 import { EmptyState } from './EmptyState.jsx';
 import { Icon } from './Icon.jsx';
 
 const FADE_OPTIONS = [0, 500, 1000, 2000, 5000];
+const FILL_DISMISSED_KEY = 'odmx-fill-dismissed';
+
+// "Not now" on the fill banner is remembered for that set of lights, so a light left out on purpose does not nag.
+function loadDismissed() {
+  try {
+    return localStorage.getItem(FILL_DISMISSED_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
 
 function SceneCard({ scene, project, patch, isActive, fadeMs, onRecall, onRename, onDuplicate, onCapture, onDelete }) {
   const colors = fixtureColors(project, patch, scene.values);
+  const lights = lightsInLook(project, patch, scene.values);
+  const left = project.fixtures.filter((fixture) => !lights.includes(fixture));
+  const coverage = `${lights.length} of ${project.fixtures.length} ${project.fixtures.length === 1 ? 'light' : 'lights'}`;
+  const darkNote = left.length > 0 ? `Not in this look: ${listNames(left.map((fixture) => fixture.name))}` : null;
   return (
     <article className="card scene-card" data-active={isActive}>
       <div className="scene-swatch" style={{ background: sceneGradient(colors) }}>
@@ -31,7 +46,14 @@ function SceneCard({ scene, project, patch, isActive, fadeMs, onRecall, onRename
           onChange={(event) => onRename(scene.id, event.target.value || scene.name)}
         />
         <div className="scene-foot">
-          {isActive ? <span className="badge badge-live">On stage</span> : <span>{colors.length} fixtures</span>}
+          {isActive ? (
+            <span className="badge badge-live">On stage</span>
+          ) : (
+            <span title={darkNote ?? undefined}>
+              {coverage}
+              {darkNote ? <span className="sr-only">. {darkNote}</span> : null}
+            </span>
+          )}
           <span className="scene-actions">
             <button
               type="button"
@@ -145,6 +167,21 @@ export function ScenesView({ project, patch, update, flush, live }) {
       scenes: current.scenes.filter((scene) => scene.id !== id),
       chases: current.chases.map((chase) => ({ ...chase, steps: chase.steps.filter((step) => step.sceneId !== id) })),
     }));
+  // Lights added after the looks were saved are in none of them; offer to set them like their partners.
+  const fillPlan = planFill(project, patch);
+  const fillKey = fillPlan.map(({ to }) => to.id).join(',');
+  const [dismissed, setDismissed] = useState(loadDismissed);
+  const handleDismiss = () => {
+    setDismissed(fillKey);
+    try {
+      localStorage.setItem(FILL_DISMISSED_KEY, fillKey);
+    } catch {
+      // Remembering is a convenience; the banner simply comes back in a private window.
+    }
+  };
+  const handleFill = () =>
+    update((current) => ({ ...current, scenes: fillLooks(current.scenes, patch, planFill(current, patch)) }));
+
   const handleRecall = async (sceneId, fade) => {
     await flush();
     live.send({ type: 'recall', sceneId, fadeMs: fade });
@@ -190,6 +227,24 @@ export function ScenesView({ project, patch, update, flush, live }) {
         />
       ) : (
         <>
+          {fillPlan.length > 0 && dismissed !== fillKey ? (
+            <div className="card card-pad fill-banner" role="region" aria-label="New lights">
+              <p className="view-sub">
+                <strong>{listNames(fillPlan.map(({ to }) => to.name))}</strong> {fillPlan.length === 1 ? 'is' : 'are'}{' '}
+                in none of your looks yet, so {fillPlan.length === 1 ? 'it stays' : 'they stay'} dark when a look plays.
+                Filling sets {fillPlan.length === 1 ? 'it' : 'each'} like a light of the same kind, in every look:{' '}
+                {fillPlan.map(({ from, to }) => `${from.name} → ${to.name}`).join(', ')}.
+              </p>
+              <div className="toolbar">
+                <button type="button" className="btn btn-ghost" onClick={handleDismiss}>
+                  Not now
+                </button>
+                <button type="button" className="btn btn-primary" onClick={handleFill}>
+                  Fill the new lights
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className="pad-section-head">
             <h2 className="section-title">
               Saved looks

@@ -1,6 +1,8 @@
 // Groups: name sets of lights (front wash, left side) so an effect can run on just those lights.
 import { categoriesByFixture } from '../utils/deviceCategories.js';
+import { listNames } from '../utils/lookCoverage.js';
 import { DeviceIcon } from './DeviceIcon.jsx';
+
 export function GroupsCard({ project, library = [], update }) {
   const categories = categoriesByFixture(project, library);
   const patchGroup = (id, changes) =>
@@ -25,6 +27,9 @@ export function GroupsCard({ project, library = [], update }) {
         : [...group.fixtureIds, fixtureId],
     });
 
+  const grouped = new Set(project.groups.flatMap((group) => group.fixtureIds));
+  const ungrouped = project.fixtures.filter((fixture) => !grouped.has(fixture.id));
+
   return (
     <section className="card card-pad groups-card" aria-label="Groups">
       <div className="section-bar">
@@ -35,6 +40,13 @@ export function GroupsCard({ project, library = [], update }) {
       </div>
       {project.groups.length === 0 ? (
         <p className="view-sub">Group lights (for example the front row) to run an effect on just those lights.</p>
+      ) : null}
+      {ungrouped.length > 0 && project.groups.length > 0 ? (
+        <p className="view-sub" role="note">
+          Not in any group: {listNames(ungrouped.map((fixture) => fixture.name))}. Tick{' '}
+          {ungrouped.length === 1 ? 'it' : 'them'} below to run effects on {ungrouped.length === 1 ? 'it' : 'them'} with
+          a group.
+        </p>
       ) : null}
       {project.groups.map((group) => (
         <div key={group.id} className="group-row">
