@@ -44,6 +44,8 @@ describe('VenuesCard', () => {
     render(<Harness />);
     const rows = screen.getAllByRole('listitem');
     expect(rows[0]).toHaveTextContent('2 lights');
+    expect(rows[0]).toHaveTextContent('output: the output as it is');
+    expect(rows[1]).toHaveTextContent('keeps the output as it is');
     expect(within(rows[0]).getByText('Here now')).toBeInTheDocument();
     await user.type(screen.getByLabelText('New venue'), 'Hall');
     await user.click(screen.getByRole('button', { name: 'Add venue' }));

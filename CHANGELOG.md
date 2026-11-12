@@ -7,6 +7,9 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Each venue remembers its output**: the USB cable at one venue, Art-Net to a node at another. Leaving a venue
+  remembers the output in use there; switching to a venue sets its output again, and the question before switching
+  says when the output will change. The Venues card shows each venue's output.
 - **AI shows**: Claude designs looks and sequences for the venue you are at, using everything its lights can do
   (colour, movement, gobos, prisms, beam, smoke, built-in programs). Let the AI decide everything, or steer it with a
   mood, the energy, colours to use more, less or avoid, and More, Less or Off for each thing the venue's lights can do.
