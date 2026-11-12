@@ -2,7 +2,7 @@
 // MIDI controls (pads, keys, knobs) and actions (play a look, play a sequence, blackout, stop, master).
 
 /**
- * @typedef {{ type: 'look' | 'sequence' | 'timeline', id: string } | { type: 'blackout' } | { type: 'stop' } | { type: 'master' }} Action
+ * @typedef {{ type: 'look' | 'sequence', id: string } | { type: 'blackout' } | { type: 'stop' } | { type: 'master' }} Action
  * @typedef {{ kind: 'note' | 'cc', channel: number, number: number, value: number }} MidiMessage
  */
 
@@ -110,7 +110,7 @@ function isAction(value) {
     return false;
   }
   const { type, id } = /** @type {Record<string, unknown>} */ (value);
-  if (type === 'look' || type === 'sequence' || type === 'timeline') {
+  if (type === 'look' || type === 'sequence') {
     return typeof id === 'string' && id.length > 0 && id.length <= 200;
   }
   return type === 'blackout' || type === 'stop' || type === 'master';

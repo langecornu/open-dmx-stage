@@ -821,8 +821,8 @@ RULES:
 RULES:
 - Enable secret scanning with push protection, and scan history for leaked secrets (for example with gitleaks) in CI.
 - Treat the no-login design as a documented risk. Before the app is used on a shared network, add an optional access
-  token or password for the control surface, bind to loopback by default, and require an explicit setting to listen
-  on other interfaces.
+  token or password for the control surface. The app listens on the network by default (ADR 0008, which supersedes the
+  loopback default of ADR 0005); the docs say how to keep it on one computer.
 - Keep the Content Security Policy as tight as possible and test it in the browser on every build.
 - Add `SECURITY.md` (4.11) and a short threat model to the docs: who can reach the server, what they could do, and what
   is mitigated.
@@ -893,7 +893,7 @@ and where Part 4 explains how to close it.
 | Manual accessibility pass | Not recorded for releases                                                                                           | Automated checks cover only part of the issues                                              | Keyboard, screen reader and zoom checklist in each release PR           | 4.3      |
 | Node version              | The dev machine's default is still Node 20 (Node 24 is installed beside it for tests); `engine-strict` is off       | Enabling it would stop installs on Node 20                                                  | Make Node 24 the default, then add `engine-strict=true` to `.npmrc`     | 4.8      |
 | Dependencies              | No unused-dependency check                                                                                          | Needs a tool and a baseline                                                                 | Add `knip` and fix what it finds                                        | 4.9      |
-| Security                  | No access token for the control surface                                                                             | Loopback by default removes the main risk; a token needs a login design                     | Optional access token if the app is used on shared networks             | 4.16     |
+| Security                  | No access token for the control surface                                                                             | Documented; `HOST=127.0.0.1` keeps it on one computer; a token needs a login design         | Optional access token if the app is used on shared networks             | 4.16     |
 | Network output            | The network interface for broadcast and multicast cannot be chosen                                                  | Needs a setting in the schema, UI and guide                                                 | Optional interface setting                                              | 4.13     |
 | USB output                | Not verified on real hardware                                                                                       | No adapter was available                                                                    | `npm run dmx:ramp` on a real adapter, then update ADR 0003 and the docs | 4.13     |
 | API                       | No OpenAPI description                                                                                              | Only this app uses the API today                                                            | Add one when anything else does                                         | 4.14     |
@@ -903,7 +903,7 @@ and where Part 4 explains how to close it.
 
 Closed by this work: stable ids for chase steps; a structured logger with request ids and health endpoints; JSDoc and
 `tsc` for the server; component and accessibility tests; coverage thresholds; CI with pinned actions and a bundle and
-licence check; Dependabot; versioned API under `/api/v1`; loopback by default; show file schema version, migrations,
+licence check; Dependabot; versioned API under `/api/v1`; network exposure decided and documented (ADR 0008); show file schema version, migrations,
 rolling backup and export and import; WebSocket backoff, heartbeat and protocol version; automatic recovery of a failed
 output; error boundaries; the guide split into one component per file and loaded on demand; contributor files and ADRs.
 

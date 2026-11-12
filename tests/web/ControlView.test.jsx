@@ -159,3 +159,52 @@ describe('ControlView', () => {
     expect(await accessibilityViolations(container)).toEqual([]);
   });
 });
+
+describe('ControlView: more controls', () => {
+  const head = {
+    id: 'head-type',
+    manufacturer: '',
+    name: 'Test head',
+    description: '',
+    modes: [
+      {
+        name: '3 channel',
+        channels: [
+          { name: 'Pan', type: 'pan', defaultValue: 128 },
+          { name: 'Pan fine', type: 'pan-fine', defaultValue: 0 },
+          {
+            name: 'Gobo',
+            type: 'gobo',
+            defaultValue: 0,
+            capabilities: [
+              { from: 0, to: 9, type: 'gobo-slot', label: 'Open' },
+              { from: 10, to: 19, type: 'gobo-slot', label: 'Star' },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  const rig = makeShow({
+    fixtureTypes: [head],
+    fixtures: [
+      { id: 'h1', name: 'Head 1', typeId: 'head-type', mode: 0, address: 1 },
+      { id: 'h2', name: 'Head 2', typeId: 'head-type', mode: 0, address: 4 },
+    ],
+  });
+
+  it('sets pan (on its coarse and fine channels) and a gobo on every light, as manual changes', async () => {
+    const user = userEvent.setup();
+    const { live } = renderView({ project: rig });
+    const more = screen.getByRole('region', { name: 'More controls' });
+    fireEvent.change(within(more).getByLabelText('Pan'), { target: { value: '25' } });
+    expect(lastSet(live)).toEqual({ 1: 64, 2: 0, 4: 64, 5: 0 });
+    await user.selectOptions(within(more).getByLabelText('Gobo'), 'Star');
+    expect(lastSet(live)).toEqual({ 3: 15, 6: 15 });
+  });
+
+  it('shows each light’s device icon on its tile', () => {
+    renderView({ project: rig });
+    expect(document.querySelectorAll('.tile svg.device-icon')).toHaveLength(2);
+  });
+});

@@ -1,6 +1,6 @@
 # 5. The server listens on loopback by default
 
-Status: accepted
+Status: superseded by ADR 0008
 
 ## Context
 

@@ -10,31 +10,32 @@ import { EmptyState } from './EmptyState.jsx';
 import { DmxMap } from './DmxMap.jsx';
 import { GroupsCard } from './GroupsCard.jsx';
 import { ShowFileCard } from './ShowFileCard.jsx';
+import { VenuesCard } from './VenuesCard.jsx';
+import { categoryOf, guessCategory } from '../../shared/categories.js';
+import { CategorySelect } from './CategorySelect.jsx';
+import { DeviceIcon } from './DeviceIcon.jsx';
 import { Icon } from './Icon.jsx';
 
-// A small lamp in each rig row, in the colour the light is really sending, so a row is recognisable at a glance.
-function RigLamp({ range, patch }) {
+// The device's icon in each rig row, lit in the colour the light is really sending, so a row says what the device is
+// and what it is doing at a glance.
+function RigLamp({ range, patch, category }) {
   const frame = useFrame();
   const color = range && !range.missingType ? fixtureColor(range, patch, (channel) => frame[channel - 1] ?? 0) : null;
   const isLit = color !== null && color.level > 0.02;
   return (
-    <span
-      className="rig-icon rig-lamp"
-      data-lit={isLit}
-      style={isLit ? { '--lamp': color.css, '--level': color.level.toFixed(3) } : undefined}
-      aria-hidden="true"
-    >
-      <Icon name="control" />
+    <span className="rig-icon rig-lamp" data-lit={isLit} aria-hidden="true">
+      <DeviceIcon category={category} size={30} glow={isLit ? color.css : undefined} />
     </span>
   );
 }
 
-export function PatchView({ project, library, patch, update, replaceProject }) {
+export function PatchView({ project, library, patch, update, openShows }) {
   const typesById = useMemo(() => indexFixtureTypes(project, library), [project, library]);
   const allTypes = [...library, ...project.fixtureTypes];
   const [typeId, setTypeId] = useState(allTypes[0]?.id ?? '');
   const [modeIndex, setModeIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [category, setCategory] = useState('');
   const [message, setMessage] = useState(null);
 
   const selectedType = typesById.get(typeId);
@@ -45,7 +46,9 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
     const { additions, notice } = planFixtures({ project, patch, type: selectedType, modeIndex, quantity });
     setMessage(notice);
     if (additions.length > 0) {
-      update((current) => ({ ...current, fixtures: [...current.fixtures, ...additions] }));
+      // A device type chosen here is set on the new lights; otherwise they follow their fixture type.
+      const added = category ? additions.map((fixture) => ({ ...fixture, category })) : additions;
+      update((current) => ({ ...current, fixtures: [...current.fixtures, ...added] }));
     }
   };
 
@@ -95,7 +98,10 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
           <h1 className="view-title" id="patch-title">
             Setup
           </h1>
-          <p className="view-sub">Tell the studio which lights you have and where they sit on the DMX line.</p>
+          <p className="view-sub">
+            The lights at <strong>{project.venue?.name ?? 'your venue'}</strong> and where they sit on the DMX line.
+            Other venues are under Venues, below.
+          </p>
         </div>
       </div>
 
@@ -108,6 +114,7 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
             onChange={(event) => {
               setTypeId(event.target.value);
               setModeIndex(0);
+              setCategory('');
             }}
           >
             {allTypes.map((type) => (
@@ -128,6 +135,16 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
             ))}
           </select>
         </label>
+        <div className="field">
+          <span aria-hidden="true">Device type</span>
+          <CategorySelect
+            label="Device type"
+            value={category}
+            inherited={selectedType ? categoryOf({}, selectedType) : 'other'}
+            inheritedFrom={selectedType?.category ? 'from the fixture' : 'best guess'}
+            onChange={setCategory}
+          />
+        </div>
         <label className="field">
           How many
           <input
@@ -175,7 +192,7 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
             const type = typesById.get(fixture.typeId);
             return (
               <div key={fixture.id} className="card rig-row">
-                <RigLamp range={range} patch={patch} />
+                <RigLamp range={range} patch={patch} category={categoryOf(fixture, type)} />
                 <input
                   className="input"
                   value={fixture.name}
@@ -190,6 +207,14 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
                     <span className="badge badge-bad">Missing type</span>
                   )}
                 </span>
+                <CategorySelect
+                  className="select select-compact rig-category"
+                  label={`Device type of ${fixture.name}`}
+                  value={fixture.category ?? ''}
+                  inherited={type ? categoryOf({}, type) : guessCategory({})}
+                  inheritedFrom={type?.category ? 'fixture' : 'guess'}
+                  onChange={(value) => handleField(fixture.id, { category: value || undefined })}
+                />
                 <label className="addr-chip">
                   <span className="rig-meta">DMX</span>
                   <input
@@ -224,8 +249,9 @@ export function PatchView({ project, library, patch, update, replaceProject }) {
           })}
         </div>
       )}
-      {project.fixtures.length > 0 ? <GroupsCard project={project} update={update} /> : null}
-      <ShowFileCard onImported={replaceProject} />
+      <VenuesCard project={project} library={library} update={update} />
+      {project.fixtures.length > 0 ? <GroupsCard project={project} library={library} update={update} /> : null}
+      <ShowFileCard onOpenShows={openShows} />
     </section>
   );
 }

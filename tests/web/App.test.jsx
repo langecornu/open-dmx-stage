@@ -101,7 +101,7 @@ describe('App', () => {
     const user = userEvent.setup();
     await renderApp();
     await user.keyboard('{Control>}k{/Control}');
-    const box = await screen.findByRole('combobox');
+    const box = within(await screen.findByRole('dialog')).getByRole('combobox');
     await user.type(box, 'perform{Enter}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(await screen.findByRole('heading', { level: 1, name: 'Perform' })).toBeInTheDocument();

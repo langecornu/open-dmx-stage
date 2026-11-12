@@ -1,6 +1,12 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 6,
+  "id": "e661ba05-13a3-47f9-b54a-83d8a7082a3e",
   "name": "Demo light show",
+  "venue": {
+    "id": "main",
+    "name": "My venue"
+  },
+  "venues": [],
   "fixtureTypes": [],
   "fixtures": [
     {
@@ -223,7 +229,8 @@
           "fadeBeats": 4,
           "holdBeats": 4
         }
-      ]
+      ],
+      "blocks": []
     },
     {
       "id": "seq-cycle",
@@ -279,7 +286,8 @@
           "fadeBeats": 1,
           "holdBeats": 3
         }
-      ]
+      ],
+      "blocks": []
     },
     {
       "id": "seq-police",
@@ -303,7 +311,8 @@
           "fadeBeats": 0,
           "holdBeats": 1
         }
-      ]
+      ],
+      "blocks": []
     },
     {
       "id": "seq-strobe",
@@ -351,7 +360,8 @@
           "fadeBeats": 0,
           "holdBeats": 1
         }
-      ]
+      ],
+      "blocks": []
     }
   ],
   "groups": [
@@ -370,6 +380,5 @@
       "name": "Both pars",
       "fixtureIds": ["par-1", "par-2"]
     }
-  ],
-  "timelines": []
+  ]
 }

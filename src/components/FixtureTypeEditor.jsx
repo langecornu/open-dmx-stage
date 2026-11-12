@@ -8,6 +8,8 @@ import {
   MAX_NAME_LENGTH,
   newChannel,
 } from '../utils/fixtureTypes.js';
+import { guessCategory } from '../../shared/categories.js';
+import { CategorySelect } from './CategorySelect.jsx';
 import { ChannelRow } from './ChannelRow.jsx';
 import { Icon } from './Icon.jsx';
 
@@ -78,6 +80,16 @@ export function FixtureTypeEditor({ type, isBuiltIn, usedBy, onChange, onDuplica
             onChange={(event) => onChange({ name: event.target.value || type.name })}
           />
         </label>
+        <div className="field">
+          <span aria-hidden="true">Device type</span>
+          <CategorySelect
+            label="Device type"
+            value={type.category ?? ''}
+            inherited={guessCategory(type)}
+            inheritedFrom="best guess"
+            onChange={(value) => onChange({ category: value || undefined })}
+          />
+        </div>
         <label className="field fixture-description">
           Description
           <textarea

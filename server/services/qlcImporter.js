@@ -16,7 +16,7 @@ const parser = new XMLParser({
   ignoreDeclaration: true,
   parseTagValue: false,
   parseAttributeValue: false,
-  isArray: (name) => ['Channel', 'Mode'].includes(name),
+  isArray: (name) => ['Channel', 'Mode', 'Capability'].includes(name),
 });
 
 /** @type {Record<string, string>} */
@@ -29,12 +29,33 @@ const PRESET_TYPES = {
   IntensityWhite: 'white',
   IntensityAmber: 'amber',
   IntensityUV: 'uv',
+  IntensityLime: 'lime',
+  IntensityIndigo: 'indigo',
+  IntensityCyan: 'cyan',
+  IntensityMagenta: 'magenta',
+  IntensityYellow: 'yellow',
+  IntensityWarmWhite: 'warm-white',
+  IntensityColdWhite: 'cold-white',
   PositionPan: 'pan',
+  PositionPanFine: 'pan-fine',
   PositionTilt: 'tilt',
+  PositionTiltFine: 'tilt-fine',
 };
 
 /** @type {Record<string, string>} */
-const COLOUR_TYPES = { red: 'red', green: 'green', blue: 'blue', white: 'white', amber: 'amber', uv: 'uv' };
+const COLOUR_TYPES = {
+  red: 'red',
+  green: 'green',
+  blue: 'blue',
+  white: 'white',
+  amber: 'amber',
+  uv: 'uv',
+  lime: 'lime',
+  indigo: 'indigo',
+  cyan: 'cyan',
+  magenta: 'magenta',
+  yellow: 'yellow',
+};
 
 /** @type {Record<string, string>} */
 const GROUP_TYPES = {
@@ -44,7 +65,35 @@ const GROUP_TYPES = {
   gobo: 'gobo',
   shutter: 'strobe',
   speed: 'speed',
+  prism: 'prism',
+  effect: 'effect',
+  maintenance: 'maintenance',
 };
+
+/** Preset name parts, for the presets not listed above (first match wins). @type {[RegExp, string][]} */
+const PRESET_PARTS = [
+  [/^ShutterStrobe|^Shutter/, 'strobe'],
+  [/^SpeedPanTilt/, 'pan-tilt-speed'],
+  [/^Speed/, 'speed'],
+  [/^ColorWheel|^ColorMacro/, 'color-wheel'],
+  [/^ColorCTO|^ColorCTB|Temperature/, 'color-temperature'],
+  [/^GoboWheelRotation|^GoboRotation|Rotation.*Gobo/, 'gobo-rotation'],
+  [/^Gobo/, 'gobo'],
+  [/^PrismRotation/, 'prism-rotation'],
+  [/^Prism/, 'prism'],
+  [/^BeamZoom/, 'zoom'],
+  [/^BeamFocus/, 'focus'],
+  [/^BeamIris/, 'iris'],
+  [/^BeamFrost/, 'frost'],
+];
+
+/** Beam channels named for what they do. @type {[RegExp, string][]} */
+const BEAM_NAMES = [
+  [/zoom/i, 'zoom'],
+  [/focus/i, 'focus'],
+  [/iris/i, 'iris'],
+  [/frost/i, 'frost'],
+];
 
 /**
  * @param {any} node a parsed XML node: text, or an object with `#text`
@@ -65,30 +114,24 @@ function classifyByPreset(preset) {
   if (preset.endsWith('Fine')) {
     return 'other';
   }
-  if (preset.startsWith('Shutter')) {
-    return 'strobe';
-  }
-  if (preset.startsWith('Speed')) {
-    return 'speed';
-  }
-  if (preset.startsWith('ColorWheel') || preset.startsWith('ColorMacro')) {
-    return 'color-wheel';
-  }
-  if (preset.startsWith('Gobo')) {
-    return 'gobo';
-  }
-  return 'other';
+  return PRESET_PARTS.find(([pattern]) => pattern.test(preset))?.[1] ?? 'other';
 }
 
 /** @param {any} group the parsed <Group> element @returns {string} one of CHANNEL_TYPES */
-function classifyByGroup(group) {
+function classifyByGroup(group, channelName = '') {
   const name = textOf(group).toLowerCase();
   const isFine = String(group?.['@_Byte'] ?? '0') !== '0';
   if (isFine) {
-    return 'other';
+    return name === 'pan' ? 'pan-fine' : name === 'tilt' ? 'tilt-fine' : 'other';
   }
   if (name === 'intensity') {
     return 'intensity';
+  }
+  if (name === 'beam') {
+    return BEAM_NAMES.find(([pattern]) => pattern.test(channelName))?.[1] ?? 'other';
+  }
+  if (/fog|haze|smoke/i.test(channelName)) {
+    return /fan/i.test(channelName) ? 'fan' : 'fog';
   }
   return GROUP_TYPES[name] ?? 'other';
 }
@@ -102,11 +145,108 @@ function classifyChannel(definition) {
   if (preset) {
     return classifyByPreset(preset);
   }
-  const type = classifyByGroup(definition.Group);
+  const type = classifyByGroup(definition.Group, String(definition['@_Name'] ?? ''));
   if (type === 'intensity') {
     return COLOUR_TYPES[textOf(definition.Colour).toLowerCase()] ?? 'intensity';
   }
   return type;
+}
+
+/**
+ * What one QLC+ capability range does, from the channel's type and the range's name and preset.
+ * @param {string} channelType
+ * @param {string} label
+ * @param {string} preset
+ * @param {boolean} isRange whether it spans more than one value
+ * @returns {{ type: string, reverse?: boolean }}
+ */
+function capabilityType(channelType, label, preset, isRange) {
+  const words = `${preset} ${label}`;
+  const reverse = /FastToSlow|fast\s*(?:to|-|→)\s*slow|BigSmall|FarNear/i.test(words) ? { reverse: true } : {};
+  if (/no function|nothing|^\s*$/i.test(label) && !preset) {
+    return { type: 'none' };
+  }
+  if (channelType === 'strobe') {
+    if (/open/i.test(words)) {
+      return { type: 'shutter-open' };
+    }
+    if (/clos/i.test(words) || /blackout/i.test(words)) {
+      return { type: 'shutter-closed' };
+    }
+    return { type: /strobe/i.test(words) ? 'strobe' : 'shutter-effect', ...reverse };
+  }
+  if (channelType === 'color-wheel' || channelType === 'gobo') {
+    if (/rotat|scroll|spin/i.test(words)) {
+      return { type: 'wheel-rotation', ...reverse };
+    }
+    if (/shak/i.test(words)) {
+      return { type: 'gobo-shake', ...reverse };
+    }
+    return { type: channelType === 'gobo' ? 'gobo-slot' : 'color-slot' };
+  }
+  if (/sound/i.test(words)) {
+    return { type: 'sound' };
+  }
+  if (/reset|lamp|maintenance/i.test(words)) {
+    return { type: 'maintenance' };
+  }
+  /** @type {Record<string, string>} */
+  const continuous = {
+    pan: 'pan',
+    tilt: 'tilt',
+    zoom: 'zoom',
+    focus: 'focus',
+    iris: 'iris',
+    frost: 'frost',
+    fog: 'fog',
+    fan: 'fan',
+    prism: 'prism',
+    'prism-rotation': 'prism-rotation',
+    'gobo-rotation': 'wheel-rotation',
+    'pan-tilt-speed': 'pan-tilt-speed',
+    speed: 'speed',
+    'effect-speed': 'effect-speed',
+    intensity: 'intensity',
+  };
+  if (channelType === 'effect') {
+    return isRange && /speed/i.test(words) ? { type: 'effect-speed', ...reverse } : { type: 'effect' };
+  }
+  return { type: continuous[channelType] ?? 'generic', ...reverse };
+}
+
+/**
+ * The value ranges of a QLC+ channel. A channel with one range over all its values needs no list, so it gets none.
+ * @param {Record<string, any> | undefined} definition the parsed <Channel> element
+ * @param {string} channelType
+ * @returns {import('../../shared/capabilities.js').Capability[]}
+ */
+function capabilitiesOf(definition, channelType) {
+  const raw = Array.isArray(definition?.Capability) ? definition.Capability : [];
+  if (raw.length <= 1) {
+    return [];
+  }
+  const ranges = raw.slice(0, 64).flatMap((/** @type {Record<string, any>} */ capability) => {
+    const from = Number(capability['@_Min']);
+    const to = Number(capability['@_Max']);
+    if (![from, to].every((value) => Number.isInteger(value) && value >= 0 && value <= 255) || from > to) {
+      return [];
+    }
+    const label = textOf(capability).slice(0, 80);
+    const preset = String(capability['@_Preset'] ?? '');
+    const colour = [capability['@_Res1'], capability['@_Res'], capability['@_Color']].find(
+      (value) => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value),
+    );
+    return [
+      {
+        from,
+        to,
+        ...capabilityType(channelType, label, preset, to > from),
+        ...(label ? { label } : {}),
+        ...(colour ? { color: colour.toLowerCase() } : {}),
+      },
+    ];
+  });
+  return /** @type {import('../../shared/capabilities.js').Capability[]} */ (ranges);
 }
 
 /**
@@ -147,8 +287,15 @@ export function convertQlcPlus(xml) {
       if (!name) {
         return { name: 'Unused', type: 'other', defaultValue: 0 };
       }
-      const type = classifyChannel(definitions.get(name));
-      return { name, type, defaultValue: type === 'pan' || type === 'tilt' ? 128 : 0 };
+      const definition = definitions.get(name);
+      const type = classifyChannel(definition);
+      const capabilities = capabilitiesOf(definition, type);
+      return {
+        name,
+        type,
+        defaultValue: type === 'pan' || type === 'tilt' ? 128 : 0,
+        ...(capabilities.length > 0 ? { capabilities } : {}),
+      };
     });
     return { name: mode['@_Name'] ?? 'Mode', channels };
   });

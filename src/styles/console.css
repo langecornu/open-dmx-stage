@@ -1181,11 +1181,17 @@ kbd {
 }
 
 /* ---------- Sequences: the timeline editor ---------- */
+/* The timeline editor uses the whole width of the window. */
+.view.view-wide {
+  max-width: none;
+}
+
 .timeline-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr) 280px;
   gap: var(--space-4);
   align-items: start;
+  margin-top: var(--space-3);
 }
 
 @media (max-width: 1100px) {
@@ -1204,19 +1210,74 @@ kbd {
   user-select: none;
 }
 
+.tl-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* Under the grid: the drawing hint on the left, the zoom controls at the bottom right. */
+.tl-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.tl-footer .tl-beat-help {
+  flex: 1 1 200px;
+}
+
+.tl-zoom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.tl-zoom .btn-compact {
+  min-width: 36px;
+  min-height: 30px;
+  padding: 2px 10px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.tl-zoom .btn-compact[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--on-accent-soft);
+}
+
+.tl-zoom-note {
+  color: var(--text-dim);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .tl-row {
   display: grid;
-  grid-template-columns: 120px minmax(calc(var(--tl-beats) * 24px), 1fr);
+  /* Zoomed in, each beat has a set width and the grid scrolls sideways; "Whole timeline" (0 px) fits the width. */
+  grid-template-columns: 120px minmax(calc(var(--tl-beats) * var(--tl-beat-px, 0px)), 1fr);
   gap: var(--space-2);
   align-items: stretch;
 }
 
+/* The light names stay in view while a long timeline scrolls sideways. */
 .tl-label {
+  position: sticky;
+  left: 0;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 4px;
   min-width: 0;
+  background: var(--surface);
   font-size: 13px;
   font-weight: 700;
 }
@@ -1260,11 +1321,50 @@ kbd {
   touch-action: none;
 }
 
+/* A long timeline seen whole: beat lines would be a blur, so only bar lines are drawn. */
+.tl[data-dense='true'] .tl-track:not(.tl-ruler-track) {
+  background:
+    repeating-linear-gradient(90deg, var(--border-strong) 0 1px, transparent 1px calc(400% / var(--tl-beats))),
+    var(--surface-2);
+}
+
 .tl-ruler-track {
   height: 20px;
   border: 0;
   background: none;
   cursor: default;
+}
+
+.tl-ruler-track[data-pannable='true'] {
+  cursor: grab;
+}
+
+.tl-ruler-track[data-pannable='true']:active {
+  cursor: grabbing;
+}
+
+/* A scrollbar that is always shown, so a zoomed-in timeline can be scrolled with a plain mouse too. */
+.tl {
+  scrollbar-color: var(--text-faint) var(--surface-2);
+}
+
+.tl::-webkit-scrollbar {
+  height: 12px;
+}
+
+.tl::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.tl::-webkit-scrollbar-thumb {
+  border: 3px solid var(--surface-2);
+  border-radius: 999px;
+  background: var(--text-faint);
+}
+
+.tl::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
 }
 
 .tl-tick {
@@ -1398,6 +1498,507 @@ kbd {
   border: 0;
   background: none;
   cursor: pointer;
+}
+
+/* ---------- Device icons ---------- */
+.device-icon {
+  flex: none;
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.tile-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tl-label .device-icon {
+  margin-right: 2px;
+}
+
+.group-members .pill .device-icon,
+.mutesolo-row .device-icon {
+  margin-right: 2px;
+}
+
+.list-item .device-icon {
+  margin-right: var(--space-2);
+}
+
+.rig-category {
+  max-width: 170px;
+}
+
+/* ---------- Fixture editor: value ranges ---------- */
+.ranges {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3) 36px;
+  padding: var(--space-3);
+  border-left: 2px solid var(--border-strong);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.range-row {
+  display: grid;
+  grid-template-columns: 76px 76px minmax(150px, 1.2fr) minmax(120px, 1fr) 90px 70px 40px;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.range-head {
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.range-colour {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.range-colour input[type='color'] {
+  width: 32px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+@media (max-width: 900px) {
+  .range-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ---------- Fixture controls (block panel and Lights) ---------- */
+.fixture-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.control-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.control-group > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.control-count {
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.control-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px var(--space-2);
+  align-items: center;
+  padding: 6px 10px;
+  border-top: 1px solid var(--border);
+}
+
+.control-row > .control-label {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.control-row[data-set='false'] > .control-label {
+  color: var(--text-dim);
+}
+
+.control-row .select {
+  min-width: 0;
+}
+
+.control-level {
+  display: flex;
+  grid-column: 1;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.control-level input {
+  flex: 1;
+  min-width: 0;
+}
+
+.control-value {
+  min-width: 38px;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.control-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+/* ---------- Sequences: the Looks lane and blocks over steps ---------- */
+.tl-looks .tl-lane-name {
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tl-looks-track {
+  cursor: default;
+}
+
+.tl-looks-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.tl-step {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  display: flex;
+  align-items: center;
+  min-width: 6px;
+  padding: 0 10px;
+  overflow: hidden;
+  border: 1px solid rgb(0 0 0 / 0.3);
+  border-radius: 6px;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.7);
+  cursor: pointer;
+}
+
+.tl-step[aria-pressed='true'] {
+  z-index: 1;
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
+
+.tl-step:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tl-step-name {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The fade into a step: a darker band at its start. */
+.tl-step-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(90deg, rgb(0 0 0 / 0.45), transparent);
+  pointer-events: none;
+}
+
+.step-overlays {
+  margin: -2px 0 var(--space-2) 72px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+/* Shows: the show list dialog, and its button and the venue picker in the top bar. */
+/* A link that looks like a button (Export), not like a link. */
+a.btn {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.btn-compact {
+  min-height: 32px;
+  padding: 4px 12px;
+}
+
+.topbar-shows {
+  gap: 6px;
+}
+
+.venue-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+}
+
+.venue-picker .select {
+  max-width: 180px;
+}
+
+.shows {
+  width: min(720px, 100%);
+  max-height: 80vh;
+}
+
+.shows-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.shows-current {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.shows-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.shows-forms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+
+.shows-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.shows-form .field {
+  flex: 1;
+}
+
+.shows-list,
+.venues-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shows-row,
+.venues-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.shows-row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.shows-row-name {
+  font-weight: 600;
+}
+
+.venues {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.venues-row[data-active='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.venues-row .input {
+  flex: 1;
+  min-width: 0;
+  max-width: 280px;
+}
+
+.venues-row .fixture-meta {
+  flex: 1;
+}
+
+/* AI shows and Settings. */
+.ai-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ai-auto,
+.ai-card > .btn,
+.ai-fieldset > .btn {
+  align-self: flex-start;
+}
+
+.ai-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ai-choices textarea {
+  font: inherit;
+  resize: vertical;
+}
+
+.ai-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.ai-fieldset legend {
+  padding: 0 var(--space-1);
+  font-weight: 600;
+}
+
+.ai-colour {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ai-colour input[type='color'] {
+  width: 44px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: none;
+}
+
+.ai-feature {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.ai-feature > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-feature-name {
+  font-weight: 600;
+}
+
+.ai-energy {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 56px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.ai-energy-section {
+  min-width: 3px;
+  border-radius: 3px;
+  background: var(--text-faint);
+}
+
+.ai-energy-section[data-level='medium'] {
+  background: var(--accent-soft);
+}
+
+.ai-energy-section[data-level='high'] {
+  background: var(--accent);
+}
+
+.ai-go {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ai-looks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ai-look {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.ai-look-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+.ai-key {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 760px;
+}
+
+.ai-key-saved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ai-key-field {
+  flex: 1;
+  min-width: 260px;
 }
 
 /* ---------- Looks: lights added after the looks were saved ---------- */

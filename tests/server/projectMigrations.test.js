@@ -67,13 +67,61 @@ describe('migrateProject', () => {
     assert.equal(migrated.chases[0].steps[0].fadeMs, 1000, 'the seconds are kept');
   });
 
-  it('upgrades a version 3 show: adds an empty list of timelines, and keeps everything else', () => {
+  it('upgrades a version 3 show: gives every sequence an empty list of blocks, and keeps everything else', () => {
     const version3 = { ...migrateProject(VERSION_1), schemaVersion: 3 };
-    delete version3.timelines;
+    for (const chase of version3.chases) {
+      delete chase.blocks;
+    }
     const migrated = migrateProject(version3);
     assert.equal(migrated.schemaVersion, CURRENT_SCHEMA_VERSION);
-    assert.deepEqual(migrated.timelines, [], 'no timelines yet');
-    assert.deepEqual(migrated.chases, version3.chases, 'sequences are untouched');
+    assert.ok(migrated.chases.every((chase) => Array.isArray(chase.blocks) && chase.blocks.length === 0));
+    assert.equal('timelines' in migrated, false, 'there is no separate list of timelines');
+    assert.doesNotThrow(() => projectSchema.parse(migrated), 'the result is a valid show');
+  });
+
+  it('upgrades a version 4 show: each timeline becomes a sequence with its blocks, its length, following the tempo', () => {
+    const block = {
+      id: 'b',
+      fixtureId: 'f',
+      start: 0,
+      length: 4,
+      color: '#ff0000',
+      intensity: 100,
+      transition: 'none',
+      endColor: '#ff0000',
+      endIntensity: 100,
+      effect: 'none',
+      strobeSpeed: 50,
+    };
+    const version4 = {
+      ...migrateProject(VERSION_1),
+      schemaVersion: 4,
+      timelines: [{ id: 't', name: 'Groove', beats: 32, blocks: [block] }],
+    };
+    const migrated = migrateProject(version4);
+    assert.equal('timelines' in migrated, false);
+    assert.deepEqual(migrated.chases.at(-1), {
+      id: 't',
+      name: 'Groove',
+      loop: true,
+      timing: 'beats',
+      steps: [],
+      blocks: [block],
+      length: 32,
+    });
+    assert.doesNotThrow(() => projectSchema.parse(migrated), 'the result is a valid show');
+  });
+
+  it('upgrades a version 5 show: it gets an id, and its rig becomes its first venue', () => {
+    const version5 = { ...migrateProject(VERSION_1), schemaVersion: 5 };
+    delete version5.id;
+    delete version5.venue;
+    delete version5.venues;
+    const migrated = migrateProject(version5);
+    assert.match(String(migrated.id), /^[0-9a-f-]{36}$/);
+    assert.deepEqual(migrated.venue, { id: 'main', name: 'My venue' });
+    assert.deepEqual(migrated.venues, []);
+    assert.deepEqual(migrated.fixtures, version5.fixtures, 'the lights are untouched');
     assert.doesNotThrow(() => projectSchema.parse(migrated), 'the result is a valid show');
   });
 

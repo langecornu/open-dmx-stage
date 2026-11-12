@@ -159,19 +159,43 @@ describe('live socket', () => {
     }
   });
 
-  it('plays a timeline from a timelineStart message, and stops it', async () => {
+  it('plays a sequence of blocks only, and stops it', async () => {
     await projectService.save({
       ...projectService.get(),
-      timelines: [{ id: 'tl-1', name: 'Groove', beats: 16, blocks: [] }],
+      chases: [
+        {
+          id: 'seq-1',
+          name: 'Groove',
+          loop: true,
+          timing: 'beats',
+          steps: [],
+          length: 16,
+          blocks: [
+            {
+              id: 'b1',
+              fixtureId: 'f1',
+              start: 0,
+              length: 4,
+              color: '#ff0000',
+              intensity: 100,
+              transition: 'none',
+              endColor: '#ff0000',
+              endIntensity: 100,
+              effect: 'none',
+              strobeSpeed: 50,
+            },
+          ],
+        },
+      ],
     });
     const { socket, messages } = connect(ALLOWED_ORIGIN);
     try {
       await waitFor(() => messages.some((m) => m.type === 'state'), 'the initial state');
       const lastState = () => messages.filter((m) => m.type === 'state').at(-1).state;
-      socket.send(JSON.stringify({ type: 'timelineStart', timelineId: 'tl-1' }));
-      await waitFor(() => lastState().activeTimelineId === 'tl-1', 'the timeline to play');
+      socket.send(JSON.stringify({ type: 'chaseStart', chaseId: 'seq-1' }));
+      await waitFor(() => lastState().activeChaseId === 'seq-1', 'the sequence to play');
       socket.send(JSON.stringify({ type: 'chaseStop' }));
-      await waitFor(() => lastState().activeTimelineId === null, 'the timeline to stop');
+      await waitFor(() => lastState().activeChaseId === null, 'the sequence to stop');
     } finally {
       socket.close();
     }

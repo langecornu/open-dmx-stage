@@ -58,6 +58,10 @@ Open **Lights**. The studio at the top has quick colour swatches, a rainbow swat
 - **Which fixtures?** With nothing selected, changes apply to _all_ fixtures ("Applies to: all fixtures"). Tap
   fixture tiles to select just those ones ("Applies to: 2 selected"). Use **Clear selection** to go back to all.
 - **Each tile** shows a glowing orb of the colour that fixture is emitting right now.
+- **More controls:** with lights selected, the panel shows everything else they can do, grouped as Colour, Shutter,
+  Movement, Beam, Atmosphere and Program: a slider for something continuous (pan, zoom, fog output) and a list for
+  something with named settings (a gobo, a colour wheel slot, shutter open or strobe), with a level when that setting
+  has one (a strobe's speed). They come from the fixture's channel ranges.
 - **Fine control:** open **Channels** on a tile to move individual DMX channel faders (dimmer, red, green, pan, tilt
   and so on).
 - **Reset manual changes** drops every manual fader or colour override and returns control to the running look or
@@ -93,19 +97,24 @@ this browser, for a light you left out on purpose.
 
 ## 4. Sequences: build a show
 
-There are two ways to make a sequence. The toggle at the top of **Sequences** chooses which one you see and which kind
-**New sequence** makes; the app remembers your choice.
+A sequence is a chain of your looks (its **steps**, each with a fade and a hold) and, if you like, coloured **blocks**
+drawn for single lights over the top of them. Two views show the same sequence, chosen with the **Steps / Timeline**
+toggle at the top of **Sequences**; the app remembers your choice. Switch at any time: a change in one view is in the
+other.
 
-- **Steps**: a chain of your looks, one after another, with a fade and a hold for each.
-- **Timeline**: coloured blocks drawn for each light on a grid of beats, like a lighting timeline.
+- **Steps**: the chain of looks as a list. Under each step, a line says which blocks play during it.
+- **Timeline**: the same chain laid out in time on a **Looks** lane, with a lane for each light underneath where you
+  draw blocks.
 
-Both kinds are sequences everywhere else: on Perform, on Home, in the search palette and in the **On stage** bar.
+A sequence can have steps only, blocks only, or both. Where a light has a block, the block decides what it does; where
+it has none, the look playing at that moment does. Sequences play from Perform, Home, the search palette and MIDI, and
+show in the **On stage** bar.
 
 ### Steps
 
 A step sequence plays looks one after another.
 
-1. Open **Sequences**, choose **Steps**, then **New sequence**.
+1. Open **Sequences**, choose **Steps**, then **New sequence** (made from the Steps view, it is timed in seconds).
 2. Choose **Add step** for each look you want, then pick the look for each step.
 3. Set the **Fade** (seconds to transition in) and **Hold** (seconds to stay) for each step.
 4. Turn **Loop** on to repeat forever, then press **Play**. Press **Stop** to end it.
@@ -121,11 +130,23 @@ The step that is playing is highlighted. Use the arrow buttons to reorder steps 
 
 ### Timeline
 
-A timeline has one lane for each light in your rig and a grid of beats, with a stronger line at each bar. It plays in a
-loop and follows the tempo: a faster tempo plays it faster.
+The Timeline view lays the sequence out in time on a grid of beats (with a stronger line at each bar) when it follows the
+tempo, or of seconds when it is timed in seconds. The top lane, **Looks**, shows each step as a block of its look's
+colours, as long as its fade plus hold, with the fade drawn lighter. Below it is one lane for each light in your rig.
 
-1. Choose **Timeline**, then **New sequence**. Set its **Length** (1 to 16 bars) and the **Grid** (1, 1/2 or 1/4
-   beat), which is what blocks snap to.
+- **Click a look** on the Looks lane to edit that step in the **Step** panel: its look, fade and hold, or **Remove
+  step**. **Drag its right edge** to make it hold longer or shorter. **Add step** adds the next look at the end. Reorder
+  steps in the Steps view.
+- The sequence runs as long as its looks and blocks. **Length** makes it at least 1 to 64 bars (or a number of seconds)
+  long, to leave room to draw.
+
+1. Choose **Timeline**, then **New sequence** (made from the Timeline view, it follows the tempo), or pick a sequence
+   you already have. Set its **Length** and the **Grid** (1, 1/2 or 1/4 beat), which is what blocks snap to. A
+   timeline opens fitted to the width (**Fit**), however long it
+   is. **+** and **−** above the grid zoom in and out (or hold **Ctrl** or **⌘** and turn the mouse wheel over it);
+   zoomed in, the grid scrolls sideways: turn the mouse wheel over it, drag the bar numbers, or use the
+   scrollbar under it. The light names stay in view. In Timeline mode the screen uses the whole
+   width of the window.
 2. **Drag across a lane** to draw a block over those beats. Drag across several lanes to draw the same block on each
    of those lights at once.
 3. The new blocks are selected, and the **Block** panel beside the grid edits them all:
@@ -135,20 +156,38 @@ loop and follows the tempo: a faster tempo plays it faster.
      across the block. **None (hold)** keeps the colour.
    - **Effect**: **Strobe** flashes the light, with a **Strobe speed** from slow to fast. A strobing block is striped.
    - **Starts at beat** and **Length (beats)**, when one block is selected.
+   - **What else the lights do**: everything else the selected lights can do, grouped as Colour, Shutter, Movement,
+     Beam, Atmosphere and Program: pan and tilt, a colour wheel slot, a gobo, the shutter, zoom, fog output and so on.
+     A setting is **Not set** until you choose it; with **Fade**, sliders also get an end value, so a moving head can
+     sweep across a block. **×** clears a setting.
 
    New blocks are drawn in the look you chose last, so a run of similar blocks needs no repeated edits.
 
-4. **Click** a block to select it, **Shift-click** to add more. **Drag** a block to move it (selected blocks move
+4. **Repeat** copies the selected blocks straight after themselves, keeping their lights and the gaps between them;
+   the copies become the selection, so pressing **Repeat** again carries the pattern on. Draw one bar, then repeat it
+   to fill a long timeline.
+5. **Click** a block to select it, **Shift-click** to add more. **Drag** a block to move it (selected blocks move
    together), or drag its **right edge** to change its length. A click on an empty part of a lane clears the
    selection.
-5. Press **Play**. A playhead shows where the timeline is; press **Stop** to end it, or play it from Perform.
+6. Press **Play**. A playhead shows where the timeline is, and the grid scrolls to follow it when zoomed in; press
+   **Stop** to end it, or play it from Perform.
 
-Where blocks overlap on a lane, the one drawn last plays. Where a lane has no block, that light is dark. Making a
-timeline shorter cuts the blocks that run past the new end.
+Where blocks overlap on a lane, the one drawn last plays. Where a lane has no block, that light shows the look playing
+at that moment, or stays dark when there is none. Making a sequence shorter removes the blocks past the new end and
+shortens those that run past it; the app asks first. Steps are never cut.
 
 **From the keyboard:** the **+** beside a light's name adds a one-bar block on that lane. A block is a button: **Tab**
 to it and press **Enter** to select it, **←** and **→** to move it by one grid step, **Shift** with **←** and **→** to
 shorten or lengthen it, and **Delete** to remove it. Every setting is also in the **Block** panel.
+
+### Export and import a sequence
+
+**Export** saves the selected sequence as a file of its own (`name.sequence.json`), with the looks its steps use and
+the lights it refers to. **Import sequence** adds one to your show, for example one made at another venue or shared by
+a friend. Its lights are matched to your rig: first a light with the same name and fixture, then the next light of the
+same fixture and mode. Looks and blocks move onto your lights' addresses, so a sequence made where the pars start at
+channel 1 plays where they start at 101. A look identical to one you already have is reused instead of copied. The app
+then says what came over, and which lights had no match (their blocks are left out).
 
 ## 5. Perform: run a show
 
@@ -265,6 +304,9 @@ Use **Setup** to manage your fixtures.
 ![Setup screen](images/07-setup.jpg)
 
 - **Add:** choose a fixture and mode, how many, then **Add to rig**. Addresses are picked for you.
+- **Device type:** every light has a type (par, spot, moving head, scanner, LED bar, strobe, blinder, smoke machine,
+  hazer, laser, dimmer and more, or **Other**), shown as an icon beside its name everywhere in the app. The app guesses
+  it from the fixture; change it when adding lights, or on each light in the rig.
 - **Edit:** rename a fixture or change its **DMX** address. A warning badge appears if fixtures overlap or run past
   channel 512.
 - **Import fixture file:** load a fixture definition from a QLC+ `.qxf` file or an Open Fixture Library `.json` file.
@@ -273,9 +315,27 @@ Use **Setup** to manage your fixtures.
 - **Groups:** once you have lights, a **Groups** card lets you name sets of them, such as a front row, by ticking the
   lights in each. Effects on the Perform screen can run on just one group. Lights that are in no group are named under
   the groups, so lights added later are easy to spot.
-- **Your show file:** **Export show** downloads your whole show (fixtures, looks and sequences) as a file you can back up
-  or move to another computer. **Import show** loads one back in, after asking you to confirm, because it replaces the
-  current show. Files from older versions of the app are upgraded automatically.
+- **Your show:** the **Your show** card has **Shows…**, which opens the show list (see Saving), and **Export show**.
+
+### Venues
+
+If you play the same show in different places, each with its own lights on its own DMX addresses, give each place a
+**venue**. Your looks and sequences belong to the show and go with it; each venue has its own lights and groups. The
+rig on Setup is always the venue you are at now, named at the top of the screen and in the **venue picker** beside
+the show name in the top bar.
+
+1. In the **Venues** card on Setup, type a name under **New venue**. Choose **Start with: the lights here** to copy
+   this venue's lights (then change their addresses there), or **No lights** to start from nothing. Press **Add
+   venue**.
+2. Press **Switch here** on a venue (or pick it in the venue picker). The app says how many lights match one there
+   and which do not, and asks before it switches.
+3. Set up the lights there as usual: add, remove, re-address, group.
+
+When you switch, each light is matched to one of the same fixture and mode at the other venue: the same light first
+(in a copied venue), then one with the same name, then the next of its kind. Looks and sequence blocks move onto the
+matched lights' addresses. A light with no match there loses nothing: what your looks do with it is kept aside and
+comes back when you switch to a venue that has it. Rename a venue by editing its name; remove one with the bin (not
+the one you are at). Output settings (cable, Art-Net and so on) are the same for every venue.
 
 Make sure each fixture's real DMX address and mode match what is shown here.
 
@@ -317,9 +377,12 @@ If it is not in the library, or you prefer to enter it yourself, you need the ch
    "40W Beam Moving Head Light DMX512 RGBW Stage Light").
 3. Name the **mode** the way the light's display does (for example "13 channel"), then list its channels in order. For
    each channel give a **Name**, choose **What it does** (dimmer, red, green, blue, white, pan, tilt, strobe, and so
-   on) and set **Rests at**, the value the channel sits at when you have not moved it. Use **Add channel**, the arrows
+   on) and set **Rests at**, the value the channel sits at when you have not moved it. **Ranges** lists what each
+   range of values does (for example 0 to 9 open, 10 to 19 a star gobo, 20 to 255 strobe slow to fast), which the
+   app turns into the controls on Lights and on timeline blocks. Use **Add channel**, the arrows
    and the bin to build the list. **Add mode** is for lights with more than one channel layout.
-4. In **Setup**, choose your fixture and mode and add it to the rig.
+4. Choose the **Device type**, so the light gets the right icon.
+5. In **Setup**, choose your fixture and mode and add it to the rig.
 
 Choosing the right **What it does** matters: colours and the dimmer respond to the colour picker, master and blackout,
 while **Other (fixed)** channels are never scaled. Use **Other** for anything that must stay put, with a **Rests at** that is
@@ -370,11 +433,54 @@ them back.
   the show from a phone or tablet on the same network (the server must be set to listen beyond this computer: see the
   [install guide](INSTALL.md#control-it-from-a-phone-or-tablet)).
 
-## 10. Saving
+## AI shows: let Claude design for your rig
 
-Your show (fixtures, looks, sequences) saves automatically a moment after each change. The top bar shows
-_Unsaved_, _Saving…_ or _Saved_. The data lives in `server/data/project.json` on the machine running the server, and the previous save is kept as
-`project.json.bak`.
+**AI shows** (in the Show section of the sidebar) asks Claude, by Anthropic, to design looks and sequences for the venue
+you are at, using everything its lights can do: colour, moving head sweeps, gobos, prisms, smoke bursts and so on. You
+need your own Anthropic API key; each generation is billed to your Anthropic account (the app shows the tokens used and
+an estimate in dollars).
+
+1. **Add your key once:** open **Settings**, paste the key (it starts with `sk-ant-`) and press **Save key**. The app
+   checks it with Anthropic and keeps it on the computer running Open DMX Stage. After that it only says _Key saved_:
+   the key cannot be shown again, only replaced or removed. (A key set on the server as `ANTHROPIC_API_KEY` is used
+   instead.)
+2. **Optional, a song:** press **Choose a song**. The app listens to it in your browser and finds its tempo, its first
+   downbeat and how its energy rises and falls, shown as a bar strip. If the tempo is twice too fast or slow, press
+   **Half** or **Double**. Only these numbers are sent to the AI, never the audio.
+3. **Your choices:** leave **Let the AI decide everything** ticked, or untick it to steer: a mood or style in your own
+   words, the energy, colours to use more, use less or avoid, and **More**, **Less** or **Off** for each thing the
+   lights at this venue can do (only what they have is offered: strobe always, movement only with moving heads, smoke
+   only with a smoke machine or hazer, and so on). Choose how many looks and sequences, and their length when there is
+   no song.
+4. Press **Generate the show**. It usually takes one to three minutes. The new looks and sequences are added to your
+   show; **Remove these** takes them out again.
+
+With a song, the first sequence follows the whole song, section by section, plays once, and starts at the song's tempo.
+Play the song from your deck, start the sequence on its first downbeat (from Perform or a MIDI pad), and turn on
+**Follow the music** so the lights stay on the beat. Every AI look and sequence can be edited like any other.
+
+What is sent to Anthropic: your lights' names, fixtures and controls, your choices, and the song's numbers. Nothing else
+from your show, and never the audio.
+
+## 10. Saving, and other shows
+
+Your show (venues, fixtures, looks, sequences) saves automatically a moment after each change. The top bar shows
+_Unsaved_, _Saving…_ or _Saved_. There is no Save button to remember.
+
+Press **Shows** beside the show name in the top bar (or **Shows…** on Setup) to see the show list:
+
+- **Open now:** the show you are working on, with **Export to a file** (a backup, or to take it to another computer)
+  and **Import a show file**. An imported show opens as a show of its own; the one you were on goes to the list.
+- **Save as:** keeps the show as it is now in the list, and carries on in a copy with the new name.
+- **New show:** starts an empty show with that name; the one you were on goes to the list.
+- **Your other shows:** **Open** one to work on it (the one you were on goes to the list, saved), or delete one with
+  the bin. A show only exists once: in the list, or open.
+
+Opening another show stops whatever is playing. Rename the open show by editing its name in the top bar.
+
+The open show lives in `server/data/project.json` on the machine running the server (the previous save is kept as
+`project.json.bak`), and the others in `server/data/shows/`. Files from older versions of the app are upgraded
+automatically.
 
 ## Current limits
 

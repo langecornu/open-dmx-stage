@@ -41,7 +41,12 @@ export function useProject() {
       setSaveStatus('saved');
     } catch (saveError) {
       setSaveStatus('error');
-      setError(saveError.message);
+      // The server moved to a newer show format while this page was open: only a reload brings the page up to date.
+      setError(
+        /schemaVersion/.test(saveError.message)
+          ? 'The app was updated while this page was open, so this change could not be saved. Reload the page (your saved show is safe), then make the change again.'
+          : saveError.message,
+      );
     }
   }, []);
 

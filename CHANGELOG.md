@@ -7,10 +7,53 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **AI shows**: Claude designs looks and sequences for the venue you are at, using everything its lights can do
+  (colour, movement, gobos, prisms, beam, smoke, built-in programs). Let the AI decide everything, or steer it with a
+  mood, the energy, colours to use more, less or avoid, and More, Less or Off for each thing the venue's lights can do.
+  Optionally pick a song: its tempo, first downbeat and energy map are worked out in the browser (the audio is never
+  sent) and one sequence follows the whole song, starting at its tempo. New looks and sequences are marked as AI-made
+  and can be removed in one go. Uses your own Anthropic API key, pasted once on the new **Settings** screen and never
+  shown again (or `ANTHROPIC_API_KEY` on the server). See ADR 0007.
+- When a save fails because the app was updated while the page was open, it now says to reload the page.
+- **Shows: open, new, save as, import**: a **Shows** button beside the show name opens the show list. Open another
+  show, start a **New show**, **Save as** to carry on in a copy under another name, delete a show, export the open one
+  or import a file. Importing a file now adds it as a show of its own instead of replacing yours, and the show you
+  were on always goes to the list, saved. The other shows live in `server/data/shows/`.
+- **Venues**: one show, several rigs. Each venue has its own lights, addresses and groups; looks and sequences are
+  shared. Add a venue empty or as a copy of this one, then switch with the venue picker in the top bar or the new
+  **Venues** card on Setup. Switching says which lights match, then moves looks and blocks onto that venue's addresses;
+  what a light without a match does is kept aside and comes back at a venue that has it. The saved show format moves
+  to version 6; older shows get one venue, "My venue".
+- **One sequence, two views**: Steps and Timeline are now two views of the same sequence instead of two kinds. A
+  sequence is a chain of looks (steps) and, optionally, blocks drawn per light over them; switch views at any time and
+  edit either. The Timeline view shows the steps on a **Looks** lane (click one to edit its look, fade and hold, drag
+  its edge to hold longer, **Add step**), with the light lanes under it; the Steps view says under each step which
+  blocks play during it. Where a light has no block, the look shows. Sequences timed in seconds draw on a grid of
+  seconds. Existing timelines become sequences of blocks, with nothing lost; the saved show format moves to version 5.
+- **Export and import a sequence**: **Export** saves one sequence, with its looks and lights, as a file of its own;
+  **Import sequence** adds it to another show and matches its lights to that rig (by name, then by fixture and mode),
+  moving looks and blocks onto the rig's addresses, so a sequence made for one venue plays at another. Identical looks
+  are reused, and the app says which lights had no match.
+- **Everything a light can do**: fixtures now describe what each range of a channel's values does (from the Open
+  Fixture Library, QLC+ files and maker manuals, or entered under **Ranges** in the fixture editor), and many more
+  channel kinds are known (cold and warm white, lime, CMY, colour temperature and macros, fine pan and tilt, prisms,
+  frost, iris, zoom, focus, fog, fans and more). Lights gets **More controls** for the selected lights, and timeline
+  blocks get **What else the lights do**: pan, tilt, gobos, colour wheel slots, shutter, zoom, fog output and the rest,
+  grouped, with start and end values that fade across a block. New built-in smoke machine and hazer.
+- **Device types with icons**: every light has a type (par, spot, moving head, scanner, LED bar, matrix, strobe,
+  blinder, effect, flower, mirror ball, laser, smoke machine, hazer, fan, special effect, dimmer, or other), guessed
+  from its fixture and changeable when adding it, in Setup and in the fixture editor. An icon of the type shows beside
+  the light's name everywhere, with its light-emitting part in colour.
+- **Longer timelines**: a timeline can be up to 64 bars long (was 16). It opens fitted to the width, with thin beats;
+  **+** and **−** (or Ctrl or ⌘ and the mouse wheel) zoom in and out. Zoomed in, the mouse wheel, dragging the bar numbers
+  or the always-visible scrollbar move along the timeline, the light names stay in view, and the grid follows the
+  playhead. Timeline mode uses the whole width of the window.
+  **Repeat** copies the selected blocks straight after themselves to carry a pattern on. Shortening a timeline asks
+  before removing or cutting blocks.
 - **Looks: fill lights added later**: when lights were added after your looks were saved, the Looks screen offers to
   set them in every look like a light of the same kind, in rig order (Par 1 → Par 3, Par 2 → Par 4), keeping each
   look's pattern. Setup names the lights that are in no group.
-- **Timeline sequences**: a second way to make a sequence, chosen with a **Steps / Timeline** toggle on Sequences. A
+- **Timeline sequences**: draw a sequence instead of listing it, with a **Steps / Timeline** toggle on Sequences. A
   timeline has a lane for each light on a grid of beats: drag across lanes to draw blocks, then set their colour,
   intensity, a fade to another colour and intensity, and a strobe with its speed. Blocks can be moved and resized by
   dragging or from the keyboard. Timelines loop to the tempo, play from Perform, Home, the search palette and MIDI, and
@@ -51,6 +94,11 @@ the project follows [Semantic Versioning](https://semver.org/).
   **Reset**) button. During a blackout the bar turns red, says the lights are off, and has a **Lights on** button.
 
 ### Changed
+
+- **The server listens on your network by default** (`HOST=0.0.0.0`), so a phone or tablet on the same network can
+  open the app at this computer's address or name and run the show, with no extra settings: the computer's own
+  addresses are now trusted for the live link. The control surface still has no login; set `HOST=127.0.0.1` to keep
+  it on this computer (ADR 0008, superseding ADR 0005).
 
 - **Perform is a denser stage console.** A status strip at the top shows the output, the MIDI controller and whether the
   page is listening to the music, each with a dot and words, and jumps to its settings. Beside it, the tempo and four

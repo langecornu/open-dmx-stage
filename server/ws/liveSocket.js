@@ -135,13 +135,6 @@ export function attachLiveSocket({
       case 'chaseStop':
         engine.stopChase();
         break;
-      case 'timelineStart': {
-        const timeline = (project.timelines ?? []).find((candidate) => candidate.id === message.timelineId);
-        if (timeline) {
-          engine.startTimeline(timeline);
-        }
-        break;
-      }
       case 'release':
         engine.releaseScene(message.fadeMs);
         break;

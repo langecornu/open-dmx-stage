@@ -3,6 +3,7 @@
 // loads an old file.
 import { randomUUID } from 'node:crypto';
 
+import { FIRST_VENUE } from '../../shared/venues.js';
 import { CURRENT_SCHEMA_VERSION } from '../schemas/projectSchema.js';
 import { httpError } from '../utils/httpError.js';
 
@@ -62,11 +63,56 @@ function addTimelines(project) {
   return { ...project, timelines: Array.isArray(project.timelines) ? project.timelines : [] };
 }
 
+/**
+ * Version 5 makes a sequence one thing that can be edited as steps or on a timeline: a chain of looks (its steps) and
+ * free blocks per light drawn over them. Each version 4 timeline becomes a sequence with no steps, its blocks, its
+ * length, following the tempo and looping, as it played before. It also adds channel types for everything DMX fixtures
+ * do (pan fine, zoom, gobo rotation, fog and more), value ranges on channels (capabilities), settings on blocks, and a
+ * device category on fixtures and lights.
+ * @param {Record<string, any>} project
+ * @returns {Record<string, any>}
+ */
+export function mergeTimelinesIntoSequences(project) {
+  const timelines = Array.isArray(project.timelines) ? project.timelines : [];
+  const chases = Array.isArray(project.chases) ? project.chases : [];
+  const fromTimelines = timelines.map((/** @type {Record<string, any>} */ timeline) => ({
+    id: timeline.id,
+    name: timeline.name,
+    loop: true,
+    timing: 'beats',
+    steps: [],
+    blocks: Array.isArray(timeline.blocks) ? timeline.blocks : [],
+    length: timeline.beats,
+  }));
+  const rest = { ...project };
+  delete rest.timelines;
+  return {
+    ...rest,
+    chases: [
+      ...chases.map((/** @type {Record<string, any>} */ chase) => ({
+        ...chase,
+        blocks: Array.isArray(chase.blocks) ? chase.blocks : [],
+      })),
+      ...fromTimelines,
+    ],
+  };
+}
+
+/**
+ * Version 5 to 6: shows get an id, for the show list, and venues. The rig a show has becomes its first venue.
+ * @param {Record<string, any>} project
+ */
+export function addVenues(project) {
+  return { ...project, id: project.id ?? randomUUID(), venue: { ...FIRST_VENUE }, venues: [] };
+}
+
 /** Ordered migrations: each takes a project at version `from` and returns one at version `to`. */
 const MIGRATIONS = [
   { from: 1, to: 2, up: addChaseStepIds },
   { from: 2, to: 3, up: addGroupsAndBeatTiming },
   { from: 3, to: 4, up: addTimelines },
+  { from: 4, to: 5, up: mergeTimelinesIntoSequences },
+  { from: 5, to: 6, up: addVenues },
 ];
 
 /**
