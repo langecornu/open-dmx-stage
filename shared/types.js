@@ -35,6 +35,7 @@
  * @property {string} channelName
  * @property {string} type
  * @property {number} defaultValue
+ * @property {import('./capabilities.js').Capability[]} [capabilities] its value ranges, when it does several things
  * @property {number} offset
  */
 

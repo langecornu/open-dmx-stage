@@ -3,6 +3,8 @@ import { z } from 'zod';
 
 import { AUTO_BEATS, AUTO_ORDERS, AUTO_SOURCES } from '../../shared/autoShow.js';
 import { EFFECT_BEATS, EFFECT_TYPES, MAX_BPM, MIN_BPM } from '../../shared/effects.js';
+import { CAPABILITY_TYPES } from '../../shared/capabilities.js';
+import { DEVICE_CATEGORIES } from '../../shared/categories.js';
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
 import {
   BLOCK_EFFECTS,
@@ -17,11 +19,27 @@ const id = z.string().min(1).max(64);
 const label = z.string().trim().min(1).max(80);
 const dmxValue = z.number().int().min(0).max(255);
 
+const hexColour = z.string().regex(/^#[0-9a-f]{6}$/i, 'Colour must be #rrggbb');
+
+/** One range of a channel's values and what it does (a gobo, "shutter open", "strobe slow to fast"). */
+export const capabilitySchema = z
+  .object({
+    from: dmxValue,
+    to: dmxValue,
+    type: z.enum(CAPABILITY_TYPES),
+    label: z.string().trim().max(80).optional(),
+    color: hexColour.optional(),
+    reverse: z.boolean().optional(),
+  })
+  .strict()
+  .refine((capability) => capability.from <= capability.to, 'A range must start at or before its end');
+
 export const channelSchema = z
   .object({
     name: label,
     type: z.enum(CHANNEL_TYPES),
     defaultValue: dmxValue.default(0),
+    capabilities: z.array(capabilitySchema).max(64).optional(),
   })
   .strict();
 
@@ -31,6 +49,7 @@ export const fixtureTypeSchema = z
     manufacturer: z.string().trim().max(80).default(''),
     name: label, // the model
     description: z.string().trim().max(500).default(''),
+    category: z.enum(DEVICE_CATEGORIES).optional(), // what kind of device it is; guessed when missing
     modes: z
       .array(z.object({ name: label, channels: z.array(channelSchema).min(1).max(DMX_CHANNELS) }).strict())
       .min(1)
@@ -45,6 +64,7 @@ export const fixtureSchema = z
     typeId: id,
     mode: z.number().int().min(0).max(31),
     address: z.number().int().min(1).max(DMX_CHANNELS),
+    category: z.enum(DEVICE_CATEGORIES).optional(), // set on this light, over its fixture type's
   })
   .strict();
 
@@ -90,8 +110,11 @@ export const chaseSchema = z
 
 export const groupSchema = z.object({ id, name: label, fixtureIds: z.array(id).max(256) }).strict();
 
-const hexColor = z.string().regex(/^#[0-9a-f]{6}$/i, 'Colour must be #rrggbb');
 const percent = z.number().min(0).max(100);
+const controlValue = z.union([percent, z.object({ option: z.number().int().min(0).max(63), level: percent }).strict()]);
+const blockSettings = z
+  .record(z.string().min(1).max(100), controlValue)
+  .refine((settings) => Object.keys(settings).length <= 64, 'Too many settings');
 
 /** A block on a timeline lane: a light, a span of beats, a colour and intensity, a transition and an effect. */
 export const timelineBlockSchema = z
@@ -100,13 +123,17 @@ export const timelineBlockSchema = z
     fixtureId: id,
     start: z.number().min(0).max(MAX_TIMELINE_BEATS),
     length: z.number().min(MIN_BLOCK_BEATS).max(MAX_TIMELINE_BEATS),
-    color: hexColor,
+    color: hexColour,
     intensity: percent,
     transition: z.enum(TRANSITIONS),
-    endColor: hexColor,
+    endColor: hexColour,
     endIntensity: percent,
     effect: z.enum(BLOCK_EFFECTS),
     strobeSpeed: z.number().min(1).max(100),
+    // What else the block sets on its light, by control key (see shared/capabilities.js): a level from 0 to 100, or a
+    // choice and its level. `endSettings` are where a fade ends, for the controls that fade (pan, tilt, zoom…).
+    settings: blockSettings.optional(),
+    endSettings: blockSettings.optional(),
   })
   .strict();
 

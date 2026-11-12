@@ -1,14 +1,26 @@
 // Lights: choose a colour and brightness for all or selected fixtures; fine-tune single channels per fixture.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+import {
+  controlDmx,
+  controlValueOf,
+  controlsByFixture,
+  matchOption,
+  mergeControls,
+} from '../../shared/capabilities.js';
+import { indexFixtureTypes } from '../../shared/patch.js';
 
 import { useFrame } from '../hooks/frameStore.js';
 import { applyColor } from '../utils/colorControl.js';
 import { averageColor, fixtureColor } from '../utils/sceneColors.js';
 import { ColorStudio } from './ColorStudio.jsx';
 import { EmptyState } from './EmptyState.jsx';
+import { FixtureControls } from './FixtureControls.jsx';
 import { FixtureTile } from './FixtureTile.jsx';
+import { categoriesByFixture } from '../utils/deviceCategories.js';
 
-export function ControlView({ project, patch, live }) {
+export function ControlView({ project, patch, live, library = [] }) {
+  const categories = categoriesByFixture(project, library);
   const [edits, setEdits] = useState({});
   const [selected, setSelected] = useState(() => new Set());
   const [color, setColor] = useState([255, 190, 120]);
@@ -40,6 +52,46 @@ export function ControlView({ project, patch, live }) {
     Math.abs(liveColor.r - expected[0]) <= 12 &&
     Math.abs(liveColor.g - expected[1]) <= 12 &&
     Math.abs(liveColor.b - expected[2]) <= 12;
+
+  // Pan, gobo, zoom, fog and the rest, for the lights the colour applies to. A value shown is what the first of them is
+  // sending; a change goes to each of them, as manual changes, so it can be saved in a look.
+  const controlsById = useMemo(
+    () => controlsByFixture(project, indexFixtureTypes(project, library)),
+    [project, library],
+  );
+  const targetControls = targets.map((fixture) => controlsById.get(fixture.id) ?? []);
+  const moreControls = mergeControls(targetControls);
+  const controlValues = Object.fromEntries(
+    moreControls.map((control) => [
+      control.key,
+      controlValueOf(control, valueOf(control.channel), control.fineChannel ? valueOf(control.fineChannel) : 0),
+    ]),
+  );
+  const handleControl = (key, value) => {
+    const source = moreControls.find((control) => control.key === key);
+    if (!source || value === undefined) {
+      return;
+    }
+    const values = {};
+    for (const controls of targetControls) {
+      const control = controls.find((candidate) => candidate.key === key);
+      if (!control) {
+        continue;
+      }
+      let own = value;
+      if (typeof value === 'object') {
+        const option = matchOption(source, control, value.option);
+        if (option < 0) {
+          continue;
+        }
+        own = { option, level: value.level };
+      }
+      for (const [channel, dmx] of controlDmx(control, own)) {
+        values[channel] = dmx;
+      }
+    }
+    handleSet(values);
+  };
 
   const handleSet = (values) => {
     setEdits((current) => ({ ...current, ...values }));
@@ -126,6 +178,7 @@ export function ControlView({ project, patch, live }) {
                 <FixtureTile
                   key={fixture.id}
                   fixture={fixture}
+                  category={categories.get(fixture.id)}
                   range={rangeOf(fixture)}
                   patch={patch}
                   valueOf={valueOf}
@@ -147,6 +200,15 @@ export function ControlView({ project, patch, live }) {
               onColor={handleColor}
               onBrightness={handleBrightness}
             />
+            {moreControls.length > 0 ? (
+              <section className="card card-pad lights-more" aria-label="More controls">
+                <h2 className="section-title">More controls</h2>
+                <p className="fixture-meta">
+                  Movement, gobos, fog and more, for {targetLabel}. Changes are manual changes, saved with a look.
+                </p>
+                <FixtureControls controls={moreControls} values={controlValues} onChange={handleControl} />
+              </section>
+            ) : null}
           </aside>
         </div>
       )}

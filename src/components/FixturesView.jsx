@@ -12,6 +12,8 @@ import {
 import { FixtureTypeEditor } from './FixtureTypeEditor.jsx';
 import { OflSearch } from './OflSearch.jsx';
 import { Icon } from './Icon.jsx';
+import { guessCategory } from '../../shared/categories.js';
+import { DeviceIcon } from './DeviceIcon.jsx';
 
 const EXAMPLE_ID = 'uking-40w-beam-moving-head';
 
@@ -76,6 +78,7 @@ export function FixturesView({ project, library, update }) {
         aria-current={item.id === selectedId}
         onClick={() => setSelectedId(item.id)}
       >
+        <DeviceIcon category={item.category ?? guessCategory(item)} size={28} />
         <span className="fixture-item">
           <strong>{item.name}</strong>
           <small className="fixture-meta">

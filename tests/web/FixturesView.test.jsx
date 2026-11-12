@@ -159,3 +159,18 @@ describe('FixturesView', () => {
     expect(await accessibilityViolations(container)).toEqual([]);
   });
 });
+
+describe('FixturesView: device type and value ranges', () => {
+  it('sets a fixture’s device type and adds a value range to one of its channels', async () => {
+    const user = userEvent.setup();
+    const { last } = renderView(makeProject([MINE]));
+    await user.click(screen.getByRole('button', { name: /Wash 3/ }));
+    await user.selectOptions(screen.getByLabelText('Device type'), 'par');
+    expect(last().fixtureTypes[0].category).toBe('par');
+    await user.click(screen.getAllByRole('button', { name: /^Value ranges of channel 1/ })[0]);
+    await user.click(screen.getByRole('button', { name: 'Add range' }));
+    expect(last().fixtureTypes[0].modes[0].channels[0].capabilities).toEqual([
+      { from: 0, to: 255, type: 'generic', label: '' },
+    ]);
+  });
+});

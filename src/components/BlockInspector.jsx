@@ -2,6 +2,7 @@
 // (strobe, with its speed). A change applies to every selected block; start and length are offered for one block.
 import { MIN_BLOCK_BEATS } from '../../shared/timeline.js';
 import { SWATCHES, beatLabel } from '../utils/timelineEdit.js';
+import { FixtureControls } from './FixtureControls.jsx';
 import { Icon } from './Icon.jsx';
 
 function ColourField({ label, value, onChange }) {
@@ -47,7 +48,17 @@ function PercentField({ label, value, onChange }) {
   );
 }
 
-export function BlockInspector({ blocks, beats, snap, onChange, onDelete, onRepeat, canRepeat }) {
+export function BlockInspector({
+  blocks,
+  beats,
+  snap,
+  controls = [],
+  onChange,
+  onSetting,
+  onDelete,
+  onRepeat,
+  canRepeat,
+}) {
   if (blocks.length === 0) {
     return (
       <div className="card card-pad inspector inspector-empty">
@@ -167,6 +178,25 @@ export function BlockInspector({ blocks, beats, snap, onChange, onDelete, onRepe
             onChange={(event) => set({ strobeSpeed: Number(event.target.value) })}
           />
         </label>
+      ) : null}
+      {controls.length > 0 ? (
+        <section className="inspector-more" aria-label="What else the lights do">
+          <h3 className="section-title">What else</h3>
+          <p className="fixture-meta">
+            Movement, gobos, fog and more, for the lights these blocks are on. Left unset, a light keeps its usual
+            value.
+            {first.transition === 'fade' ? ' With a fade, a slider gets an end value too, so a head can move.' : ''}
+          </p>
+          <FixtureControls
+            controls={controls}
+            values={first.settings ?? {}}
+            endValues={first.endSettings ?? {}}
+            showEnd={first.transition === 'fade'}
+            canClear
+            onChange={(key, value) => onSetting(key, value, 'settings')}
+            onEndChange={(key, value) => onSetting(key, value, 'endSettings')}
+          />
+        </section>
       ) : null}
     </div>
   );

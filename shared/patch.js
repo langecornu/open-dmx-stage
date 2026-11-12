@@ -9,22 +9,64 @@
 export const DMX_CHANNELS = 512;
 
 // Channel types that represent "how bright" a fixture is; the master and blackout act on these only.
-export const LEVEL_TYPES = new Set(['intensity', 'red', 'green', 'blue', 'white', 'amber', 'uv']);
+export const LEVEL_TYPES = new Set([
+  'intensity',
+  'red',
+  'green',
+  'blue',
+  'white',
+  'warm-white',
+  'cold-white',
+  'amber',
+  'uv',
+  'lime',
+  'indigo',
+]);
 
+// What a channel does. The first group drives colour and brightness; the rest are the other things DMX fixtures do
+// (after the Open Fixture Library's capability types). A channel can also list its value ranges (see
+// shared/capabilities.js) when it does several things, such as a gobo wheel or a shutter with open, closed and strobe.
 export const CHANNEL_TYPES = [
   'intensity',
   'red',
   'green',
   'blue',
   'white',
+  'warm-white',
+  'cold-white',
   'amber',
   'uv',
-  'pan',
-  'tilt',
-  'strobe',
+  'lime',
+  'indigo',
+  'cyan',
+  'magenta',
+  'yellow',
+  'color-temperature',
   'color-wheel',
+  'color-macro',
+  'strobe',
+  'pan',
+  'pan-fine',
+  'tilt',
+  'tilt-fine',
+  'pan-tilt-speed',
   'gobo',
+  'gobo-rotation',
+  'prism',
+  'prism-rotation',
+  'frost',
+  'iris',
+  'zoom',
+  'focus',
+  'fog',
+  'fog-type',
+  'fan',
+  'effect',
+  'effect-speed',
+  'sound-sensitivity',
+  'rotation',
   'speed',
+  'maintenance',
   'other',
 ];
 
@@ -84,6 +126,7 @@ export function buildPatch(project, builtinTypes) {
         channelName: channel.name,
         type: channel.type,
         defaultValue: channel.defaultValue,
+        capabilities: channel.capabilities ?? [],
         offset,
       });
     });

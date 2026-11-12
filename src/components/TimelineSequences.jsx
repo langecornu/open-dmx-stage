@@ -1,7 +1,9 @@
 // Sequences drawn on a timeline: a list of timelines, and an editor with one lane per light. Blocks are drawn with the
 // mouse, edited in the inspector, and played in a loop that follows the tempo.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { controlsByFixture, mergeControls } from '../../shared/capabilities.js';
+import { indexFixtureTypes } from '../../shared/patch.js';
 import { BEATS_PER_BAR, TIMELINE_BARS } from '../../shared/timeline.js';
 import {
   DEFAULT_STYLE,
@@ -15,6 +17,7 @@ import { BlockInspector } from './BlockInspector.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { Icon } from './Icon.jsx';
 import { TimelineGrid } from './TimelineGrid.jsx';
+import { categoriesByFixture } from '../utils/deviceCategories.js';
 
 const STYLE_KEYS = Object.keys(DEFAULT_STYLE);
 
@@ -56,13 +59,17 @@ function usePlayhead(isPlaying, bpm, beats) {
   return beat;
 }
 
-export function TimelineSequences({ project, update, flush, live, selectedId, onSelectTimeline }) {
+export function TimelineSequences({ project, library = [], update, flush, live, selectedId, onSelectTimeline }) {
   const timelines = project.timelines ?? [];
   const timeline = timelines.find((candidate) => candidate.id === selectedId) ?? null;
   const [snap, setSnap] = useState(1);
   const [selectedBlockIds, setSelectedBlockIds] = useState(/** @type {string[]} */ ([]));
   const [style, setStyle] = useState(/** @type {Record<string, unknown>} */ ({}));
   const isPlaying = Boolean(timeline) && live.engine.activeTimelineId === timeline?.id;
+  const controlsById = useMemo(
+    () => controlsByFixture(project, indexFixtureTypes(project, library)),
+    [project, library],
+  );
   const playhead = usePlayhead(isPlaying, live.engine.bpm, timeline?.beats ?? 16);
 
   useEffect(() => setSelectedBlockIds([]), [selectedId]);
@@ -104,6 +111,23 @@ export function TimelineSequences({ project, update, flush, live, selectedId, on
     const styleChanges = Object.fromEntries(Object.entries(changes).filter(([key]) => STYLE_KEYS.includes(key)));
     setStyle((current) => ({ ...current, ...styleChanges }));
   };
+
+  // A setting (pan, gobo, fog…) changes on every selected block, leaving their other settings as they are.
+  const handleSetting = (key, value, field) =>
+    patchTimeline((item) => ({
+      blocks: item.blocks.map((block) => {
+        if (!selectedBlockIds.includes(block.id)) {
+          return block;
+        }
+        const next = { ...(block[field] ?? {}) };
+        if (value === undefined) {
+          delete next[key];
+        } else {
+          next[key] = value;
+        }
+        return { ...block, [field]: next };
+      }),
+    }));
 
   const handleDelete = (ids = selectedBlockIds) => {
     patchTimeline((item) => ({ blocks: item.blocks.filter((block) => !ids.includes(block.id)) }));
@@ -274,6 +298,7 @@ export function TimelineSequences({ project, update, flush, live, selectedId, on
               <TimelineGrid
                 timeline={timeline}
                 fixtures={project.fixtures}
+                categories={categoriesByFixture(project, library)}
                 snap={snap}
                 selectedIds={selectedBlockIds}
                 playheadBeat={playhead}
@@ -287,7 +312,13 @@ export function TimelineSequences({ project, update, flush, live, selectedId, on
                 blocks={selectedBlocks}
                 beats={timeline.beats}
                 snap={snap}
+                controls={mergeControls(
+                  [...new Set(selectedBlocks.map((block) => block.fixtureId))].map(
+                    (fixtureId) => controlsById.get(fixtureId) ?? [],
+                  ),
+                )}
                 onChange={handleEdit}
+                onSetting={handleSetting}
                 onDelete={() => handleDelete()}
                 onRepeat={handleRepeat}
                 canRepeat={repeatBlocks(selectedBlocks, timeline.beats, () => '').length > 0}

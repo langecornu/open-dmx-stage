@@ -31,13 +31,58 @@ describe('convertQlcPlus', () => {
     const channels = type.modes[0].channels;
     assert.deepEqual(
       channels.map((channel) => channel.type),
-      ['red', 'intensity', 'pan', 'other', 'strobe', 'other', 'amber'],
-      'types follow presets, fine channels and groups',
+      ['red', 'intensity', 'pan', 'pan-fine', 'strobe', 'other', 'amber'],
+      'types follow presets, fine channels (the fine half of pan) and groups',
     );
     assert.equal(channels[5].name, 'Unused', 'a gap in channel numbers becomes an unused slot');
     assert.equal(channels[2].defaultValue, 128, 'pan defaults to centre');
     assert.equal(type.id, 'qlc-acme-wash-7', 'id comes from manufacturer and model');
     assert.equal(type.manufacturer, 'Acme', 'manufacturer is kept');
+  });
+
+  it('keeps the value ranges of a channel, with slot colours and directions', () => {
+    const spot = `<?xml version="1.0" encoding="UTF-8"?>
+<FixtureDefinition xmlns="http://www.qlcplus.org/FixtureDefinition">
+ <Manufacturer>Acme</Manufacturer>
+ <Model>Spot</Model>
+ <Channel Name="Shutter">
+  <Group Byte="0">Shutter</Group>
+  <Capability Min="0" Max="9">Shutter closed</Capability>
+  <Capability Min="10" Max="19">Shutter open</Capability>
+  <Capability Min="20" Max="255" Preset="StrobeFastToSlow">Strobe fast to slow</Capability>
+ </Channel>
+ <Channel Name="Colour">
+  <Group Byte="0">Colour</Group>
+  <Capability Min="0" Max="9" Preset="ColorMacro" Res1="#FFFFFF">White</Capability>
+  <Capability Min="10" Max="19" Preset="ColorMacro" Res1="#ff0000">Red</Capability>
+  <Capability Min="20" Max="255">Rotation</Capability>
+ </Channel>
+ <Channel Name="Zoom"><Group Byte="0">Beam</Group></Channel>
+ <Mode Name="Basic">
+  <Channel Number="0">Shutter</Channel>
+  <Channel Number="1">Colour</Channel>
+  <Channel Number="2">Zoom</Channel>
+ </Mode>
+</FixtureDefinition>`;
+    const [shutter, colour, zoom] = convertQlcPlus(spot).modes[0].channels;
+    assert.deepEqual(
+      shutter.capabilities.map((capability) => [capability.type, capability.from, capability.to, capability.reverse]),
+      [
+        ['shutter-closed', 0, 9, undefined],
+        ['shutter-open', 10, 19, undefined],
+        ['strobe', 20, 255, true],
+      ],
+    );
+    assert.equal(colour.type, 'color-wheel');
+    assert.deepEqual(
+      colour.capabilities.map((capability) => [capability.type, capability.label, capability.color]),
+      [
+        ['color-slot', 'White', '#ffffff'],
+        ['color-slot', 'Red', '#ff0000'],
+        ['wheel-rotation', 'Rotation', undefined],
+      ],
+    );
+    assert.equal(zoom.type, 'zoom', 'a beam channel is named for what it does');
   });
 
   it('rejects input that is not a QLC+ fixture definition', () => {

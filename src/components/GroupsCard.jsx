@@ -1,5 +1,8 @@
 // Groups: name sets of lights (front wash, left side) so an effect can run on just those lights.
-export function GroupsCard({ project, update }) {
+import { categoriesByFixture } from '../utils/deviceCategories.js';
+import { DeviceIcon } from './DeviceIcon.jsx';
+export function GroupsCard({ project, library = [], update }) {
+  const categories = categoriesByFixture(project, library);
   const patchGroup = (id, changes) =>
     update((current) => ({
       ...current,
@@ -56,6 +59,7 @@ export function GroupsCard({ project, update }) {
                   checked={group.fixtureIds.includes(fixture.id)}
                   onChange={() => handleToggle(group, fixture.id)}
                 />
+                <DeviceIcon category={categories.get(fixture.id) ?? 'other'} size={18} />
                 {fixture.name}
               </label>
             ))}

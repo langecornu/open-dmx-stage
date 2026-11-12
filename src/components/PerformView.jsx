@@ -61,7 +61,7 @@ function learnReducer(state, event) {
   }
 }
 
-export function PerformView({ project, patch, live, flush }) {
+export function PerformView({ project, patch, live, flush, library = [] }) {
   const [fadeMs, setFadeMs] = useState(500);
   const [{ isLearning, armed }, dispatchLearn] = useReducer(learnReducer, { isLearning: false, armed: null });
   const [error, setError] = useState(null);
@@ -278,7 +278,7 @@ export function PerformView({ project, patch, live, flush }) {
         />
         <AutoShowPanel project={project} live={live} flush={flush} />
         <EffectsPanel groups={project.groups} live={live} />
-        <MuteSoloPanel project={project} live={live} />
+        <MuteSoloPanel project={project} live={live} library={library} />
         <SoundPanel id={PANEL_IDS.sound} follower={follower} />
         <MidiPanel
           id={PANEL_IDS.midi}

@@ -2,7 +2,7 @@
 // applies master and blackout to level channels, and pushes one 512-slot frame per tick to a driver.
 import { MAX_BPM, MIN_BPM, pulseGain, rainbowRgb, sweepGain } from '../../shared/effects.js';
 import { DMX_CHANNELS } from '../../shared/patch.js';
-import { blockAt, evaluateBlock } from '../../shared/timeline.js';
+import { blockAt, blockControlWrites, evaluateBlock } from '../../shared/timeline.js';
 
 /** @typedef {import('../../shared/types.js').Driver} Driver */
 /** @typedef {import('../../shared/types.js').Scene} Scene */
@@ -93,6 +93,8 @@ export class DmxEngine {
     this.effect = null;
     /** @type {Map<string, FixtureChannels>} */
     this.fixtureChannels = new Map();
+    /** @type {Map<string, import('../../shared/capabilities.js').Control[]>} what each fixture can be set to do */
+    this.fixtureControls = new Map();
   }
 
   /** @returns {number} milliseconds in one beat at the current tempo */
@@ -120,6 +122,11 @@ export class DmxEngine {
   /** @param {Map<string, FixtureChannels>} fixtureChannels the colour and brightness channels of every fixture */
   setFixtureChannels(fixtureChannels) {
     this.fixtureChannels = fixtureChannels;
+  }
+
+  /** @param {Map<string, import('../../shared/capabilities.js').Control[]>} fixtureControls by fixture id */
+  setFixtureControls(fixtureControls) {
+    this.fixtureControls = fixtureControls;
   }
 
   /**
@@ -420,6 +427,14 @@ export class DmxEngine {
       const dimmerLevel = hasColour ? shown.level : shown.level * (Math.max(shown.red, shown.green, shown.blue) / 255);
       for (const channel of dimmers) {
         layer[channel - 1] = Math.round(dimmerLevel * 255);
+      }
+      // Pan, tilt, gobo, zoom, fog and the rest, plus an open shutter: only while a block is on the lane, so a lane
+      // with no block leaves them where they rest.
+      if (block) {
+        const controls = this.fixtureControls.get(fixtureId) ?? [];
+        for (const [channel, value] of blockControlWrites(block, run.beat, shown, controls, hasColour)) {
+          layer[channel - 1] = value;
+        }
       }
     }
     this.sceneLayer = layer;

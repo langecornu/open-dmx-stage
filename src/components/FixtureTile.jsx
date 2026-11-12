@@ -5,8 +5,19 @@ import { DMX_CHANNELS } from '../../shared/patch.js';
 import { fixtureColor } from '../utils/sceneColors.js';
 import { Fader } from './Fader.jsx';
 import { Icon } from './Icon.jsx';
+import { DeviceIcon } from './DeviceIcon.jsx';
 
-export function FixtureTile({ fixture, range, patch, valueOf, overridden, isSelected, onToggleSelect, onSet }) {
+export function FixtureTile({
+  fixture,
+  category = 'other',
+  range,
+  patch,
+  valueOf,
+  overridden,
+  isSelected,
+  onToggleSelect,
+  onSet,
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const color = fixtureColor(range, patch, valueOf);
   const glow = color.level;
@@ -30,7 +41,10 @@ export function FixtureTile({ fixture, range, patch, valueOf, overridden, isSele
       <button type="button" className="tile-main" aria-pressed={isSelected} onClick={() => onToggleSelect(fixture.id)}>
         <span className="orb" style={orbStyle} aria-hidden="true" />
         <span>
-          <span className="tile-name">{fixture.name}</span>
+          <span className="tile-name">
+            <DeviceIcon category={category} size={22} glow={glow > 0.02 ? color.css : undefined} />
+            {fixture.name}
+          </span>
           <br />
           <span className="tile-meta">
             DMX {range.start}–{range.end}

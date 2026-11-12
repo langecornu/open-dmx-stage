@@ -13,6 +13,7 @@ import {
   moveBlocks,
   snapNearest,
 } from '../utils/timelineEdit.js';
+import { DeviceIcon } from './DeviceIcon.jsx';
 
 /** Beat widths for zooming in, in pixels. "Fit" (no width) shows the whole timeline in the space available. */
 export const ZOOM_STEPS = [4, 6, 10, 16, 24, 40];
@@ -21,6 +22,7 @@ const LABEL_COLUMN = 128;
 export function TimelineGrid({
   timeline,
   fixtures,
+  categories = new Map(),
   snap,
   selectedIds,
   playheadBeat,
@@ -338,6 +340,7 @@ export function TimelineGrid({
         {fixtures.map((fixture, laneIndex) => (
           <div key={fixture.id} className="tl-row">
             <div className="tl-label">
+              <DeviceIcon category={categories.get(fixture.id) ?? 'other'} size={22} />
               <span className="tl-lane-name">{fixture.name}</span>
               <button
                 type="button"

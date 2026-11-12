@@ -5,6 +5,8 @@ import { createHash } from 'node:crypto';
 
 import { httpError } from '../utils/httpError.js';
 import { slugify } from '../utils/slugify.js';
+import { categoryFromOfl } from '../../shared/categories.js';
+import { classifyOflChannel, convertCapabilities } from './oflCapabilities.js';
 
 import { fixtureTypeSchema } from '../schemas/projectSchema.js';
 
@@ -12,12 +14,56 @@ import { fixtureTypeSchema } from '../schemas/projectSchema.js';
  * @param {string} name
  * @param {string} type one of CHANNEL_TYPES
  * @param {number} [defaultValue]
+ * @param {{ from: number, to: number, type: string, label?: string, color?: string, reverse?: boolean }[]} [capabilities]
+ *   its value ranges, when it has several (checked by the schema test of the built-in fixtures)
  */
-const ch = (name, type, defaultValue = 0) => ({ name, type, defaultValue });
+const ch = (name, type, defaultValue = 0, capabilities = undefined) =>
+  capabilities ? { name, type, defaultValue, capabilities } : { name, type, defaultValue };
 
-export const BUILTIN_FIXTURE_TYPES = [
+// Typical ranges of inexpensive LED fixtures. Real fixtures vary, so these are a starting point; a copy of a built-in
+// fixture can be edited to match the manual.
+/** A shutter that is open (no strobe) at 0 to 9 and strobes slow to fast from 10. */
+const SHUTTER = [
+  { from: 0, to: 9, type: 'shutter-open', label: 'Open (no strobe)' },
+  { from: 10, to: 255, type: 'strobe', label: 'Strobe slow to fast' },
+];
+/** Built-in programs: manual colour at 0 to 9, automatic programs above. */
+const PROGRAMS = [
+  { from: 0, to: 9, type: 'none', label: 'Manual (no program)' },
+  { from: 10, to: 255, type: 'effect', label: 'Automatic programs' },
+];
+const RESET = [
+  { from: 0, to: 249, type: 'none', label: 'Normal' },
+  { from: 250, to: 255, type: 'maintenance', label: 'Reset' },
+];
+/** A motor speed where 0 is fastest. */
+const MOTOR_SPEED = [{ from: 0, to: 255, type: 'pan-tilt-speed', label: 'Fast to slow', reverse: true }];
+const COLOUR_WHEEL = [
+  ['White', '#ffffff'],
+  ['Red', '#ff0000'],
+  ['Orange', '#ff7a00'],
+  ['Yellow', '#ffd400'],
+  ['Green', '#00ff3c'],
+  ['Blue', '#0040ff'],
+  ['Cyan', '#00e5ff'],
+  ['Magenta', '#ff00c8'],
+].map(([label, color], index) => ({ from: index * 16, to: index * 16 + 15, type: 'color-slot', label, color }));
+const GOBO_WHEEL = [
+  { from: 0, to: 15, type: 'gobo-slot', label: 'Open' },
+  ...Array.from({ length: 7 }, (_, index) => ({
+    from: 16 + index * 16,
+    to: 31 + index * 16,
+    type: 'gobo-slot',
+    label: `Gobo ${index + 1}`,
+  })),
+  { from: 128, to: 255, type: 'gobo-shake', label: 'Gobo shake, slow to fast' },
+];
+
+/** @type {import('../../shared/types.js').FixtureType[]} */
+export const BUILTIN_FIXTURE_TYPES = /** @type {any} */ ([
   {
     id: 'generic-dimmer',
+    category: 'dimmer',
     manufacturer: 'Generic',
     name: 'Dimmer',
     description: 'A single dimmer channel, for lamps and dimmer packs.',
@@ -25,6 +71,7 @@ export const BUILTIN_FIXTURE_TYPES = [
   },
   {
     id: 'generic-rgb-par',
+    category: 'par',
     manufacturer: 'Generic',
     name: 'RGB LED par',
     description:
@@ -38,7 +85,7 @@ export const BUILTIN_FIXTURE_TYPES = [
           ch('Red', 'red'),
           ch('Green', 'green'),
           ch('Blue', 'blue'),
-          ch('Strobe', 'strobe'),
+          ch('Strobe', 'strobe', 0, SHUTTER),
           ch('Speed', 'speed'),
         ],
       },
@@ -46,6 +93,7 @@ export const BUILTIN_FIXTURE_TYPES = [
   },
   {
     id: 'generic-rgbw-par',
+    category: 'par',
     manufacturer: 'Generic',
     name: 'RGBW LED par',
     description: 'A colour-mixing LED par with red, green, blue and white.',
@@ -58,6 +106,7 @@ export const BUILTIN_FIXTURE_TYPES = [
   },
   {
     id: 'uking-40w-beam-moving-head',
+    category: 'moving-head',
     manufacturer: "U'King",
     name: '40W RGBW Moving Head Light',
     description: '40W Beam Moving Head Light DMX512 RGBW Stage Light',
@@ -69,24 +118,25 @@ export const BUILTIN_FIXTURE_TYPES = [
         name: '13 channel',
         channels: [
           ch('Pan', 'pan', 128),
-          ch('Pan fine', 'other'),
+          ch('Pan fine', 'pan-fine'),
           ch('Tilt', 'tilt', 128),
-          ch('Tilt fine', 'other'),
-          ch('Speed', 'speed'),
+          ch('Tilt fine', 'tilt-fine'),
+          ch('Speed', 'pan-tilt-speed', 0, MOTOR_SPEED),
           ch('Dimmer', 'intensity', 255),
-          ch('Strobe', 'strobe'),
+          ch('Strobe', 'strobe', 0, SHUTTER),
           ch('Red', 'red'),
           ch('Green', 'green'),
           ch('Blue', 'blue'),
           ch('White', 'white'),
-          ch('Programs and sound (keep at 0)', 'other'),
-          ch('Reset (keep at 0)', 'other'),
+          ch('Programs and sound', 'effect', 0, PROGRAMS),
+          ch('Reset', 'maintenance', 0, RESET),
         ],
       },
     ],
   },
   {
     id: 'generic-led-par-36-7ch',
+    category: 'par',
     manufacturer: 'Generic',
     name: '36 LED RGB par (7 channel)',
     description:
@@ -101,15 +151,16 @@ export const BUILTIN_FIXTURE_TYPES = [
           ch('Red', 'red'),
           ch('Green', 'green'),
           ch('Blue', 'blue'),
-          ch('Strobe', 'strobe'),
-          ch('Programs (keep at 0 for manual colour)', 'other'),
-          ch('Program speed', 'speed'),
+          ch('Strobe', 'strobe', 0, SHUTTER),
+          ch('Programs', 'effect', 0, PROGRAMS),
+          ch('Program speed', 'effect-speed'),
         ],
       },
     ],
   },
   {
     id: 'generic-mini-spider-light',
+    category: 'effect',
     manufacturer: 'Generic',
     name: 'Mini Spider Light (8 x RGBW)',
     description:
@@ -122,16 +173,17 @@ export const BUILTIN_FIXTURE_TYPES = [
           ch('Motor 1 (tilt, 0 to 135 degrees)', 'tilt', 128),
           ch('Motor 2 (tilt, 0 to 135 degrees)', 'tilt', 128),
           ch('Dimmer', 'intensity', 255),
-          ch('Strobe', 'strobe'),
-          ch('Effect (keep at 0 for none)', 'other'),
-          ch('Effect speed', 'speed'),
-          ch('Reset (keep at 0)', 'other'),
+          ch('Strobe', 'strobe', 0, SHUTTER),
+          ch('Effect', 'effect', 0, PROGRAMS),
+          ch('Effect speed', 'effect-speed'),
+          ch('Reset', 'maintenance', 0, RESET),
         ],
       },
     ],
   },
   {
     id: 'generic-mini-moving-head-gobo',
+    category: 'moving-head',
     manufacturer: 'Generic',
     name: 'Mini Moving Head Gobo Light',
     description:
@@ -143,16 +195,16 @@ export const BUILTIN_FIXTURE_TYPES = [
         name: '12 channel',
         channels: [
           ch('Pan', 'pan', 128),
-          ch('Pan fine', 'other'),
+          ch('Pan fine', 'pan-fine'),
           ch('Tilt', 'tilt', 128),
-          ch('Tilt fine', 'other'),
+          ch('Tilt fine', 'tilt-fine'),
           ch('Colour wheel', 'color-wheel'),
           ch('Gobo', 'gobo'),
-          ch('Strobe', 'strobe'),
+          ch('Strobe', 'strobe', 0, SHUTTER),
           ch('Dimmer', 'intensity', 255),
-          ch('Motor speed (0 fast, 255 slow)', 'speed'),
-          ch('Automatic mode (keep at 0)', 'other'),
-          ch('Reset (keep at 0)', 'other'),
+          ch('Motor speed (0 fast, 255 slow)', 'pan-tilt-speed', 0, MOTOR_SPEED),
+          ch('Automatic mode', 'effect', 0, PROGRAMS),
+          ch('Reset', 'maintenance', 0, RESET),
           ch('Light strips (5 to 109 colour, 110 and up auto)', 'other'),
         ],
       },
@@ -163,11 +215,11 @@ export const BUILTIN_FIXTURE_TYPES = [
           ch('Tilt', 'tilt', 128),
           ch('Colour wheel', 'color-wheel'),
           ch('Gobo', 'gobo'),
-          ch('Strobe', 'strobe'),
+          ch('Strobe', 'strobe', 0, SHUTTER),
           ch('Dimmer', 'intensity', 255),
-          ch('Motor speed (0 fast, 255 slow)', 'speed'),
-          ch('Automatic mode (keep at 0)', 'other'),
-          ch('Reset (keep at 0)', 'other'),
+          ch('Motor speed (0 fast, 255 slow)', 'pan-tilt-speed', 0, MOTOR_SPEED),
+          ch('Automatic mode', 'effect', 0, PROGRAMS),
+          ch('Reset', 'maintenance', 0, RESET),
           ch('Light strips (5 to 109 colour, 110 and up auto)', 'other'),
         ],
       },
@@ -175,83 +227,66 @@ export const BUILTIN_FIXTURE_TYPES = [
   },
   {
     id: 'generic-moving-head',
+    category: 'moving-head',
     manufacturer: 'Generic',
     name: 'Moving head (basic)',
-    description: 'A simple 8 channel moving head: pan, tilt, colour wheel, gobo, strobe, dimmer, speed and control.',
+    description:
+      'A simple 8 channel moving head: pan, tilt, colour wheel, gobo, strobe, dimmer, speed and control. The colour and ' +
+      'gobo slots are typical ones; make a copy and edit them to match your manual.',
     modes: [
       {
         name: '8 channel',
         channels: [
           ch('Pan', 'pan', 128),
           ch('Tilt', 'tilt', 128),
-          ch('Color wheel', 'color-wheel'),
-          ch('Gobo', 'gobo'),
-          ch('Strobe', 'strobe'),
+          ch('Color wheel', 'color-wheel', 0, COLOUR_WHEEL),
+          ch('Gobo', 'gobo', 0, GOBO_WHEEL),
+          ch('Strobe', 'strobe', 0, SHUTTER),
           ch('Dimmer', 'intensity'),
-          ch('Speed', 'speed'),
-          ch('Control', 'other'),
+          ch('Speed', 'pan-tilt-speed', 0, MOTOR_SPEED),
+          ch('Control', 'maintenance', 0, RESET),
         ],
       },
     ],
   },
-];
-
-/** @type {Record<string, string>} */
-const COLOR_TYPES = {
-  red: 'red',
-  green: 'green',
-  blue: 'blue',
-  white: 'white',
-  warm: 'white',
-  cold: 'white',
-  amber: 'amber',
-  uv: 'uv',
-};
+  {
+    id: 'generic-fog-machine',
+    category: 'smoke',
+    manufacturer: 'Generic',
+    name: 'Smoke machine (1 channel)',
+    description: 'A DMX smoke (fog) machine: one channel sets how much fog it puts out. Most need to warm up first.',
+    modes: [
+      {
+        name: '1 channel',
+        channels: [
+          ch('Fog output', 'fog', 0, [
+            { from: 0, to: 9, type: 'none', label: 'Off' },
+            { from: 10, to: 255, type: 'fog', label: 'Fog, little to a lot' },
+          ]),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'generic-hazer',
+    category: 'hazer',
+    manufacturer: 'Generic',
+    name: 'Hazer (2 channel)',
+    description: 'A DMX hazer: haze output and fan speed, which spreads the haze.',
+    modes: [{ name: '2 channel', channels: [ch('Haze output', 'fog'), ch('Fan', 'fan')] }],
+  },
+]);
 
 /**
- * @param {Record<string, any> | undefined} definition an Open Fixture Library channel definition
- * @returns {Record<string, any> | undefined}
- */
-function firstCapability(definition) {
-  if (definition?.capability) {
-    return definition.capability;
-  }
-  return Array.isArray(definition?.capabilities) ? definition.capabilities[0] : undefined;
-}
-
-/**
+ * What an OFL channel is, as one of CHANNEL_TYPES. Kept here for callers of the converter; the work is in
+ * oflCapabilities.js.
  * @param {string} name
  * @param {Record<string, any> | undefined} definition
- * @returns {string} one of CHANNEL_TYPES
+ * @param {Record<string, any>} [wheels] the fixture's wheels, to tell a colour wheel from a gobo wheel
+ * @returns {string}
  */
-export function classifyChannel(name, definition) {
-  const capability = firstCapability(definition);
-  const capType = capability?.type;
-  if (capType === 'ColorIntensity') {
-    return COLOR_TYPES[String(capability?.color ?? '').toLowerCase()] ?? 'other';
-  }
-  if (capType === 'Intensity') {
-    return 'intensity';
-  }
-  if (capType === 'Pan' || capType === 'PanContinuous') {
-    return 'pan';
-  }
-  if (capType === 'Tilt' || capType === 'TiltContinuous') {
-    return 'tilt';
-  }
-  if (capType === 'ShutterStrobe') {
-    return 'strobe';
-  }
-  if (capType === 'ColorPreset' || (capType === 'WheelSlot' && /colou?r/i.test(name))) {
-    return 'color-wheel';
-  }
-  if (capType === 'WheelSlot' && /gobo/i.test(name)) {
-    return 'gobo';
-  }
-  if (capType === 'Speed' || capType === 'PanTiltSpeed') {
-    return 'speed';
-  }
-  return 'other';
+export function classifyChannel(name, definition, wheels = {}) {
+  return classifyOflChannel(name, definition, wheels);
 }
 
 /**
@@ -318,7 +353,7 @@ function escapeRegExp(text) {
  * repeated for each pixel (for example "Red Master") come from `templateChannels` keys such as "Red $pixelKey", so a
  * name that is not listed is matched against those too. Fine channels ("Pan fine") are recognised the same way.
  * @param {Record<string, any>} document untrusted fixture document
- * @returns {{ definitionOf: (name: string) => Record<string, any> | undefined, isFine: (name: string) => boolean }}
+ * @returns {{ definitionOf: (name: string) => Record<string, any> | undefined, isFine: (name: string) => boolean, coarseOf: (name: string) => string | undefined }}
  */
 export function createChannelLookup(document) {
   const asEntries = (/** @type {unknown} */ value) =>
@@ -337,9 +372,12 @@ export function createChannelLookup(document) {
   /** @type {RegExp[]} */
   const fineTemplates = [];
   const fine = new Set();
-  for (const [, definition] of available) {
+  /** @type {Map<string, string>} fine alias to the name of its coarse channel */
+  const coarse = new Map();
+  for (const [name, definition] of available) {
     for (const alias of definition?.fineChannelAliases ?? []) {
       fine.add(alias);
+      coarse.set(alias, name);
     }
   }
   for (const [name, definition] of asEntries(document.templateChannels)) {
@@ -357,6 +395,7 @@ export function createChannelLookup(document) {
   return {
     definitionOf: (name) => available.get(name) ?? templates.find((entry) => entry.pattern.test(name))?.definition,
     isFine: (name) => fine.has(name) || fineTemplates.some((pattern) => pattern.test(name)),
+    coarseOf: (name) => coarse.get(name),
   };
 }
 
@@ -389,6 +428,7 @@ export function convertOpenFixtureLibrary(document, manufacturer = '', source = 
     .map((/** @type {Record<string, any>} */ mode) => String(mode.name ?? 'Mode'));
 
   const lookup = createChannelLookup(document);
+  const wheels = typeof document.wheels === 'object' && document.wheels !== null ? document.wheels : {};
 
   /** @param {string | null} name */
   const resolveChannel = (name) => {
@@ -396,10 +436,20 @@ export function convertOpenFixtureLibrary(document, manufacturer = '', source = 
       return { name: 'Unused', type: 'other', defaultValue: 0 };
     }
     if (lookup.isFine(name)) {
-      return { name, type: 'other', defaultValue: 0 };
+      // The fine half of a 16-bit pan or tilt goes with its coarse channel; other fine channels rest at 0.
+      const coarseName = lookup.coarseOf(name);
+      const coarseType = coarseName ? classifyChannel(coarseName, lookup.definitionOf(coarseName), wheels) : 'other';
+      const type = coarseType === 'pan' ? 'pan-fine' : coarseType === 'tilt' ? 'tilt-fine' : 'other';
+      return { name, type, defaultValue: 0 };
     }
     const definition = lookup.definitionOf(name);
-    return { name, type: classifyChannel(name, definition), defaultValue: parseDefault(definition?.defaultValue) };
+    const capabilities = convertCapabilities(definition, name, wheels);
+    return {
+      name,
+      type: classifyChannel(name, definition, wheels),
+      defaultValue: parseDefault(definition?.defaultValue),
+      ...(capabilities.length > 0 ? { capabilities } : {}),
+    };
   };
 
   const converted = {
@@ -407,6 +457,7 @@ export function convertOpenFixtureLibrary(document, manufacturer = '', source = 
     manufacturer,
     name: document.name,
     description: describeSource(document, source, leftOut),
+    ...(categoryFromOfl(document.categories) ? { category: categoryFromOfl(document.categories) } : {}),
     modes: supportedModes.slice(0, 32).map((/** @type {Record<string, any>} */ mode) => ({
       name: String(mode.name ?? 'Mode'),
       channels: (mode.channels ?? []).map((/** @type {string | null} */ name) => resolveChannel(name)),

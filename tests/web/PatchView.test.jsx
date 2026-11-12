@@ -83,37 +83,45 @@ describe('PatchView', () => {
     expect(field).toHaveValue(1);
   });
 
-  it('says so when the universe is full, and adds nothing', async () => {
-    const user = userEvent.setup();
-    const dimmers = Array.from({ length: 512 }, (_, index) => ({
-      id: `d${index}`,
-      name: `Dimmer ${index + 1}`,
-      typeId: 'generic-dimmer',
-      mode: 0,
-      address: index + 1,
-    }));
-    const { update } = renderView(makeShow({ fixtures: dimmers }));
-    await user.click(screen.getByRole('button', { name: 'Add to rig' }));
-    expect(screen.getByRole('status')).toHaveTextContent('No free DMX address range');
-    expect(update).not.toHaveBeenCalled();
-  }, FULL_UNIVERSE_TIMEOUT_MS);
+  it(
+    'says so when the universe is full, and adds nothing',
+    async () => {
+      const user = userEvent.setup();
+      const dimmers = Array.from({ length: 512 }, (_, index) => ({
+        id: `d${index}`,
+        name: `Dimmer ${index + 1}`,
+        typeId: 'generic-dimmer',
+        mode: 0,
+        address: index + 1,
+      }));
+      const { update } = renderView(makeShow({ fixtures: dimmers }));
+      await user.click(screen.getByRole('button', { name: 'Add to rig' }));
+      expect(screen.getByRole('status')).toHaveTextContent('No free DMX address range');
+      expect(update).not.toHaveBeenCalled();
+    },
+    FULL_UNIVERSE_TIMEOUT_MS,
+  );
 
-  it('adds as many as fit and says how many did not', async () => {
-    const user = userEvent.setup();
-    const fixtures = Array.from({ length: 510 }, (_, index) => ({
-      id: `d${index}`,
-      name: `Dimmer ${index + 1}`,
-      typeId: 'generic-dimmer',
-      mode: 0,
-      address: index + 1,
-    }));
-    const { last } = renderView(makeShow({ fixtures }));
-    await user.selectOptions(screen.getByLabelText('Fixture'), 'generic-dimmer');
-    fireEvent.change(screen.getByLabelText('How many'), { target: { value: '5' } });
-    await user.click(screen.getByRole('button', { name: 'Add to rig' }));
-    expect(last().fixtures).toHaveLength(512);
-    expect(screen.getByRole('status')).toHaveTextContent('Only 2 of 5 fixtures fit in the universe.');
-  }, FULL_UNIVERSE_TIMEOUT_MS);
+  it(
+    'adds as many as fit and says how many did not',
+    async () => {
+      const user = userEvent.setup();
+      const fixtures = Array.from({ length: 510 }, (_, index) => ({
+        id: `d${index}`,
+        name: `Dimmer ${index + 1}`,
+        typeId: 'generic-dimmer',
+        mode: 0,
+        address: index + 1,
+      }));
+      const { last } = renderView(makeShow({ fixtures }));
+      await user.selectOptions(screen.getByLabelText('Fixture'), 'generic-dimmer');
+      fireEvent.change(screen.getByLabelText('How many'), { target: { value: '5' } });
+      await user.click(screen.getByRole('button', { name: 'Add to rig' }));
+      expect(last().fixtures).toHaveLength(512);
+      expect(screen.getByRole('status')).toHaveTextContent('Only 2 of 5 fixtures fit in the universe.');
+    },
+    FULL_UNIVERSE_TIMEOUT_MS,
+  );
 
   it('renames a fixture, keeps the old name when emptied, and limits the address to 1 to 512', () => {
     const { update, project } = renderView();
@@ -211,5 +219,27 @@ describe('PatchView', () => {
   it('has no automated accessibility violations', async () => {
     const { container } = renderView();
     expect(await accessibilityViolations(container)).toEqual([]);
+  });
+});
+
+describe('PatchView: device types', () => {
+  it('sets a chosen device type on the lights it adds, and can change or clear it on one light', async () => {
+    const user = userEvent.setup();
+    const { last, update, project } = renderView(makeShow({ fixtures: [] }));
+    await user.selectOptions(screen.getByLabelText('Device type'), 'smoke');
+    await user.click(screen.getByRole('button', { name: 'Add to rig' }));
+    expect(last().fixtures.every((fixture) => fixture.category === 'smoke')).toBe(true);
+    update.mockClear();
+    void project;
+  });
+
+  it('lets a light in the rig be given another device type, or follow its fixture again', async () => {
+    const user = userEvent.setup();
+    const { last } = renderView();
+    const [first] = makeShow().fixtures;
+    await user.selectOptions(screen.getByLabelText(`Device type of ${first.name}`), 'blinder');
+    expect(last().fixtures[0].category).toBe('blinder');
+    await user.selectOptions(screen.getByLabelText(`Device type of ${first.name}`), '');
+    expect(last().fixtures[0].category).toBeUndefined();
   });
 });

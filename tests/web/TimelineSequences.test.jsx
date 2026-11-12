@@ -332,3 +332,82 @@ describe('Timeline editor', () => {
     expect(await accessibilityViolations(container)).toEqual([]);
   });
 });
+
+describe('Timeline editor: what else a light does', () => {
+  const head = {
+    id: 'head-type',
+    manufacturer: '',
+    name: 'Test head',
+    description: '',
+    modes: [
+      {
+        name: '4 channel',
+        channels: [
+          { name: 'Pan', type: 'pan', defaultValue: 128 },
+          {
+            name: 'Gobo',
+            type: 'gobo',
+            defaultValue: 0,
+            capabilities: [
+              { from: 0, to: 9, type: 'gobo-slot', label: 'Open' },
+              { from: 10, to: 19, type: 'gobo-slot', label: 'Star' },
+            ],
+          },
+          { name: 'Dimmer', type: 'intensity', defaultValue: 0 },
+          { name: 'Red', type: 'red', defaultValue: 0 },
+        ],
+      },
+    ],
+  };
+  const rig = {
+    ...start,
+    fixtureTypes: [head],
+    fixtures: [{ id: 'h1', name: 'Head 1', typeId: 'head-type', mode: 0, address: 1 }],
+    timelines: [
+      {
+        id: 't1',
+        name: 'Moves',
+        beats: 16,
+        blocks: [
+          {
+            id: 'b1',
+            fixtureId: 'h1',
+            start: 0,
+            length: 4,
+            color: '#ff0000',
+            intensity: 100,
+            transition: 'fade',
+            endColor: '#ff0000',
+            endIntensity: 100,
+            effect: 'none',
+            strobeSpeed: 50,
+          },
+        ],
+      },
+    ],
+  };
+
+  beforeEach(() => localStorage.setItem('odmx-sequence-mode', 'timeline'));
+
+  it('offers the light’s controls, and saves a start and end pan and a gobo on the block', async () => {
+    const user = userEvent.setup();
+    renderView(rig);
+    await user.click(screen.getByRole('button', { name: /Head 1, beats 1 to 5/ }));
+    const more = screen.getByRole('region', { name: 'What else the lights do' });
+    fireEvent.change(within(more).getByLabelText('Pan'), { target: { value: '20' } });
+    fireEvent.change(within(more).getByLabelText('Pan at the end'), { target: { value: '80' } });
+    await user.selectOptions(within(more).getByLabelText('Gobo'), 'Star');
+    expect(latest.timelines[0].blocks[0]).toMatchObject({
+      settings: { pan: 20, gobo: { option: 1, level: 50 } },
+      endSettings: { pan: 80 },
+    });
+    await user.click(within(more).getByRole('button', { name: 'Clear Gobo' }));
+    expect(latest.timelines[0].blocks[0].settings).toEqual({ pan: 20 });
+  });
+
+  it('shows the device icon beside each lane’s name', () => {
+    renderView(rig);
+    const lane = screen.getByText('Head 1').closest('.tl-label');
+    expect(lane.querySelector('svg.device-icon').dataset.category).toBe('moving-head'); // guessed from "Test head"
+  });
+});

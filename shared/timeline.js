@@ -1,6 +1,7 @@
 // Timelines: one lane per light, with blocks drawn on a grid of beats. A block has a colour and an intensity, can fade to
 // an end colour and intensity, and can strobe. Pure, and shared by the engine (which plays a timeline) and the editor
 // (which previews it), so what you draw is exactly what plays.
+import { controlDmx, nearestColourOption } from './capabilities.js';
 
 export const BEATS_PER_BAR = 4;
 
@@ -103,4 +104,78 @@ export function evaluateBlock(block, beat, ms) {
     }
   }
   return { red: mix(from[0], to[0]), green: mix(from[1], to[1]), blue: mix(from[2], to[2]), level };
+}
+
+/**
+ * A block's settings at a beat: during a fade, a continuous setting moves from its start value to its end value, and a
+ * choice keeps its option while its level moves.
+ * @param {TimelineBlock & { settings?: Record<string, import('./capabilities.js').ControlValue>, endSettings?: Record<string, import('./capabilities.js').ControlValue> }} block
+ * @param {number} beat
+ * @returns {Map<string, import('./capabilities.js').ControlValue>}
+ */
+export function settingsAt(block, beat) {
+  const start = block.settings ?? {};
+  const end = block.transition === 'fade' ? (block.endSettings ?? {}) : {};
+  const progress = block.length > 0 ? Math.max(0, Math.min(1, (beat - block.start) / block.length)) : 0;
+  const mix = (/** @type {number} */ a, /** @type {number} */ b) => a + (b - a) * progress;
+  const result = new Map();
+  for (const [key, value] of Object.entries(start)) {
+    const target = end[key];
+    if (typeof value === 'number' && typeof target === 'number') {
+      result.set(key, mix(value, target));
+    } else if (typeof value === 'object' && typeof target === 'object' && value.option === target.option) {
+      result.set(key, { option: value.option, level: mix(value.level, target.level) });
+    } else {
+      result.set(key, value);
+    }
+  }
+  return result;
+}
+
+/**
+ * Everything a block sets on a light besides its red, green, blue and dimmer: its settings, plus what makes the light
+ * show the block at all. The shutter opens (unless the block sets it), a light with a colour wheel instead of red,
+ * green and blue gets the nearest colour, and a light that mixes cyan, magenta and yellow gets those from the colour.
+ * @param {Parameters<typeof settingsAt>[0]} block
+ * @param {number} beat
+ * @param {{ red: number, green: number, blue: number, level: number }} shown what evaluateBlock gave
+ * @param {import('./capabilities.js').Control[]} controls the light's controls
+ * @param {boolean} hasRgb whether the light has red, green and blue channels
+ * @returns {[number, number][]} pairs of absolute DMX channel and value
+ */
+export function blockControlWrites(block, beat, shown, controls, hasRgb) {
+  const settings = settingsAt(block, beat);
+  const byKey = new Map(controls.map((control) => [control.key, control]));
+  /** @type {[number, number][]} */
+  const writes = [];
+  const shutter = byKey.get('strobe');
+  if (shutter && !settings.has('strobe') && shutter.kind === 'choice') {
+    const open = shutter.options.findIndex((option) => option.type === 'shutter-open');
+    if (open >= 0) {
+      writes.push(...controlDmx(shutter, { option: open, level: 0 }));
+    }
+  }
+  if (!hasRgb) {
+    const wheel = byKey.get('color-wheel') ?? byKey.get('color-macro');
+    if (wheel && wheel.kind === 'choice' && !settings.has(wheel.key)) {
+      const nearest = nearestColourOption(wheel, [shown.red, shown.green, shown.blue]);
+      if (nearest >= 0) {
+        writes.push(...controlDmx(wheel, { option: nearest, level: 0 }));
+      }
+    }
+    const subtractive = { cyan: shown.red, magenta: shown.green, yellow: shown.blue };
+    for (const [key, additive] of Object.entries(subtractive)) {
+      const control = byKey.get(key);
+      if (control && !settings.has(key)) {
+        writes.push(...controlDmx(control, 100 - (additive / 255) * 100));
+      }
+    }
+  }
+  for (const [key, value] of settings) {
+    const control = byKey.get(key);
+    if (control) {
+      writes.push(...controlDmx(control, value));
+    }
+  }
+  return writes;
 }

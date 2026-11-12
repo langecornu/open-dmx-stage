@@ -31,7 +31,7 @@ function loadMode() {
   }
 }
 
-export function ChasesView({ project, patch, update, flush, live }) {
+export function ChasesView({ project, patch, update, flush, live, library = [] }) {
   const [mode, setMode] = useState(loadMode);
   const [timelineId, setTimelineId] = useState(project.timelines?.[0]?.id ?? null);
   const [selectedId, setSelectedId] = useState(project.chases[0]?.id ?? null);
@@ -161,6 +161,7 @@ export function ChasesView({ project, patch, update, flush, live }) {
       {mode === 'timeline' ? (
         <TimelineSequences
           project={project}
+          library={library}
           update={update}
           flush={flush}
           live={live}

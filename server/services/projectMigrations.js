@@ -63,9 +63,10 @@ function addTimelines(project) {
 }
 
 /**
- * Version 5 lets a timeline be up to 64 bars long (version 4 allowed 16). The data does not change; the new version
- * number is what makes an older app refuse a show with a long timeline ("saved by a newer version") instead of treating
- * it as damaged.
+ * Version 5 lets a timeline be up to 64 bars long (version 4 allowed 16), adds channel types for everything DMX fixtures
+ * do (pan fine, zoom, gobo rotation, fog and more), lets a channel list its value ranges (capabilities), and lets a
+ * timeline block set those (settings). Existing data stays valid as it is; the new version number is what makes an
+ * older app refuse such a show ("saved by a newer version") instead of treating it as damaged.
  * @param {Record<string, any>} project
  * @returns {Record<string, any>}
  */
