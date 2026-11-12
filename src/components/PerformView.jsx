@@ -61,7 +61,7 @@ function learnReducer(state, event) {
   }
 }
 
-export function PerformView({ project, patch, live, flush }) {
+export function PerformView({ project, patch, live, flush, library = [] }) {
   const [fadeMs, setFadeMs] = useState(500);
   const [{ isLearning, armed }, dispatchLearn] = useReducer(learnReducer, { isLearning: false, armed: null });
   const [error, setError] = useState(null);
@@ -85,7 +85,7 @@ export function PerformView({ project, patch, live, flush }) {
   }, [items]);
 
   const perform = async (action, value) => {
-    if (action.type === 'look' || action.type === 'sequence' || action.type === 'timeline') {
+    if (action.type === 'look' || action.type === 'sequence') {
       await playAction({ action, engine: live.engine, send: live.send, flush, fadeMs });
     } else if (action.type === 'blackout') {
       live.send({ type: 'blackout', enabled: !live.engine.blackout });
@@ -278,7 +278,7 @@ export function PerformView({ project, patch, live, flush }) {
         />
         <AutoShowPanel project={project} live={live} flush={flush} />
         <EffectsPanel groups={project.groups} live={live} />
-        <MuteSoloPanel project={project} live={live} />
+        <MuteSoloPanel project={project} live={live} library={library} />
         <SoundPanel id={PANEL_IDS.sound} follower={follower} />
         <MidiPanel
           id={PANEL_IDS.midi}

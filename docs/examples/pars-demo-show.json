@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "name": "Demo light show",
   "fixtureTypes": [],
   "fixtures": [
@@ -223,7 +223,8 @@
           "fadeBeats": 4,
           "holdBeats": 4
         }
-      ]
+      ],
+      "blocks": []
     },
     {
       "id": "seq-cycle",
@@ -279,7 +280,8 @@
           "fadeBeats": 1,
           "holdBeats": 3
         }
-      ]
+      ],
+      "blocks": []
     },
     {
       "id": "seq-police",
@@ -303,7 +305,8 @@
           "fadeBeats": 0,
           "holdBeats": 1
         }
-      ]
+      ],
+      "blocks": []
     },
     {
       "id": "seq-strobe",
@@ -351,7 +354,8 @@
           "fadeBeats": 0,
           "holdBeats": 1
         }
-      ]
+      ],
+      "blocks": []
     }
   ],
   "groups": [
@@ -370,6 +374,5 @@
       "name": "Both pars",
       "fixtureIds": ["par-1", "par-2"]
     }
-  ],
-  "timelines": []
+  ]
 }

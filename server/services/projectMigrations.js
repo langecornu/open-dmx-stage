@@ -62,11 +62,47 @@ function addTimelines(project) {
   return { ...project, timelines: Array.isArray(project.timelines) ? project.timelines : [] };
 }
 
+/**
+ * Version 5 makes a sequence one thing that can be edited as steps or on a timeline: a chain of looks (its steps) and
+ * free blocks per light drawn over them. Each version 4 timeline becomes a sequence with no steps, its blocks, its
+ * length, following the tempo and looping, as it played before. It also adds channel types for everything DMX fixtures
+ * do (pan fine, zoom, gobo rotation, fog and more), value ranges on channels (capabilities), settings on blocks, and a
+ * device category on fixtures and lights.
+ * @param {Record<string, any>} project
+ * @returns {Record<string, any>}
+ */
+export function mergeTimelinesIntoSequences(project) {
+  const timelines = Array.isArray(project.timelines) ? project.timelines : [];
+  const chases = Array.isArray(project.chases) ? project.chases : [];
+  const fromTimelines = timelines.map((/** @type {Record<string, any>} */ timeline) => ({
+    id: timeline.id,
+    name: timeline.name,
+    loop: true,
+    timing: 'beats',
+    steps: [],
+    blocks: Array.isArray(timeline.blocks) ? timeline.blocks : [],
+    length: timeline.beats,
+  }));
+  const rest = { ...project };
+  delete rest.timelines;
+  return {
+    ...rest,
+    chases: [
+      ...chases.map((/** @type {Record<string, any>} */ chase) => ({
+        ...chase,
+        blocks: Array.isArray(chase.blocks) ? chase.blocks : [],
+      })),
+      ...fromTimelines,
+    ],
+  };
+}
+
 /** Ordered migrations: each takes a project at version `from` and returns one at version `to`. */
 const MIGRATIONS = [
   { from: 1, to: 2, up: addChaseStepIds },
   { from: 2, to: 3, up: addGroupsAndBeatTiming },
   { from: 3, to: 4, up: addTimelines },
+  { from: 4, to: 5, up: mergeTimelinesIntoSequences },
 ];
 
 /**

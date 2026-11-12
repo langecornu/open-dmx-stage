@@ -2,20 +2,11 @@
 // applies master and blackout to level channels, and pushes one 512-slot frame per tick to a driver.
 import { MAX_BPM, MIN_BPM, pulseGain, rainbowRgb, sweepGain } from '../../shared/effects.js';
 import { DMX_CHANNELS } from '../../shared/patch.js';
-import { blockAt, evaluateBlock } from '../../shared/timeline.js';
+import { blockAt, blockControlWrites, evaluateBlock, sequenceLength } from '../../shared/timeline.js';
 
 /** @typedef {import('../../shared/types.js').Driver} Driver */
 /** @typedef {import('../../shared/types.js').Scene} Scene */
 /** @typedef {import('../../shared/types.js').Chase} Chase */
-/** @typedef {import('../../shared/types.js').Timeline} Timeline */
-/**
- * @typedef {object} TimelineRun a timeline playing in a loop, following the tempo
- * @property {string} id
- * @property {number} beats its length
- * @property {Map<string, Timeline['blocks']>} blocksByFixture each lane's blocks, in drawing order
- * @property {number} beat the current position, 0 to `beats`
- * @property {number} lastAt the engine-clock time `beat` was last moved on
- */
 /** @typedef {import('../../shared/patch.js').FixtureChannels} FixtureChannels */
 /** @typedef {{ type: 'pulse' | 'sweep' | 'rainbow', beats: number, groupId: string | null, fixtureIds: string[] | null }} Effect */
 /** @typedef {{ from: Float64Array, to: Float64Array, start: number, duration: number }} Fade */
@@ -31,6 +22,11 @@ import { blockAt, evaluateBlock } from '../../shared/timeline.js';
  * @property {number} index current step
  * @property {'fade' | 'hold'} phase
  * @property {number} phaseStart milliseconds on the engine clock
+ * @property {Map<string, Chase['blocks']>} blocksByFixture the free blocks drawn over the looks, by light
+ * @property {number} length the whole sequence, in its units (beats, or seconds): the steps, the blocks or the length
+ *   it was given, whichever is longest
+ * @property {number} position where it is now, in its units, from 0 to `length`
+ * @property {number} lastAt the engine-clock time `position` was last moved on
  */
 /**
  * @typedef {object} AutoRun the auto show: plays looks or sequences in turn at the tempo, with no one at the controls
@@ -44,7 +40,7 @@ import { blockAt, evaluateBlock } from '../../shared/timeline.js';
  * @property {number} changedAt milliseconds on the engine clock when the item came on
  */
 /** @typedef {{ source: 'looks' | 'sequences', beats: number, order: 'order' | 'shuffle', itemId: string }} AutoState */
-/** @typedef {{ master: number, blackout: boolean, bpm: number, effect: { type: string, beats: number, groupId: string | null } | null, activeSceneId: string | null, activeChaseId: string | null, chaseStep: number | null, programmerChannels: number[], muted: string[], soloed: string[], auto: AutoState | null, activeTimelineId: string | null }} EngineState */
+/** @typedef {{ master: number, blackout: boolean, bpm: number, effect: { type: string, beats: number, groupId: string | null } | null, activeSceneId: string | null, activeChaseId: string | null, chaseStep: number | null, programmerChannels: number[], muted: string[], soloed: string[], auto: AutoState | null }} EngineState */
 /** @typedef {{ type: 'frame', frame: Uint8Array } | { type: 'state', state: EngineState }} EngineEvent */
 
 export class DmxEngine {
@@ -83,8 +79,6 @@ export class DmxEngine {
     this.chase = null;
     /** @type {AutoRun | null} */
     this.auto = null;
-    /** @type {TimelineRun | null} */
-    this.timeline = null;
     this.frame = new Uint8Array(DMX_CHANNELS);
 
     this.bpm = 120;
@@ -93,6 +87,8 @@ export class DmxEngine {
     this.effect = null;
     /** @type {Map<string, FixtureChannels>} */
     this.fixtureChannels = new Map();
+    /** @type {Map<string, import('../../shared/capabilities.js').Control[]>} what each fixture can be set to do */
+    this.fixtureControls = new Map();
   }
 
   /** @returns {number} milliseconds in one beat at the current tempo */
@@ -108,8 +104,8 @@ export class DmxEngine {
    * @param {number} [at]
    */
   setTempo(bpm, sync = false, at = this.now()) {
-    if (this.timeline) {
-      this.moveTimeline(this.timeline, at); // the beats played so far count at the old tempo
+    if (this.chase) {
+      this.moveChase(this.chase, at); // the beats played so far count at the old tempo
     }
     const beat = (at - this.tempoOrigin) / this.beatMs();
     this.bpm = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
@@ -120,6 +116,11 @@ export class DmxEngine {
   /** @param {Map<string, FixtureChannels>} fixtureChannels the colour and brightness channels of every fixture */
   setFixtureChannels(fixtureChannels) {
     this.fixtureChannels = fixtureChannels;
+  }
+
+  /** @param {Map<string, import('../../shared/capabilities.js').Control[]>} fixtureControls by fixture id */
+  setFixtureControls(fixtureControls) {
+    this.fixtureControls = fixtureControls;
   }
 
   /**
@@ -251,7 +252,6 @@ export class DmxEngine {
    */
   showScene(scene, fadeMs, at) {
     this.chase = null;
-    this.timeline = null;
     this.programmer.clear();
     this.activeSceneId = scene.id;
     this.startFade(scene.values, fadeMs, at);
@@ -280,16 +280,22 @@ export class DmxEngine {
    */
   playChase(chase, scenesById, at) {
     const steps = chase.steps.filter((step) => scenesById.has(step.sceneId));
-    if (steps.length === 0) {
+    const blocks = chase.blocks ?? [];
+    if (steps.length === 0 && blocks.length === 0) {
       return false;
     }
-    this.timeline = null;
     this.programmer.clear();
+    /** @type {Map<string, Chase['blocks']>} */
+    const blocksByFixture = new Map();
+    for (const block of blocks) {
+      blocksByFixture.set(block.fixtureId, [...(blocksByFixture.get(block.fixtureId) ?? []), block]);
+    }
+    const timing = chase.timing ?? 'seconds';
     /** @type {ChaseRun} */
     const run = {
       id: chase.id,
       loop: chase.loop,
-      timing: chase.timing ?? 'seconds',
+      timing,
       fadeMs: 0,
       holdMs: 0,
       steps,
@@ -297,10 +303,18 @@ export class DmxEngine {
       index: 0,
       phase: 'fade',
       phaseStart: 0,
+      blocksByFixture,
+      length: sequenceLength({ ...chase, steps }),
+      position: 0,
+      lastAt: at,
     };
     this.chase = run;
     this.activeSceneId = null;
-    this.beginChaseStep(run, at);
+    if (steps.length > 0) {
+      this.beginChaseStep(run, at);
+    } else {
+      this.startFade({}, 0, at); // only blocks: lights without one rest
+    }
     return true;
   }
 
@@ -370,38 +384,32 @@ export class DmxEngine {
   }
 
   /**
-   * Plays a timeline from its first beat, in a loop, following the tempo. It takes over from a look, a sequence, the
-   * auto show and manual changes, as pressing any pad does.
-   * @param {Timeline} timeline
+   * Moves a sequence's position on by the time passed, in beats at the current tempo or in seconds. `setTempo` calls it
+   * first, so a tempo change speeds the sequence up from that moment, without a jump.
+   * @param {ChaseRun} run
+   * @param {number} at
    */
-  startTimeline(timeline) {
-    /** @type {Map<string, Timeline['blocks']>} */
-    const blocksByFixture = new Map();
-    for (const block of timeline.blocks) {
-      blocksByFixture.set(block.fixtureId, [...(blocksByFixture.get(block.fixtureId) ?? []), block]);
-    }
-    this.auto = null;
-    this.chase = null;
-    this.fade = null;
-    this.activeSceneId = null;
-    this.programmer.clear();
-    this.timeline = { id: timeline.id, beats: timeline.beats, blocksByFixture, beat: 0, lastAt: this.now() };
-    this.showTimeline(this.timeline, this.timeline.lastAt);
-    this.emitState();
+  moveChase(run, at) {
+    const unitMs = run.timing === 'beats' ? this.beatMs() : 1000;
+    run.position += Math.max(0, at - run.lastAt) / unitMs;
+    run.lastAt = at;
   }
 
   /**
-   * Lays the timeline's current beat into the scene layer. A light with a block shows the block's colour, with its
-   * intensity on the dimmer when it has one, or scaling the colour when it has none. A light with no block at this beat
-   * is dark. Other channels (a pan, a tilt) stay where they rest.
-   * @param {TimelineRun} run
+   * Lays a sequence's free blocks over the frame: a light with a block at this moment shows the block's colour (on its
+   * dimmer when it has one, or scaling the colour when it has none) and its settings; a light without one shows the look.
+   * @param {Uint8Array} frame
+   * @param {ChaseRun} run
    * @param {number} at
    */
-  showTimeline(run, at) {
-    const layer = Float64Array.from(this.restingLayer);
-    for (const [fixtureId, channels] of this.fixtureChannels) {
-      const block = blockAt(run.blocksByFixture.get(fixtureId) ?? [], run.beat);
-      const shown = block ? evaluateBlock(block, run.beat, at) : { red: 0, green: 0, blue: 0, level: 0 };
+  applyBlocks(frame, run, at) {
+    for (const [fixtureId, blocks] of run.blocksByFixture) {
+      const channels = this.fixtureChannels.get(fixtureId);
+      const block = channels ? blockAt(blocks, run.position) : null;
+      if (!channels || !block) {
+        continue;
+      }
+      const shown = evaluateBlock(block, run.position, at);
       const dimmers = channels.dimmers ?? [];
       const scale = dimmers.length > 0 ? 1 : shown.level;
       /** @type {[number | undefined, number][]} */
@@ -412,45 +420,27 @@ export class DmxEngine {
       ];
       for (const [channel, value] of colours) {
         if (channel !== undefined) {
-          layer[channel - 1] = Math.round(value * scale);
+          frame[channel - 1] = Math.round(value * scale);
         }
       }
       const hasColour = channels.red !== undefined || channels.green !== undefined || channels.blue !== undefined;
       // A light with only a dimmer shows the block's brightness: its intensity times how bright the colour is.
       const dimmerLevel = hasColour ? shown.level : shown.level * (Math.max(shown.red, shown.green, shown.blue) / 255);
       for (const channel of dimmers) {
-        layer[channel - 1] = Math.round(dimmerLevel * 255);
+        frame[channel - 1] = Math.round(dimmerLevel * 255);
+      }
+      const controls = this.fixtureControls.get(fixtureId) ?? [];
+      for (const [channel, value] of blockControlWrites(block, run.position, shown, controls, hasColour)) {
+        frame[channel - 1] = value;
       }
     }
-    this.sceneLayer = layer;
   }
 
-  /**
-   * @param {TimelineRun} run
-   * @param {number} at
-   */
-  advanceTimeline(run, at) {
-    this.moveTimeline(run, at);
-    this.showTimeline(run, at);
-  }
-
-  /**
-   * Moves the position on by the time passed at the current tempo. `setTempo` calls it first, so a tempo change speeds
-   * the timeline up from that moment, without a jump.
-   * @param {TimelineRun} run
-   * @param {number} at
-   */
-  moveTimeline(run, at) {
-    run.beat = (run.beat + Math.max(0, at - run.lastAt) / this.beatMs()) % run.beats;
-    run.lastAt = at;
-  }
-
-  /** Stops the sequence, the timeline and the auto show (Escape and Stop mean "stop what is playing"). */
+  /** Stops the sequence and the auto show (Escape and Stop mean "stop what is playing"). */
   stopChase() {
-    if (this.chase || this.auto || this.timeline) {
+    if (this.chase || this.auto) {
       this.chase = null;
       this.auto = null;
-      this.timeline = null;
       this.emitState();
     }
   }
@@ -463,7 +453,6 @@ export class DmxEngine {
   releaseScene(fadeMs = 0) {
     this.auto = null; // otherwise the auto show would bring a look back at its next change
     this.chase = null;
-    this.timeline = null;
     this.activeSceneId = null;
     this.startFade({}, fadeMs);
     this.emitState();
@@ -525,9 +514,6 @@ export class DmxEngine {
     if (this.auto) {
       this.advanceAuto(this.auto, at);
     }
-    if (this.timeline) {
-      this.advanceTimeline(this.timeline, at);
-    }
   }
 
   /**
@@ -535,16 +521,37 @@ export class DmxEngine {
    * @param {number} at
    */
   advanceChase(run, at) {
+    this.moveChase(run, at);
+    const isAtEnd = run.position >= run.length - 1e-9;
+    if (run.steps.length === 0) {
+      // Only blocks: loop (or stop) at the end of the sequence.
+      if (isAtEnd) {
+        if (!run.loop) {
+          this.chase = null;
+          this.emitState();
+          return;
+        }
+        run.position %= run.length;
+      }
+      return;
+    }
     if (run.phase === 'fade' && !this.fade) {
       run.phase = 'hold';
       run.phaseStart += run.fadeMs;
     }
     if (run.phase === 'hold' && at - run.phaseStart >= run.holdMs) {
       const isLast = run.index === run.steps.length - 1;
+      // After the last step, its look holds until the end of the sequence (blocks or a length may run longer).
+      if (isLast && !isAtEnd) {
+        return;
+      }
       if (isLast && !run.loop) {
         this.chase = null;
         this.emitState();
         return;
+      }
+      if (isLast) {
+        run.position = 0;
       }
       run.index = isLast ? 0 : run.index + 1;
       this.beginChaseStep(run, at);
@@ -562,6 +569,9 @@ export class DmxEngine {
     const frame = this.frame;
     for (let i = 0; i < DMX_CHANNELS; i += 1) {
       frame[i] = Math.round(this.sceneLayer[i]);
+    }
+    if (this.chase && this.chase.blocksByFixture.size > 0) {
+      this.applyBlocks(frame, this.chase, at);
     }
     if (this.effect) {
       this.applyEffect(frame, this.effect, at);
@@ -647,7 +657,6 @@ export class DmxEngine {
                 : this.auto.chases[this.auto.index].id,
           }
         : null,
-      activeTimelineId: this.timeline?.id ?? null,
     };
   }
 

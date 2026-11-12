@@ -9,6 +9,8 @@ import {
   dragSpan,
   drawBlocks,
   moveBlocks,
+  repeatBlocks,
+  shorteningLoss,
   snapDown,
 } from '../../src/utils/timelineEdit.js';
 
@@ -66,6 +68,29 @@ describe('timeline editing', () => {
     expect(
       describeBlock(block({ transition: 'fade', endColor: '#0040ff', endIntensity: 20, effect: 'strobe' }), 'Par 2'),
     ).toBe('Par 2, beats 1 to 5, Red at 100%, fading to Blue at 20%, strobe');
+  });
+});
+
+describe('repeat and shorten', () => {
+  it('repeats a selection straight after itself, keeping lights and gaps, and leaves out copies that do not fit', () => {
+    let next = 0;
+    const makeId = () => `c${(next += 1)}`;
+    const selection = [
+      block({ id: 'x', fixtureId: 'a', start: 0, length: 2 }),
+      block({ id: 'y', fixtureId: 'b', start: 3, length: 1 }),
+    ];
+    expect(repeatBlocks(selection, 16, makeId).map((b) => [b.id, b.fixtureId, b.start, b.length])).toEqual([
+      ['c1', 'a', 4, 2],
+      ['c2', 'b', 7, 1],
+    ]);
+    expect(repeatBlocks([block({ start: 12, length: 4 })], 16, makeId)).toEqual([]);
+    expect(repeatBlocks([], 16, makeId)).toEqual([]);
+  });
+
+  it('counts the blocks a shorter timeline would remove or cut', () => {
+    const blocks = [block({ start: 0, length: 4 }), block({ start: 6, length: 4 }), block({ start: 12, length: 2 })];
+    expect(shorteningLoss(blocks, 8)).toEqual({ removed: 1, cut: 1 });
+    expect(shorteningLoss(blocks, 16)).toEqual({ removed: 0, cut: 0 });
   });
 });
 

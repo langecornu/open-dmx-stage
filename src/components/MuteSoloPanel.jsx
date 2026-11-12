@@ -1,6 +1,8 @@
 // Mute and solo for each light: mute keeps a light dark whatever plays; solo lights only the soloed lights. Live only,
 // like manual changes: not saved with the show. The On stage bar reminds you while any is set.
 import { describeFixtures } from '../utils/muteSolo.js';
+import { categoriesByFixture } from '../utils/deviceCategories.js';
+import { DeviceIcon } from './DeviceIcon.jsx';
 
 /** @param {{ isMuted: boolean, isSoloed: boolean, isDark: boolean }} state */
 function stateText(state) {
@@ -13,7 +15,8 @@ function stateText(state) {
   return state.isDark ? 'Dark: another light is solo' : 'Lit';
 }
 
-export function MuteSoloPanel({ project, live }) {
+export function MuteSoloPanel({ project, live, library = [] }) {
+  const categories = categoriesByFixture(project, library);
   const states = describeFixtures(project.fixtures, live.engine);
   const isAnySet = states.some((state) => state.isMuted || state.isSoloed);
 
@@ -40,6 +43,7 @@ export function MuteSoloPanel({ project, live }) {
         <ul className="mutesolo-list">
           {states.map((state) => (
             <li key={state.id} className="mutesolo-row" data-dark={state.isDark}>
+              <DeviceIcon category={categories.get(state.id) ?? 'other'} size={24} />
               <span className="mutesolo-name">
                 <strong>{state.name}</strong>
                 <small>{stateText(state)}</small>

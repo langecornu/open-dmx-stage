@@ -2,6 +2,7 @@
 // (strobe, with its speed). A change applies to every selected block; start and length are offered for one block.
 import { MIN_BLOCK_BEATS } from '../../shared/timeline.js';
 import { SWATCHES, beatLabel } from '../utils/timelineEdit.js';
+import { FixtureControls } from './FixtureControls.jsx';
 import { Icon } from './Icon.jsx';
 
 function ColourField({ label, value, onChange }) {
@@ -47,7 +48,17 @@ function PercentField({ label, value, onChange }) {
   );
 }
 
-export function BlockInspector({ blocks, beats, snap, onChange, onDelete }) {
+export function BlockInspector({
+  blocks,
+  beats,
+  snap,
+  controls = [],
+  onChange,
+  onSetting,
+  onDelete,
+  onRepeat,
+  canRepeat,
+}) {
   if (blocks.length === 0) {
     return (
       <div className="card card-pad inspector inspector-empty">
@@ -64,8 +75,18 @@ export function BlockInspector({ blocks, beats, snap, onChange, onDelete }) {
 
   return (
     <div className="card card-pad inspector" aria-label="Block settings" role="region">
-      <div className="section-bar">
-        <h2 className="section-title">{single ? 'Block' : `${blocks.length} blocks`}</h2>
+      <h2 className="section-title">{single ? 'Block' : `${blocks.length} blocks`}</h2>
+      <div className="toolbar">
+        <button
+          type="button"
+          className="btn"
+          disabled={!canRepeat}
+          title="Copy the selection straight after itself, to carry the pattern on"
+          onClick={onRepeat}
+        >
+          <Icon name="copy" size={16} />
+          Repeat
+        </button>
         <button type="button" className="btn btn-danger" onClick={onDelete}>
           <Icon name="trash" size={16} />
           Delete
@@ -157,6 +178,25 @@ export function BlockInspector({ blocks, beats, snap, onChange, onDelete }) {
             onChange={(event) => set({ strobeSpeed: Number(event.target.value) })}
           />
         </label>
+      ) : null}
+      {controls.length > 0 ? (
+        <section className="inspector-more" aria-label="What else the lights do">
+          <h3 className="section-title">What else</h3>
+          <p className="fixture-meta">
+            Movement, gobos, fog and more, for the lights these blocks are on. Left unset, a light keeps its usual
+            value.
+            {first.transition === 'fade' ? ' With a fade, a slider gets an end value too, so a head can move.' : ''}
+          </p>
+          <FixtureControls
+            controls={controls}
+            values={first.settings ?? {}}
+            endValues={first.endSettings ?? {}}
+            showEnd={first.transition === 'fade'}
+            canClear
+            onChange={(key, value) => onSetting(key, value, 'settings')}
+            onEndChange={(key, value) => onSetting(key, value, 'endSettings')}
+          />
+        </section>
       ) : null}
     </div>
   );

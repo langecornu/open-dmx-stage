@@ -48,7 +48,6 @@ const validProject = {
   scenes: [{ id: 's1', name: 'Red', values: { 1: 255 } }],
   chases: [],
   groups: [{ id: 'g1', name: 'Front', fixtureIds: ['f1'] }],
-  timelines: [],
 };
 
 const putProject = (body) =>

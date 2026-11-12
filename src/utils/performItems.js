@@ -1,6 +1,6 @@
-// Turns a show into the list of pads on the Perform screen: every look, then every sequence (made with steps or on a
-// timeline), each with a gradient preview of what it looks like. A step sequence also lists the colour of each step, for
-// the strip on its pad.
+// Turns a show into the list of pads on the Perform screen: every look, then every sequence, each with a gradient
+// preview of what it looks like. A sequence also lists the colour of each step, for the strip on its pad; a sequence
+// made of blocks only shows its blocks' colours.
 import { averageColor, fixtureColors, sceneGradient } from './sceneColors.js';
 import { timelineGradient } from './timelineEdit.js';
 
@@ -35,24 +35,23 @@ export function buildPerformItems(project, patch) {
       action: /** @type {const} */ ({ type: 'sequence', id: chase.id }),
       name: chase.name,
       kind: /** @type {const} */ ('Sequence'),
-      gradient: sceneGradient(stepColours),
+      gradient: playable.length > 0 ? sceneGradient(stepColours) : timelineGradient(chase),
       detail: [
-        `${playable.length} ${playable.length === 1 ? 'step' : 'steps'}`,
+        playable.length > 0 || (chase.blocks ?? []).length === 0
+          ? `${playable.length} ${playable.length === 1 ? 'step' : 'steps'}`
+          : null,
+        (chase.blocks ?? []).length > 0
+          ? `${chase.blocks.length} ${chase.blocks.length === 1 ? 'block' : 'blocks'}`
+          : null,
         chase.loop ? 'loops' : 'plays once',
-      ].join(' · '),
+      ]
+        .filter(Boolean)
+        .join(' · '),
       steps: playable.map((step, index) => ({
         id: step.id,
         colour: stepColours[index].level > 0.02 ? stepColours[index].css : 'var(--surface-3)',
       })),
     };
   });
-  const timelines = (project.timelines ?? []).map((timeline) => ({
-    action: /** @type {const} */ ({ type: 'timeline', id: timeline.id }),
-    name: timeline.name,
-    kind: /** @type {const} */ ('Sequence'),
-    gradient: timelineGradient(timeline),
-    detail: `Timeline · ${timeline.beats / 4} ${timeline.beats === 4 ? 'bar' : 'bars'} · loops`,
-    steps: /** @type {{ id: string, colour: string }[]} */ ([]),
-  }));
-  return [...looks, ...sequences, ...timelines];
+  return [...looks, ...sequences];
 }

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "name": "My rig (starter)",
   "fixtureTypes": [],
   "fixtures": [
@@ -129,7 +129,8 @@
           "fadeBeats": 1,
           "holdBeats": 3
         }
-      ]
+      ],
+      "blocks": []
     }
   ],
   "groups": [
@@ -143,6 +144,5 @@
       "name": "Moving head",
       "fixtureIds": ["head"]
     }
-  ],
-  "timelines": []
+  ]
 }

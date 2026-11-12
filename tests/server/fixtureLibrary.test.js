@@ -27,7 +27,7 @@ describe('convertOpenFixtureLibrary', () => {
     const channels = type.modes[0].channels;
     assert.deepEqual(
       channels.map((channel) => channel.type),
-      ['intensity', 'red', 'pan', 'other', 'other'],
+      ['intensity', 'red', 'pan', 'pan-fine', 'other'],
     );
     assert.equal(channels[0].defaultValue, 255, 'numeric default is kept');
     assert.equal(channels[2].defaultValue, 128, 'percentage default is converted to 0-255');
@@ -53,18 +53,18 @@ describe('built-in U`King moving head profile', () => {
       channels.map((channel) => channel.type),
       [
         'pan',
-        'other',
+        'pan-fine',
         'tilt',
-        'other',
-        'speed',
+        'tilt-fine',
+        'pan-tilt-speed',
         'intensity',
         'strobe',
         'red',
         'green',
         'blue',
         'white',
-        'other',
-        'other',
+        'effect',
+        'maintenance',
       ],
       'the channel order follows the manual',
     );
@@ -119,7 +119,7 @@ describe('built-in profiles from maker manuals', () => {
   it('lays out the 36 LED par in 7 channels as its manual says', () => {
     assert.deepEqual(
       typesOf('generic-led-par-36-7ch'),
-      ['intensity', 'red', 'green', 'blue', 'strobe', 'other', 'speed'],
+      ['intensity', 'red', 'green', 'blue', 'strobe', 'effect', 'effect-speed'],
       'dimmer, red, green, blue, strobe, programs, speed',
     );
   });
@@ -127,7 +127,7 @@ describe('built-in profiles from maker manuals', () => {
   it('lays out the mini spider light in 7 channels as its manual says', () => {
     assert.deepEqual(
       typesOf('generic-mini-spider-light'),
-      ['tilt', 'tilt', 'intensity', 'strobe', 'other', 'speed', 'other'],
+      ['tilt', 'tilt', 'intensity', 'strobe', 'effect', 'effect-speed', 'maintenance'],
       'two motors, dimmer, strobe, effect, effect speed, reset',
     );
   });
@@ -138,34 +138,42 @@ describe('built-in profiles from maker manuals', () => {
       typesOf('generic-mini-moving-head-gobo', 0),
       [
         'pan',
-        'other',
+        'pan-fine',
         'tilt',
-        'other',
+        'tilt-fine',
         'color-wheel',
         'gobo',
         'strobe',
         'intensity',
-        'speed',
-        'other',
-        'other',
+        'pan-tilt-speed',
+        'effect',
+        'maintenance',
         'other',
       ],
       'the 12 channel layout',
     );
     assert.deepEqual(
       typesOf('generic-mini-moving-head-gobo', 1),
-      ['pan', 'tilt', 'color-wheel', 'gobo', 'strobe', 'intensity', 'speed', 'other', 'other', 'other'],
+      ['pan', 'tilt', 'color-wheel', 'gobo', 'strobe', 'intensity', 'pan-tilt-speed', 'effect', 'maintenance', 'other'],
       'the 10 channel layout',
     );
   });
 
-  it('keeps every reset, program and automatic-mode channel at 0, typed other, so a light cannot reset or leave manual', () => {
+  it('keeps every reset, program and automatic-mode channel at 0 and out of the master, so a light cannot reset or leave manual on its own', () => {
     for (const type of BUILTIN_FIXTURE_TYPES) {
       for (const mode of type.modes) {
         for (const channel of mode.channels) {
-          if (/reset|keep at 0|automatic mode|programs/i.test(channel.name)) {
+          if (/reset|automatic mode|programs|effect$|control/i.test(channel.name)) {
             assert.equal(channel.defaultValue, 0, `${type.name} ${mode.name}: ${channel.name} rests at 0`);
-            assert.equal(channel.type, 'other', `${type.name} ${mode.name}: ${channel.name} is never scaled`);
+            assert.ok(
+              ['effect', 'maintenance'].includes(channel.type),
+              `${type.name} ${mode.name}: ${channel.name} is a program or maintenance channel, set only when asked`,
+            );
+            assert.equal(
+              LEVEL_TYPES.has(channel.type),
+              false,
+              `${type.name} ${mode.name}: ${channel.name} is never scaled`,
+            );
           }
         }
       }
@@ -283,7 +291,7 @@ describe('channels defined by pixel templates', () => {
       type.modes[0].channels.map((channel) => [channel.name, channel.type]),
       [
         ['Pan', 'pan'],
-        ['Pan fine', 'other'],
+        ['Pan fine', 'pan-fine'],
         ['Red Master', 'red'],
         ['Red fine Master', 'other'],
         ['Green Master', 'green'],
