@@ -306,33 +306,6 @@ export function TimelineGrid({
 
   return (
     <div className="tl-editor">
-      <div className="tl-zoom" role="group" aria-label="Zoom">
-        <button
-          type="button"
-          className="btn btn-compact"
-          aria-label="Zoom out"
-          onClick={zoomOut}
-          disabled={zoomPx === null}
-        >
-          −
-        </button>
-        <button
-          type="button"
-          className="btn btn-compact"
-          onClick={() => changeZoom(null)}
-          aria-pressed={zoomPx === null}
-        >
-          Fit
-        </button>
-        <button type="button" className="btn btn-compact" aria-label="Zoom in" onClick={zoomIn} disabled={isMaxZoom}>
-          +
-        </button>
-        <span className="tl-zoom-note">
-          {zoomPx === null
-            ? 'Whole timeline'
-            : 'Scroll with the wheel or by dragging the bar numbers. Ctrl or ⌘ and the wheel zoom.'}
-        </span>
-      </div>
       <div
         ref={rootRef}
         className="tl"
@@ -471,11 +444,38 @@ export function TimelineGrid({
           </div>
         ))}
       </div>
-      <p className="tl-beat-help" aria-live="polite">
-        {ghost
-          ? spanLabel(ghost.start, ghost.start + ghost.length, unit, true)
-          : 'Drag across beats, and across lights, to draw a block.'}
-      </p>
+      <div className="tl-footer">
+        <p className="tl-beat-help" aria-live="polite">
+          {ghost
+            ? spanLabel(ghost.start, ghost.start + ghost.length, unit, true)
+            : 'Drag across beats, and across lights, to draw a block.'}
+        </p>
+        <div className="tl-zoom" role="group" aria-label="Zoom">
+          <span className="tl-zoom-note">
+            {zoomPx === null ? 'Whole timeline' : 'Wheel or drag the bar numbers to scroll · Ctrl or ⌘ + wheel to zoom'}
+          </span>
+          <button
+            type="button"
+            className="btn btn-compact"
+            aria-label="Zoom out"
+            onClick={zoomOut}
+            disabled={zoomPx === null}
+          >
+            −
+          </button>
+          <button
+            type="button"
+            className="btn btn-compact"
+            onClick={() => changeZoom(null)}
+            aria-pressed={zoomPx === null}
+          >
+            Fit
+          </button>
+          <button type="button" className="btn btn-compact" aria-label="Zoom in" onClick={zoomIn} disabled={isMaxZoom}>
+            +
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
