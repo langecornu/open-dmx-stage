@@ -81,6 +81,15 @@ becomes a card with a preview of its colours.
 - **Fade when playing** sets how long the change takes (instant up to 5 seconds).
 - The look currently on stage shows an **On stage** badge.
 - Rename a look by clicking its name. Delete it with the bin icon (it is also removed from any sequence).
+- Each card says how many of your lights the look sets, for example **2 of 4 lights**; point at it to see which
+  lights it leaves dark.
+
+**Adding lights later.** A look remembers the lights it was saved with, so a light added afterwards stays dark when
+the look plays. When some lights are in none of your looks, the Looks screen says so and offers **Fill the new
+lights**: in every look, each new light is set like a light of the same kind, in the order of your rig. With Par 1 and
+Par 2 in your looks and Par 3 and Par 4 added, Par 1 is copied to Par 3 and Par 2 to Par 4, so each look keeps its
+pattern across the four. Values a look already sets are never changed. **Not now** hides the offer for those lights in
+this browser, for a light you left out on purpose.
 
 ## 4. Sequences: build a show
 
@@ -262,7 +271,8 @@ Use **Setup** to manage your fixtures.
   Imported fixtures then appear in the **Fixture** list. Only import files whose licence allows your use.
 - **Remove:** the bin icon takes a fixture out of the rig (and out of any group).
 - **Groups:** once you have lights, a **Groups** card lets you name sets of them, such as a front row, by ticking the
-  lights in each. Effects on the Perform screen can run on just one group.
+  lights in each. Effects on the Perform screen can run on just one group. Lights that are in no group are named under
+  the groups, so lights added later are easy to spot.
 - **Your show file:** **Export show** downloads your whole show (fixtures, looks and sequences) as a file you can back up
   or move to another computer. **Import show** loads one back in, after asking you to confirm, because it replaces the
   current show. Files from older versions of the app are upgraded automatically.

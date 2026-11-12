@@ -39,11 +39,48 @@ describe('ScenesView', () => {
     expect(screen.getByText('No looks saved yet')).toBeInTheDocument();
   });
 
-  it('lists each look with a play button and how many fixtures it uses', () => {
+  it('lists each look with a play button and how many of the lights it sets', () => {
     renderView();
     expect(screen.getByRole('button', { name: 'Play Warm wash' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Play Cool wash' })).toBeInTheDocument();
-    expect(screen.getAllByText('3 fixtures')).toHaveLength(2);
+    const counts = screen.getAllByText('1 of 3 lights');
+    expect(counts).toHaveLength(2);
+    expect(counts[0]).toHaveAttribute('title', 'Not in this look: Par 2 and Lamp');
+  });
+
+  it('offers to fill lights added after the looks, copying from lights of the same kind in rig order', async () => {
+    const user = userEvent.setup();
+    const fixtures = [
+      { id: 'p1', name: 'Par 1', typeId: 'generic-rgb-par', mode: 0, address: 1 },
+      { id: 'p2', name: 'Par 2', typeId: 'generic-rgb-par', mode: 0, address: 4 },
+      { id: 'p3', name: 'Par 3', typeId: 'generic-rgb-par', mode: 0, address: 7 },
+      { id: 'p4', name: 'Par 4', typeId: 'generic-rgb-par', mode: 0, address: 10 },
+    ];
+    const police = { id: 'police', name: 'Police', values: { 1: 255, 6: 255 } }; // Par 1 red, Par 2 blue
+    const { last } = renderView({ project: makeShow({ fixtures, scenes: [police] }) });
+    const banner = screen.getByRole('region', { name: 'New lights' });
+    expect(banner).toHaveTextContent('Par 3 and Par 4 are in none of your looks yet');
+    expect(banner).toHaveTextContent('Par 1 → Par 3, Par 2 → Par 4');
+    await user.click(within(banner).getByRole('button', { name: 'Fill the new lights' }));
+    expect(last().scenes[0].values).toEqual({ 1: 255, 6: 255, 7: 255, 12: 255 });
+  });
+
+  it('hides the fill offer for those lights after Not now', async () => {
+    const user = userEvent.setup();
+    localStorage.clear();
+    const fixtures = [
+      { id: 'p1', name: 'Par 1', typeId: 'generic-rgb-par', mode: 0, address: 1 },
+      { id: 'p2', name: 'Par 2', typeId: 'generic-rgb-par', mode: 0, address: 4 },
+    ];
+    const { unmount } = renderView({
+      project: makeShow({ fixtures, scenes: [{ id: 's', name: 'S', values: { 1: 9 } }] }),
+    });
+    await user.click(screen.getByRole('button', { name: 'Not now' }));
+    expect(screen.queryByRole('region', { name: 'New lights' })).not.toBeInTheDocument();
+    unmount();
+    renderView({ project: makeShow({ fixtures, scenes: [{ id: 's', name: 'S', values: { 1: 9 } }] }) });
+    expect(screen.queryByRole('region', { name: 'New lights' })).not.toBeInTheDocument();
+    localStorage.clear();
   });
 
   it('saves what is on stage right now, keeping only channels above zero, with a default name', async () => {
