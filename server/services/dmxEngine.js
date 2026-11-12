@@ -2,7 +2,7 @@
 // applies master and blackout to level channels, and pushes one 512-slot frame per tick to a driver.
 import { MAX_BPM, MIN_BPM, pulseGain, rainbowRgb, sweepGain } from '../../shared/effects.js';
 import { DMX_CHANNELS } from '../../shared/patch.js';
-import { blockAt, blockControlWrites, evaluateBlock, sequenceLength } from '../../shared/timeline.js';
+import { blockAt, blockWrites, sequenceLength } from '../../shared/timeline.js';
 
 /** @typedef {import('../../shared/types.js').Driver} Driver */
 /** @typedef {import('../../shared/types.js').Scene} Scene */
@@ -264,6 +264,9 @@ export class DmxEngine {
    * @returns {boolean} false when none of its looks exist, so nothing started
    */
   startChase(chase, scenesById) {
+    if (chase.tempo) {
+      this.setTempo(chase.tempo, true); // a sequence made for a song starts at the song's tempo, on the beat
+    }
     const isStarted = this.playChase(chase, scenesById, this.now());
     if (isStarted) {
       this.auto = null; // a person took over
@@ -409,28 +412,13 @@ export class DmxEngine {
       if (!channels || !block) {
         continue;
       }
-      const shown = evaluateBlock(block, run.position, at);
-      const dimmers = channels.dimmers ?? [];
-      const scale = dimmers.length > 0 ? 1 : shown.level;
-      /** @type {[number | undefined, number][]} */
-      const colours = [
-        [channels.red, shown.red],
-        [channels.green, shown.green],
-        [channels.blue, shown.blue],
-      ];
-      for (const [channel, value] of colours) {
-        if (channel !== undefined) {
-          frame[channel - 1] = Math.round(value * scale);
-        }
-      }
-      const hasColour = channels.red !== undefined || channels.green !== undefined || channels.blue !== undefined;
-      // A light with only a dimmer shows the block's brightness: its intensity times how bright the colour is.
-      const dimmerLevel = hasColour ? shown.level : shown.level * (Math.max(shown.red, shown.green, shown.blue) / 255);
-      for (const channel of dimmers) {
-        frame[channel - 1] = Math.round(dimmerLevel * 255);
-      }
-      const controls = this.fixtureControls.get(fixtureId) ?? [];
-      for (const [channel, value] of blockControlWrites(block, run.position, shown, controls, hasColour)) {
+      for (const [channel, value] of blockWrites(
+        block,
+        run.position,
+        at,
+        channels,
+        this.fixtureControls.get(fixtureId) ?? [],
+      )) {
         frame[channel - 1] = value;
       }
     }

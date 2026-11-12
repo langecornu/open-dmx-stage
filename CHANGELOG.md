@@ -7,6 +7,14 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **AI shows**: Claude designs looks and sequences for the venue you are at, using everything its lights can do
+  (colour, movement, gobos, prisms, beam, smoke, built-in programs). Let the AI decide everything, or steer it with a
+  mood, the energy, colours to use more, less or avoid, and More, Less or Off for each thing the venue's lights can do.
+  Optionally pick a song: its tempo, first downbeat and energy map are worked out in the browser (the audio is never
+  sent) and one sequence follows the whole song, starting at its tempo. New looks and sequences are marked as AI-made
+  and can be removed in one go. Uses your own Anthropic API key, pasted once on the new **Settings** screen and never
+  shown again (or `ANTHROPIC_API_KEY` on the server). See ADR 0007.
+- When a save fails because the app was updated while the page was open, it now says to reload the page.
 - **Shows: open, new, save as, import**: a **Shows** button beside the show name opens the show list. Open another
   show, start a **New show**, **Save as** to carry on in a copy under another name, delete a show, export the open one
   or import a file. Importing a file now adds it as a show of its own instead of replacing yours, and the show you

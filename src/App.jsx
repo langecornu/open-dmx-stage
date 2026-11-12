@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { buildPatch } from '../shared/patch.js';
 import { venuesOf } from '../shared/venues.js';
+import { AiShowView } from './components/AiShowView.jsx';
 import { ChasesView } from './components/ChasesView.jsx';
 import { CommandPalette } from './components/CommandPalette.jsx';
 import { ControlView } from './components/ControlView.jsx';
@@ -13,6 +14,7 @@ import { MonitorView } from './components/MonitorView.jsx';
 import { PatchView } from './components/PatchView.jsx';
 import { PerformView } from './components/PerformView.jsx';
 import { ScenesView } from './components/ScenesView.jsx';
+import { SettingsView } from './components/SettingsView.jsx';
 import { ShortcutsDialog } from './components/ShortcutsDialog.jsx';
 import { ShowsDialog } from './components/ShowsDialog.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
@@ -172,6 +174,8 @@ export function App() {
           {view === 'patch' ? <PatchView {...shared} /> : null}
           {view === 'fixtures' ? <FixturesView {...shared} /> : null}
           {view === 'monitor' ? <MonitorView {...shared} /> : null}
+          {view === 'ai' ? <AiShowView {...shared} navigate={setView} /> : null}
+          {view === 'settings' ? <SettingsView /> : null}
         </ErrorBoundary>
       </main>
       <CommandPalette

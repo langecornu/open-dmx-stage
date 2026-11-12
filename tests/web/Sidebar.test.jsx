@@ -16,9 +16,11 @@ describe('Sidebar', () => {
       'Looks',
       'Sequences',
       'Perform',
+      'AI shows',
       'Setup',
       'Fixtures',
       'Output',
+      'Settings',
     ]);
     for (const view of VIEWS) {
       expect(nav).toContainElement(screen.getByRole('button', { name: view.label }));

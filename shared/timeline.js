@@ -197,3 +197,40 @@ export function sequenceLength(sequence) {
   const blocks = Math.max(0, ...(sequence.blocks ?? []).map((block) => block.start + block.length));
   return Math.max(steps, blocks, sequence.length ?? 0, timing === 'beats' ? 1 : 0.1);
 }
+
+/**
+ * Everything a block sends to its light at one moment: red, green and blue (scaled by the intensity when the light has
+ * no dimmer), the dimmer, and its other settings. Used by the engine as a sequence plays, and to turn a still block into
+ * a look.
+ * @param {Parameters<typeof evaluateBlock>[0] & Parameters<typeof settingsAt>[0]} block
+ * @param {number} position where the sequence is, in its units
+ * @param {number} at the time in ms, for a strobe
+ * @param {{ red?: number, green?: number, blue?: number, dimmers?: number[] }} channels the light's colour and dimmer
+ *   channels
+ * @param {import('./capabilities.js').Control[]} controls the light's controls
+ * @returns {[number, number][]} pairs of absolute DMX channel and value
+ */
+export function blockWrites(block, position, at, channels, controls) {
+  const shown = evaluateBlock(block, position, at);
+  const dimmers = channels.dimmers ?? [];
+  const scale = dimmers.length > 0 ? 1 : shown.level;
+  /** @type {[number, number][]} */
+  const writes = [];
+  for (const [channel, value] of /** @type {[number | undefined, number][]} */ ([
+    [channels.red, shown.red],
+    [channels.green, shown.green],
+    [channels.blue, shown.blue],
+  ])) {
+    if (channel !== undefined) {
+      writes.push([channel, Math.round(value * scale)]);
+    }
+  }
+  const hasColour = channels.red !== undefined || channels.green !== undefined || channels.blue !== undefined;
+  // A light with only a dimmer shows the block's brightness: its intensity times how bright the colour is.
+  const dimmerLevel = hasColour ? shown.level : shown.level * (Math.max(shown.red, shown.green, shown.blue) / 255);
+  for (const channel of dimmers) {
+    writes.push([channel, Math.round(dimmerLevel * 255)]);
+  }
+  writes.push(...blockControlWrites(block, position, shown, controls, hasColour));
+  return writes;
+}

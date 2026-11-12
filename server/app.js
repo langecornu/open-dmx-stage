@@ -20,10 +20,12 @@ const SHOW_BODY_LIMIT = '8mb';
  *   projectService: import('./services/projectService.js').ProjectService,
  *   outputManager: import('./services/outputManager.js').OutputManager,
  *   ofl?: ReturnType<typeof import('./clients/oflClient.js').createOflClient> | null,
- * }} options
+ *   aiKeys?: import('./services/aiKeyStore.js').AiKeyStore,
+ *   aiClient?: (apiKey: string) => import('@anthropic-ai/sdk').default,
+ * }} options `aiKeys` and `aiClient` replace the API key store and the Anthropic client, for tests
  * @returns {import('express').Express}
  */
-export function createApp({ config, engine, projectService, outputManager, ofl = null }) {
+export function createApp({ config, engine, projectService, outputManager, ofl = null, aiKeys, aiClient }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(requestId);
@@ -54,7 +56,7 @@ export function createApp({ config, engine, projectService, outputManager, ofl =
   });
 
   app.use('/api/v1', rateLimit({ windowMs: 60_000, limit: 600, standardHeaders: true, legacyHeaders: false }));
-  app.use('/api/v1', createApiRouter({ engine, projectService, outputManager, ofl }));
+  app.use('/api/v1', createApiRouter({ engine, projectService, outputManager, ofl, aiKeys, aiClient }));
 
   if (existsSync(config.distDir)) {
     app.use(express.static(config.distDir));

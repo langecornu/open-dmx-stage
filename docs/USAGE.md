@@ -423,6 +423,35 @@ them back.
   the show from a phone or tablet on the same network (the server must be set to listen beyond this computer: see the
   [install guide](INSTALL.md#control-it-from-a-phone-or-tablet)).
 
+## AI shows: let Claude design for your rig
+
+**AI shows** (in the Show section of the sidebar) asks Claude, by Anthropic, to design looks and sequences for the venue
+you are at, using everything its lights can do: colour, moving head sweeps, gobos, prisms, smoke bursts and so on. You
+need your own Anthropic API key; each generation is billed to your Anthropic account (the app shows the tokens used and
+an estimate in dollars).
+
+1. **Add your key once:** open **Settings**, paste the key (it starts with `sk-ant-`) and press **Save key**. The app
+   checks it with Anthropic and keeps it on the computer running Open DMX Stage. After that it only says _Key saved_:
+   the key cannot be shown again, only replaced or removed. (A key set on the server as `ANTHROPIC_API_KEY` is used
+   instead.)
+2. **Optional, a song:** press **Choose a song**. The app listens to it in your browser and finds its tempo, its first
+   downbeat and how its energy rises and falls, shown as a bar strip. If the tempo is twice too fast or slow, press
+   **Half** or **Double**. Only these numbers are sent to the AI, never the audio.
+3. **Your choices:** leave **Let the AI decide everything** ticked, or untick it to steer: a mood or style in your own
+   words, the energy, colours to use more, use less or avoid, and **More**, **Less** or **Off** for each thing the
+   lights at this venue can do (only what they have is offered: strobe always, movement only with moving heads, smoke
+   only with a smoke machine or hazer, and so on). Choose how many looks and sequences, and their length when there is
+   no song.
+4. Press **Generate the show**. It usually takes one to three minutes. The new looks and sequences are added to your
+   show; **Remove these** takes them out again.
+
+With a song, the first sequence follows the whole song, section by section, plays once, and starts at the song's tempo.
+Play the song from your deck, start the sequence on its first downbeat (from Perform or a MIDI pad), and turn on
+**Follow the music** so the lights stay on the beat. Every AI look and sequence can be edited like any other.
+
+What is sent to Anthropic: your lights' names, fixtures and controls, your choices, and the song's numbers. Nothing else
+from your show, and never the audio.
+
 ## 10. Saving, and other shows
 
 Your show (venues, fixtures, looks, sequences) saves automatically a moment after each change. The top bar shows

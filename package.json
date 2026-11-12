@@ -30,6 +30,7 @@
     "demo:show": "node scripts/demo-show.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
     "@fontsource-variable/manrope": "^5.3.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",

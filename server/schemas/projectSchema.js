@@ -8,6 +8,7 @@ import { EFFECT_BEATS, EFFECT_TYPES, MAX_BPM, MIN_BPM } from '../../shared/effec
 import { CAPABILITY_TYPES } from '../../shared/capabilities.js';
 import { DEVICE_CATEGORIES } from '../../shared/categories.js';
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
+import { AMOUNTS, COLOUR_AMOUNTS, MAX_AI_LOOKS, MAX_AI_SEQUENCES } from '../../shared/aiShow.js';
 import { FIRST_VENUE, MAX_VENUES } from '../../shared/venues.js';
 import { BLOCK_EFFECTS, MAX_SEQUENCE_UNITS, MIN_BLOCK_BEATS, TRANSITIONS } from '../../shared/timeline.js';
 import { HOST_HELP, isAllowedHost } from '../utils/networkHost.js';
@@ -93,6 +94,7 @@ export const sceneSchema = z
       .record(id, parkedLightSchema)
       .refine((parked) => Object.keys(parked).length <= 256)
       .optional(),
+    origin: z.enum(['ai']).optional(), // made by AI show generation
   })
   .strict();
 
@@ -158,6 +160,9 @@ export const chaseSchema = z
     blocks: z.array(timelineBlockSchema).max(2000).default([]),
     // How long the sequence runs when that is longer than its steps and blocks, in its units.
     length: z.number().min(0).max(MAX_SEQUENCE_UNITS).optional(),
+    // The tempo of the song it was made for: starting the sequence sets it, and the beat follower carries on from there.
+    tempo: z.number().min(MIN_BPM).max(MAX_BPM).optional(),
+    origin: z.enum(['ai']).optional(), // made by AI show generation
   })
   .strict();
 
@@ -189,6 +194,58 @@ export const projectSchema = z
     scenes: z.array(sceneSchema).max(500),
     chases: z.array(chaseSchema).max(100),
     groups: z.array(groupSchema).max(100),
+  })
+  .strict();
+
+/** An Anthropic API key, pasted once in Settings. */
+export const aiKeySchema = z
+  .object({
+    apiKey: z
+      .string()
+      .trim()
+      .min(20)
+      .max(400)
+      .regex(/^sk-ant-[A-Za-z0-9_-]+$/, 'That does not look like an Anthropic API key (they start with sk-ant-).'),
+  })
+  .strict();
+
+/** What the person asks AI show generation for. The song is numbers only, worked out in the browser. */
+export const aiGenerateSchema = z
+  .object({
+    auto: z.boolean(),
+    mood: z.string().trim().max(500).default(''),
+    energy: z.number().int().min(0).max(100).nullable().default(null),
+    colours: z
+      .array(z.object({ hex: hexColour, amount: z.enum(COLOUR_AMOUNTS) }).strict())
+      .max(12)
+      .default([]),
+    features: z
+      .record(z.string().max(40), z.enum(AMOUNTS))
+      .refine((features) => Object.keys(features).length <= 20)
+      .default({}),
+    looks: z.number().int().min(2).max(MAX_AI_LOOKS).default(8),
+    sequences: z.number().int().min(1).max(MAX_AI_SEQUENCES).default(2),
+    bars: z.number().int().min(1).max(64).default(16),
+    song: z
+      .object({
+        bpm: z.number().min(MIN_BPM).max(MAX_BPM),
+        durationSeconds: z.number().min(1).max(3600),
+        firstBeatSeconds: z.number().min(0).max(120),
+        sections: z
+          .array(
+            z
+              .object({
+                startBar: z.number().int().min(0).max(4000),
+                bars: z.number().int().min(1).max(4000),
+                energy: z.number().min(0).max(1),
+              })
+              .strict(),
+          )
+          .max(200),
+      })
+      .strict()
+      .nullable()
+      .default(null),
   })
   .strict();
 
