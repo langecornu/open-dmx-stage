@@ -1,4 +1,5 @@
 // Central configuration. This is the only module allowed to read process.env; it validates at startup.
+import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -67,11 +68,20 @@ export function networkAddresses() {
     .flat()
     .filter((entry) => entry && entry.family === 'IPv4' && !entry.internal)
     .map((entry) => /** @type {os.NetworkInterfaceInfo} */ (entry).address);
-  // The name nearby devices find it by is its first label plus .local (MorpheusMacmini.local), even when the router
-  // gives it a longer one (MorpheusMacmini.askey.com).
+  // The name nearby devices find it by (Bonjour, or Avahi on Linux) ends in .local. A Mac announces the "local host
+  // name" from its Sharing settings, which can differ from its computer name; elsewhere it is the host name's first
+  // label (raspberrypi.local), even when the router gives a longer one.
   const name = os.hostname();
-  const local = `${name.split('.')[0]}.local`;
-  return [...new Set([...addresses, name, local])];
+  let announced = name.split('.')[0];
+  if (process.platform === 'darwin') {
+    try {
+      announced =
+        execFileSync('scutil', ['--get', 'LocalHostName'], { encoding: 'utf8', timeout: 2000 }).trim() || announced;
+    } catch {
+      // Keep the host name's first label.
+    }
+  }
+  return [...new Set([...addresses, name, `${announced}.local`])];
 }
 
 /**
