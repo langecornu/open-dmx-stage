@@ -6,6 +6,7 @@ import { fillLooks, lightsInLook, listNames, planFill } from '../utils/lookCover
 import { fixtureColors, sceneGradient } from '../utils/sceneColors.js';
 import { EmptyState } from './EmptyState.jsx';
 import { Icon } from './Icon.jsx';
+import { makeId } from '../utils/ids.js';
 
 const FADE_OPTIONS = [0, 500, 1000, 2000, 5000];
 const FILL_DISMISSED_KEY = 'odmx-fill-dismissed';
@@ -134,7 +135,7 @@ export function ScenesView({ project, patch, update, flush, live }) {
     const sceneName = name.trim() || `Look ${project.scenes.length + 1}`;
     update((current) => ({
       ...current,
-      scenes: [...current.scenes, { id: crypto.randomUUID(), name: sceneName, values }],
+      scenes: [...current.scenes, { id: makeId(), name: sceneName, values }],
     }));
     setName('');
   };
@@ -149,7 +150,7 @@ export function ScenesView({ project, patch, update, flush, live }) {
       if (index === -1) {
         return current;
       }
-      const copy = { ...current.scenes[index], id: crypto.randomUUID(), name: `${current.scenes[index].name} copy` };
+      const copy = { ...current.scenes[index], id: makeId(), name: `${current.scenes[index].name} copy` };
       const scenes = [...current.scenes];
       scenes.splice(index + 1, 0, copy);
       return { ...current, scenes };

@@ -15,6 +15,7 @@ import { SequenceTimeline } from './SequenceTimeline.jsx';
 import { SequenceTimelineView } from './SequenceTimelineView.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { Icon } from './Icon.jsx';
+import { makeId } from '../utils/ids.js';
 
 const formatLength = (ms) => {
   const seconds = Math.round(ms / 1000);
@@ -126,7 +127,7 @@ export function ChasesView({ project, patch, update, flush, live, library = [] }
       setMessage(problem);
       return;
     }
-    const { project: next, sequenceId, report } = importSequence(project, parsed, () => crypto.randomUUID());
+    const { project: next, sequenceId, report } = importSequence(project, parsed, makeId);
     update(() => next);
     setSelectedId(sequenceId);
     const parts = [`Imported “${parsed.sequence.name}”.`];
@@ -149,7 +150,7 @@ export function ChasesView({ project, patch, update, flush, live, library = [] }
   const handleCreate = () => {
     // From the Timeline view a new sequence follows the tempo, as drawing in beats is the point of it.
     const created = {
-      id: crypto.randomUUID(),
+      id: makeId(),
       name: `Sequence ${project.chases.length + 1}`,
       loop: true,
       timing: mode === 'timeline' ? 'beats' : 'seconds',
@@ -177,7 +178,7 @@ export function ChasesView({ project, patch, update, flush, live, library = [] }
       steps: [
         ...chase.steps,
         {
-          id: crypto.randomUUID(),
+          id: makeId(),
           sceneId: scene.id,
           fadeMs: timing.fadeMs,
           holdMs: timing.holdMs,
@@ -189,16 +190,16 @@ export function ChasesView({ project, patch, update, flush, live, library = [] }
   };
   const handleDuplicateStep = (index) => {
     const steps = [...chase.steps];
-    steps.splice(index + 1, 0, { ...chase.steps[index], id: crypto.randomUUID() });
+    steps.splice(index + 1, 0, { ...chase.steps[index], id: makeId() });
     patchChase(chase.id, { steps });
   };
   const handleDuplicate = () => {
     const copy = {
       ...chase,
-      id: crypto.randomUUID(),
+      id: makeId(),
       name: `${chase.name} copy`,
-      steps: chase.steps.map((step) => ({ ...step, id: crypto.randomUUID() })),
-      blocks: (chase.blocks ?? []).map((block) => ({ ...block, id: crypto.randomUUID() })),
+      steps: chase.steps.map((step) => ({ ...step, id: makeId() })),
+      blocks: (chase.blocks ?? []).map((block) => ({ ...block, id: makeId() })),
     };
     update((current) => ({ ...current, chases: [...current.chases, copy] }));
     setSelectedId(copy.id);

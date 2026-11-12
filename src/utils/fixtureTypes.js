@@ -1,6 +1,7 @@
 // Helpers for the Fixtures screen: make, copy and check fixture definitions (manufacturer, model, description and the
 // channel layout of each mode). Pure, so the rules are easy to test.
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
+import { makeId } from './ids.js';
 
 export const MAX_FIXTURE_TYPES = 200;
 export const MAX_MODES = 32;
@@ -65,7 +66,7 @@ export function newChannel() {
 /** @returns {import('../../shared/types.js').FixtureType} a new fixture with one mode and one dimmer channel */
 export function newFixtureType() {
   return {
-    id: crypto.randomUUID(),
+    id: makeId(),
     manufacturer: '',
     name: 'New fixture',
     description: '',
@@ -80,7 +81,7 @@ export function newFixtureType() {
  */
 export function duplicateFixtureType(type) {
   const copy = structuredClone(type);
-  copy.id = crypto.randomUUID();
+  copy.id = makeId();
   copy.name = `${type.name} (copy)`.slice(0, MAX_NAME_LENGTH);
   return copy;
 }

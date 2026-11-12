@@ -2,6 +2,7 @@
 import { categoriesByFixture } from '../utils/deviceCategories.js';
 import { listNames } from '../utils/lookCoverage.js';
 import { DeviceIcon } from './DeviceIcon.jsx';
+import { makeId } from '../utils/ids.js';
 
 export function GroupsCard({ project, library = [], update }) {
   const categories = categoriesByFixture(project, library);
@@ -14,10 +15,7 @@ export function GroupsCard({ project, library = [], update }) {
   const handleCreate = () =>
     update((current) => ({
       ...current,
-      groups: [
-        ...current.groups,
-        { id: crypto.randomUUID(), name: `Group ${current.groups.length + 1}`, fixtureIds: [] },
-      ],
+      groups: [...current.groups, { id: makeId(), name: `Group ${current.groups.length + 1}`, fixtureIds: [] }],
     }));
   const handleDelete = (id) => update((current) => ({ ...current, groups: current.groups.filter((g) => g.id !== id) }));
   const handleToggle = (group, fixtureId) =>

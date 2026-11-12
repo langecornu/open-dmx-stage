@@ -12,6 +12,10 @@ const SHOW_EVERY = 3; // update what is shown every third 20 ms window
 const TEMPO_STEP = 0.3; // send a tempo change without a beat only when it moved by at least this much
 
 /** @param {unknown} error @param {string} source @returns {string} */
+/** Shown when the page was opened at this computer's network address (plain http), as on a phone. */
+export const INSECURE_MESSAGE =
+  'Listening to the music works on the computer running Open DMX Stage (open it there at localhost), not on a phone or tablet opened at its network address: browsers only allow the microphone on secure pages. The lights follow the tempo for every device either way.';
+
 function describeError(error, source) {
   const name = error instanceof Error ? error.name : '';
   if (name === 'NotFoundError') {
@@ -60,6 +64,10 @@ export function useBeatFollower({ send }) {
 
   const refreshInputs = useCallback(async () => {
     try {
+      if (!navigator.mediaDevices) {
+        setInputs([]);
+        return;
+      }
       const devices = await navigator.mediaDevices.enumerateDevices();
       setInputs(
         devices
@@ -94,6 +102,11 @@ export function useBeatFollower({ send }) {
       stop();
       setState({ ...OFF, status: 'asking' });
       const fail = (/** @type {string} */ message) => setState({ ...OFF, error: message });
+      // Browsers only give the microphone to secure pages: https, or the app opened on its own computer.
+      if (window.isSecureContext === false || !navigator.mediaDevices) {
+        fail(INSECURE_MESSAGE);
+        return;
+      }
 
       /** @type {MediaStream} */
       let stream;

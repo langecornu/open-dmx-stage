@@ -222,3 +222,13 @@ describe('API', () => {
     assert.equal((await detect({ serialPath: '/dev/test-cable', extra: 1 })).status, 400, 'unknown fields are refused');
   });
 });
+
+describe('Security headers for the app on the local network', () => {
+  it('do not push browsers to https, which would leave a phone at this computer address with a blank page', async () => {
+    const res = await fetch(baseUrl.replace('/api/v1', '/healthz'));
+    const policy = res.headers.get('content-security-policy') ?? '';
+    assert.ok(policy.includes("script-src 'self'"), 'the content security policy is still sent');
+    assert.equal(policy.includes('upgrade-insecure-requests'), false);
+    assert.equal(res.headers.get('strict-transport-security'), null);
+  });
+});
