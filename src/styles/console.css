@@ -1854,3 +1854,149 @@ a.btn {
 .venues-row .fixture-meta {
   flex: 1;
 }
+
+/* AI shows and Settings. */
+.ai-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ai-auto,
+.ai-card > .btn,
+.ai-fieldset > .btn {
+  align-self: flex-start;
+}
+
+.ai-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ai-choices textarea {
+  font: inherit;
+  resize: vertical;
+}
+
+.ai-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.ai-fieldset legend {
+  padding: 0 var(--space-1);
+  font-weight: 600;
+}
+
+.ai-colour {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ai-colour input[type='color'] {
+  width: 44px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: none;
+}
+
+.ai-feature {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.ai-feature > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-feature-name {
+  font-weight: 600;
+}
+
+.ai-energy {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 56px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.ai-energy-section {
+  min-width: 3px;
+  border-radius: 3px;
+  background: var(--text-faint);
+}
+
+.ai-energy-section[data-level='medium'] {
+  background: var(--accent-soft);
+}
+
+.ai-energy-section[data-level='high'] {
+  background: var(--accent);
+}
+
+.ai-go {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ai-looks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ai-look {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.ai-look-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+.ai-key {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 760px;
+}
+
+.ai-key-saved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ai-key-field {
+  flex: 1;
+  min-width: 260px;
+}

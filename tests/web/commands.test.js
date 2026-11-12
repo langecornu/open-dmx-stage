@@ -26,7 +26,7 @@ const find = (commands, id) => commands.find((command) => command.id === id);
 describe('buildCommands', () => {
   it('offers every screen, every look and every sequence', () => {
     const commands = buildCommands({ project, engine: idle, theme: 'dark' });
-    expect(commands.filter((command) => command.group === 'Go to')).toHaveLength(8);
+    expect(commands.filter((command) => command.group === 'Go to')).toHaveLength(10);
     expect(find(commands, 'look-s1').label).toBe('Play Ocean');
     expect(find(commands, 'sequence-c1').label).toBe('Start Colour cycle');
     expect(find(commands, 'sequence-c1').hint).toBe('Sequence · 2 steps');

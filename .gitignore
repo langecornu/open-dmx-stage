@@ -5,3 +5,6 @@ server/data/*.json
 .DS_Store
 coverage
 server/data/*.bak
+server/data/shows/
+server/data/*.tmp
+server/data/*.unreadable-*

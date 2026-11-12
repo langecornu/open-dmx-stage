@@ -525,3 +525,57 @@ describe('Sequences: export and import', () => {
     expect(latest.chases).toHaveLength(0);
   });
 });
+
+describe('Timeline view: sequences timed in seconds, and the step panel', () => {
+  beforeEach(() => localStorage.setItem('odmx-sequence-mode', 'timeline'));
+
+  it('draws a sequence timed in seconds on a grid of seconds, with a length in seconds', () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    try {
+      renderView(
+        withSequence({
+          timing: 'seconds',
+          length: 6,
+          steps: [{ id: 'st1', sceneId: 's-red', fadeMs: 500, holdMs: 1500, fadeBeats: 1, holdBeats: 3 }],
+          blocks: [{ ...redBlock, start: 4, length: 2 }],
+        }),
+      );
+      expect(screen.getByRole('group', { name: 'Timeline, 6 seconds' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^Step 1: Red/ })).toBeInTheDocument();
+      expect(screen.getByText(/Runs 6 seconds\./)).toBeInTheDocument();
+      fireEvent.change(screen.getByLabelText('Length (seconds, at least)'), { target: { value: '3' } });
+      expect(confirm).toHaveBeenCalledWith('Making it 3 seconds will remove 1 block. Continue?');
+      expect(latest.chases[0]).toMatchObject({ length: 3, blocks: [] });
+    } finally {
+      confirm.mockRestore();
+    }
+  });
+
+  it('edits a step timed in seconds, and removes it', async () => {
+    const user = userEvent.setup();
+    renderView(
+      withSequence({
+        timing: 'seconds',
+        steps: [{ id: 'st1', sceneId: 's-red', fadeMs: 500, holdMs: 1500, fadeBeats: 1, holdBeats: 3 }],
+      }),
+    );
+    await user.click(screen.getByRole('button', { name: /^Step 1: Red/ }));
+    const panel = screen.getByRole('region', { name: 'Step settings' });
+    fireEvent.change(within(panel).getByLabelText('Fade (s)'), { target: { value: '2' } });
+    fireEvent.change(within(panel).getByLabelText('Hold (s)'), { target: { value: '4.5' } });
+    expect(latest.chases[0].steps[0]).toMatchObject({ fadeMs: 2000, holdMs: 4500 });
+    await user.click(within(panel).getByRole('button', { name: /Remove step/ }));
+    expect(latest.chases[0].steps).toEqual([]);
+    expect(screen.queryByRole('region', { name: 'Step settings' })).not.toBeInTheDocument();
+  });
+
+  it('cannot add a step before there is a look, and says to add lights when there are none', () => {
+    renderView({ ...start, chases: [sequence()] });
+    expect(screen.getByRole('button', { name: 'Add step' })).toBeDisabled();
+  });
+
+  it('asks for lights first when the rig is empty', () => {
+    renderView({ ...start, fixtures: [], scenes: [red], chases: [sequence()] });
+    expect(screen.getByText(/Add lights to your rig in Setup first/)).toBeInTheDocument();
+  });
+});

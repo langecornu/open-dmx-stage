@@ -21,6 +21,8 @@ import {
   oflDetailsSchema,
   oflImportSchema,
   oflSearchSchema,
+  aiGenerateSchema,
+  aiKeySchema,
   createEmptyProject,
   projectSchema,
   showNameSchema,
@@ -29,7 +31,9 @@ import { BUILTIN_FIXTURE_TYPES, convertOpenFixtureLibrary, oflFixtureId } from '
 import { summariseOflFixture } from '../services/oflDetails.js';
 import { convertQlcPlus } from '../services/qlcImporter.js';
 import { migrateProject } from '../services/projectMigrations.js';
+import { AiKeyStore } from '../services/aiKeyStore.js';
 import { ShowLibrary, isEmptyShow, summariseShow } from '../services/showLibrary.js';
+import { checkApiKey, generateShow } from '../services/showGenerator.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { httpError } from '../utils/httpError.js';
 
@@ -39,10 +43,19 @@ import { httpError } from '../utils/httpError.js';
  *   projectService: import('../services/projectService.js').ProjectService,
  *   outputManager: import('../services/outputManager.js').OutputManager,
  *   ofl?: ReturnType<typeof import('../clients/oflClient.js').createOflClient> | null,
+ *   aiKeys?: AiKeyStore,
+ *   aiClient?: (apiKey: string) => import('@anthropic-ai/sdk').default,
  * }} options `ofl` is null when online fixture search is turned off
  * @returns {import('express').Router}
  */
-export function createApiRouter({ engine, projectService, outputManager, ofl = null }) {
+export function createApiRouter({
+  engine,
+  projectService,
+  outputManager,
+  ofl = null,
+  aiKeys = new AiKeyStore({ dataDir: projectService.dataDir }),
+  aiClient = undefined,
+}) {
   const router = Router();
 
   /** @param {import('../../shared/types.js').Project} project */
@@ -86,6 +99,56 @@ export function createApiRouter({ engine, projectService, outputManager, ofl = n
     syncEngineWithProject(saved);
     return saved;
   };
+
+  // AI show generation. The key is write-only: no route ever returns it.
+  router.get(
+    '/settings/ai',
+    asyncHandler(async (_req, res) => {
+      res.json(await aiKeys.status());
+    }),
+  );
+
+  router.put(
+    '/settings/ai',
+    validateBody(aiKeySchema),
+    asyncHandler(async (req, res) => {
+      await checkApiKey(req.body.apiKey, aiClient);
+      await aiKeys.save(req.body.apiKey);
+      res.json(await aiKeys.status());
+    }),
+  );
+
+  router.delete(
+    '/settings/ai',
+    asyncHandler(async (_req, res) => {
+      await aiKeys.remove();
+      res.json(await aiKeys.status());
+    }),
+  );
+
+  // Each generation spends money on the person's key, so a few a minute is plenty.
+  const aiLimiter = rateLimit({ windowMs: 60_000, limit: 6, standardHeaders: true, legacyHeaders: false });
+  router.post(
+    '/ai/generate',
+    aiLimiter,
+    validateBody(aiGenerateSchema),
+    asyncHandler(async (req, res) => {
+      const apiKey = await aiKeys.read();
+      if (!apiKey) {
+        throw httpError(400, 'Add your Anthropic API key in Settings first.');
+      }
+      res.json(
+        await generateShow({
+          apiKey,
+          project: projectService.get(),
+          builtinTypes: BUILTIN_FIXTURE_TYPES,
+          preferences: req.body,
+          makeId: () => randomUUID(),
+          ...(aiClient ? { createClient: aiClient } : {}),
+        }),
+      );
+    }),
+  );
 
   // The show list: the show being worked on, then the others, newest first.
   router.get(

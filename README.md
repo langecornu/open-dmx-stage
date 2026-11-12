@@ -15,6 +15,10 @@ fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a
 - **Looks:** save what is on stage and recall it with a configurable fade.
 - **Sequences:** chain looks with fade and hold times, and draw coloured blocks per light over them on a timeline, as two views of the same sequence, with
   fades and strobes; both loop and can follow the tempo.
+- **AI shows:** Claude designs looks and sequences for your rig, with or without a song, using everything your lights
+  can do; leave it all to the AI or steer colours, energy and features. Uses your own Anthropic API key.
+- **Shows and venues:** a show list (open, new, save as, import), and venues with their own lights and addresses that
+  share one show's looks and sequences.
 - **Setup:** auto-addressing, conflict warnings, and fixture import from QLC+ (`.qxf`) and Open Fixture Library
   (`.json`) files.
 - **Output monitor:** a live view of all 512 DMX channels.

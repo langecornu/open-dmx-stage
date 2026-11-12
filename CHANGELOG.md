@@ -7,6 +7,14 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **AI shows**: Claude designs looks and sequences for the venue you are at, using everything its lights can do
+  (colour, movement, gobos, prisms, beam, smoke, built-in programs). Let the AI decide everything, or steer it with a
+  mood, the energy, colours to use more, less or avoid, and More, Less or Off for each thing the venue's lights can do.
+  Optionally pick a song: its tempo, first downbeat and energy map are worked out in the browser (the audio is never
+  sent) and one sequence follows the whole song, starting at its tempo. New looks and sequences are marked as AI-made
+  and can be removed in one go. Uses your own Anthropic API key, pasted once on the new **Settings** screen and never
+  shown again (or `ANTHROPIC_API_KEY` on the server). See ADR 0007.
+- When a save fails because the app was updated while the page was open, it now says to reload the page.
 - **Shows: open, new, save as, import**: a **Shows** button beside the show name opens the show list. Open another
   show, start a **New show**, **Save as** to carry on in a copy under another name, delete a show, export the open one
   or import a file. Importing a file now adds it as a show of its own instead of replacing yours, and the show you
@@ -83,6 +91,11 @@ the project follows [Semantic Versioning](https://semver.org/).
   **Reset**) button. During a blackout the bar turns red, says the lights are off, and has a **Lights on** button.
 
 ### Changed
+
+- **The server listens on your network by default** (`HOST=0.0.0.0`), so a phone or tablet on the same network can
+  open the app at this computer's address or name and run the show, with no extra settings: the computer's own
+  addresses are now trusted for the live link. The control surface still has no login; set `HOST=127.0.0.1` to keep
+  it on this computer (ADR 0008, superseding ADR 0005).
 
 - **Perform is a denser stage console.** A status strip at the top shows the output, the MIDI controller and whether the
   page is listening to the music, each with a dot and words, and jumps to its settings. Beside it, the tempo and four
