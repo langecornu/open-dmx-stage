@@ -4,7 +4,13 @@ import { z } from 'zod';
 import { AUTO_BEATS, AUTO_ORDERS, AUTO_SOURCES } from '../../shared/autoShow.js';
 import { EFFECT_BEATS, EFFECT_TYPES, MAX_BPM, MIN_BPM } from '../../shared/effects.js';
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
-import { BLOCK_EFFECTS, MIN_BLOCK_BEATS, TIMELINE_BEATS, TRANSITIONS } from '../../shared/timeline.js';
+import {
+  BLOCK_EFFECTS,
+  MAX_TIMELINE_BEATS,
+  MIN_BLOCK_BEATS,
+  TRANSITIONS,
+  isTimelineLength,
+} from '../../shared/timeline.js';
 import { HOST_HELP, isAllowedHost } from '../utils/networkHost.js';
 
 const id = z.string().min(1).max(64);
@@ -56,7 +62,7 @@ export const sceneSchema = z
   .strict();
 
 /** Bump with every change to the saved show format, and add a migration in server/services/projectMigrations.js. */
-export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (4);
+export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (5);
 
 export const chaseSchema = z
   .object({
@@ -92,8 +98,8 @@ export const timelineBlockSchema = z
   .object({
     id,
     fixtureId: id,
-    start: z.number().min(0).max(Math.max(...TIMELINE_BEATS)),
-    length: z.number().min(MIN_BLOCK_BEATS).max(Math.max(...TIMELINE_BEATS)),
+    start: z.number().min(0).max(MAX_TIMELINE_BEATS),
+    length: z.number().min(MIN_BLOCK_BEATS).max(MAX_TIMELINE_BEATS),
     color: hexColor,
     intensity: percent,
     transition: z.enum(TRANSITIONS),
@@ -109,7 +115,7 @@ export const timelineSchema = z
   .object({
     id,
     name: label,
-    beats: z.number().refine((beats) => TIMELINE_BEATS.includes(beats), 'Unsupported timeline length'),
+    beats: z.number().refine(isTimelineLength, 'A timeline is 1 to 64 bars long'),
     blocks: z.array(timelineBlockSchema).max(2000),
   })
   .strict();

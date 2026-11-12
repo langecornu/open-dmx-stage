@@ -7,6 +7,13 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Longer timelines**: a timeline can be up to 64 bars long (was 16). It opens fitted to the width, with thin beats;
+  **+** and **−** (or Ctrl or ⌘ and the mouse wheel) zoom in and out. Zoomed in, the mouse wheel, dragging the bar numbers
+  or the always-visible scrollbar move along the timeline, the light names stay in view, and the grid follows the
+  playhead. Timeline mode uses the whole width of the window.
+  **Repeat** copies the selected blocks straight after themselves to carry a pattern on. Shortening a timeline asks
+  before removing or cutting blocks. The saved show format moves to version 5, so an older version of the app refuses
+  a show with a long timeline instead of treating it as damaged.
 - **Timeline sequences**: a second way to make a sequence, chosen with a **Steps / Timeline** toggle on Sequences. A
   timeline has a lane for each light on a grid of beats: drag across lanes to draw blocks, then set their colour,
   intensity, a fade to another colour and intensity, and a strobe with its speed. Blocks can be moved and resized by

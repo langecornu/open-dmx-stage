@@ -129,7 +129,7 @@ export function ChasesView({ project, patch, update, flush, live }) {
   };
 
   return (
-    <section className="view" aria-labelledby="chases-title">
+    <section className={mode === 'timeline' ? 'view view-wide' : 'view'} aria-labelledby="chases-title">
       <div className="view-header">
         <div>
           <h1 className="view-title" id="chases-title">

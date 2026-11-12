@@ -2,14 +2,23 @@
 // mouse, edited in the inspector, and played in a loop that follows the tempo.
 import { useEffect, useRef, useState } from 'react';
 
-import { TIMELINE_BEATS } from '../../shared/timeline.js';
-import { DEFAULT_STYLE, SNAPS, drawBlocks, timelineGradient } from '../utils/timelineEdit.js';
+import { BEATS_PER_BAR, TIMELINE_BARS } from '../../shared/timeline.js';
+import {
+  DEFAULT_STYLE,
+  SNAPS,
+  drawBlocks,
+  repeatBlocks,
+  shorteningLoss,
+  timelineGradient,
+} from '../utils/timelineEdit.js';
 import { BlockInspector } from './BlockInspector.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { Icon } from './Icon.jsx';
 import { TimelineGrid } from './TimelineGrid.jsx';
 
 const STYLE_KEYS = Object.keys(DEFAULT_STYLE);
+
+const barsLabel = (bars) => `${bars} ${bars === 1 ? 'bar' : 'bars'}`;
 
 /**
  * Where the engine is in a playing timeline, worked out in the page from the moment it started and the tempo, so the
@@ -122,14 +131,39 @@ export function TimelineSequences({ project, update, flush, live, selectedId, on
     onSelectTimeline(null);
   };
 
-  const handleLength = (beats) =>
-    // Blocks past the new end are cut to fit, or dropped when they start after it.
+  // Repeat: copies of the selection carry on straight after it, and become the selection, so pressing again extends
+  // the pattern further.
+  const handleRepeat = () => {
+    const copies = repeatBlocks(
+      timeline.blocks.filter((block) => selectedBlockIds.includes(block.id)),
+      timeline.beats,
+      () => crypto.randomUUID(),
+    );
+    if (copies.length > 0) {
+      patchTimeline((item) => ({ blocks: [...item.blocks, ...copies] }));
+      setSelectedBlockIds(copies.map((block) => block.id));
+    }
+  };
+
+  const handleLength = (beats) => {
+    // Blocks past the new end are cut to fit, or removed when they start after it, so ask first.
+    const { removed, cut } = shorteningLoss(timeline.blocks, beats);
+    if (removed + cut > 0) {
+      const parts = [
+        removed > 0 ? `remove ${removed} ${removed === 1 ? 'block' : 'blocks'}` : null,
+        cut > 0 ? `shorten ${cut} ${cut === 1 ? 'block' : 'blocks'}` : null,
+      ].filter(Boolean);
+      if (!window.confirm(`Making it ${barsLabel(beats / BEATS_PER_BAR)} will ${parts.join(' and ')}. Continue?`)) {
+        return;
+      }
+    }
     patchTimeline((item) => ({
       beats,
       blocks: item.blocks
         .filter((block) => block.start < beats)
         .map((block) => ({ ...block, length: Math.min(block.length, beats - block.start) })),
     }));
+  };
 
   if (timelines.length === 0) {
     return (
@@ -158,7 +192,7 @@ export function TimelineSequences({ project, update, flush, live, selectedId, on
               <span className="list-text">
                 <span className="list-name">{item.name}</span>
                 <span className="list-meta">
-                  {item.beats / 4} {item.beats === 4 ? 'bar' : 'bars'} · {item.blocks.length}{' '}
+                  {barsLabel(item.beats / BEATS_PER_BAR)} · {item.blocks.length}{' '}
                   {item.blocks.length === 1 ? 'block' : 'blocks'}
                 </span>
               </span>
@@ -187,9 +221,12 @@ export function TimelineSequences({ project, update, flush, live, selectedId, on
                 value={timeline.beats}
                 onChange={(event) => handleLength(Number(event.target.value))}
               >
-                {TIMELINE_BEATS.map((beats) => (
-                  <option key={beats} value={beats}>
-                    {beats / 4} {beats === 4 ? 'bar' : 'bars'} ({beats} beats)
+                {(TIMELINE_BARS.includes(timeline.beats / BEATS_PER_BAR)
+                  ? TIMELINE_BARS
+                  : [...TIMELINE_BARS, timeline.beats / BEATS_PER_BAR].sort((a, b) => a - b)
+                ).map((bars) => (
+                  <option key={bars} value={bars * BEATS_PER_BAR}>
+                    {barsLabel(bars)} ({bars * BEATS_PER_BAR} beats)
                   </option>
                 ))}
               </select>
@@ -252,6 +289,8 @@ export function TimelineSequences({ project, update, flush, live, selectedId, on
                 snap={snap}
                 onChange={handleEdit}
                 onDelete={() => handleDelete()}
+                onRepeat={handleRepeat}
+                canRepeat={repeatBlocks(selectedBlocks, timeline.beats, () => '').length > 0}
               />
             </div>
           )}

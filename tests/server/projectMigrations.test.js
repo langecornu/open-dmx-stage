@@ -77,6 +77,19 @@ describe('migrateProject', () => {
     assert.doesNotThrow(() => projectSchema.parse(migrated), 'the result is a valid show');
   });
 
+  it('upgrades a version 4 show without changing it, and then allows timelines of up to 64 bars', () => {
+    const timeline = { id: 't', name: 'T', beats: 16, blocks: [] };
+    const version4 = { ...migrateProject(VERSION_1), schemaVersion: 4, timelines: [timeline] };
+    const migrated = migrateProject(version4);
+    assert.equal(migrated.schemaVersion, CURRENT_SCHEMA_VERSION);
+    assert.deepEqual(migrated.timelines, [timeline], 'timelines are untouched');
+    const withLength = (beats) => projectSchema.safeParse({ ...migrated, timelines: [{ ...timeline, beats }] }).success;
+    assert.equal(withLength(256), true, '64 bars is allowed');
+    assert.equal(withLength(20), true, 'any whole number of bars is allowed (5 bars)');
+    assert.equal(withLength(260), false, 'more than 64 bars is refused');
+    assert.equal(withLength(6), false, 'part of a bar is refused');
+  });
+
   it('is a no-op for a current show, and refuses newer or non-show input', () => {
     const current = { ...VERSION_1, schemaVersion: CURRENT_SCHEMA_VERSION };
     assert.equal(migrateProject(current).schemaVersion, CURRENT_SCHEMA_VERSION, 'current files pass through');

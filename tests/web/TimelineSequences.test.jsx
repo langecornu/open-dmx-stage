@@ -201,16 +201,128 @@ describe('Timeline editor', () => {
     }
   });
 
-  it('cuts blocks to fit when the timeline is made shorter', async () => {
+  it('asks before a shorter length removes or cuts blocks, and cuts them only when confirmed', async () => {
     const user = userEvent.setup();
-    renderView(
-      withTimeline([
-        { ...redBlock, start: 2, length: 6 },
-        { ...redBlock, id: 'b2', start: 10 },
-      ]),
-    );
-    await user.selectOptions(screen.getByLabelText('Length'), '8');
-    expect(latest.timelines[0]).toMatchObject({ beats: 8, blocks: [{ id: 'b1', start: 2, length: 6 }] });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    try {
+      renderView(
+        withTimeline([
+          { ...redBlock, start: 2, length: 6 },
+          { ...redBlock, id: 'b2', start: 10 },
+        ]),
+      );
+      await user.selectOptions(screen.getByLabelText('Length'), '8');
+      expect(confirm).toHaveBeenLastCalledWith('Making it 2 bars will remove 1 block. Continue?');
+      expect(latest.timelines[0].beats).toBe(16);
+      await user.selectOptions(screen.getByLabelText('Length'), '8');
+      expect(latest.timelines[0]).toMatchObject({ beats: 8, blocks: [{ id: 'b1', start: 2, length: 6 }] });
+    } finally {
+      confirm.mockRestore();
+    }
+  });
+
+  it('can be made up to 64 bars long without asking when nothing is lost', async () => {
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, 'confirm');
+    try {
+      renderView(withTimeline([redBlock]));
+      expect(screen.getByRole('option', { name: '64 bars (256 beats)' })).toBeInTheDocument();
+      await user.selectOptions(screen.getByLabelText('Length'), '256');
+      expect(latest.timelines[0].beats).toBe(256);
+      expect(confirm).not.toHaveBeenCalled();
+      expect(screen.getByRole('group', { name: 'Timeline, 64 bars' })).toBeInTheDocument();
+    } finally {
+      confirm.mockRestore();
+    }
+  });
+
+  it('repeats the selection after itself, and repeating again carries the pattern on', async () => {
+    const user = userEvent.setup();
+    renderView(withTimeline([redBlock, { ...redBlock, id: 'b2', fixtureId: 'p2', start: 2, length: 2 }]));
+    await user.click(screen.getByRole('button', { name: /Par 1, beats 1 to 5/ }));
+    await user.keyboard('{Shift>}');
+    await user.click(screen.getByRole('button', { name: /Par 2, beats 3 to 5/ }));
+    await user.keyboard('{/Shift}');
+    const inspector = screen.getByRole('region', { name: 'Block settings' });
+    await user.click(within(inspector).getByRole('button', { name: 'Repeat' }));
+    await user.click(within(inspector).getByRole('button', { name: 'Repeat' }));
+    expect(latest.timelines[0].blocks.map((b) => [b.fixtureId, b.start])).toEqual([
+      ['p1', 0],
+      ['p2', 2],
+      ['p1', 4],
+      ['p2', 6],
+      ['p1', 8],
+      ['p2', 10],
+    ]);
+  });
+
+  it('starts fitted to the width, zooms in and out with buttons and Ctrl and the wheel, and fits again', async () => {
+    const user = userEvent.setup();
+    renderView(withTimeline([redBlock]));
+    const grid = screen.getByRole('group', { name: 'Timeline, 4 bars' });
+    const width = () => grid.style.getPropertyValue('--tl-beat-px');
+    expect(width()).toBe('0px');
+    expect(screen.getByRole('button', { name: 'Fit' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Zoom out' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Zoom in' }));
+    expect(width()).toBe('4px');
+    await user.click(screen.getByRole('button', { name: 'Zoom in' }));
+    expect(width()).toBe('6px');
+    fireEvent.wheel(grid, { deltaY: -100, ctrlKey: true });
+    expect(width()).toBe('10px');
+    fireEvent.wheel(grid, { deltaY: 100, metaKey: true });
+    expect(width()).toBe('6px');
+    fireEvent.wheel(grid, { deltaY: -100 });
+    expect(width()).toBe('6px'); // a plain wheel scrolls, it does not zoom
+    await user.click(screen.getByRole('button', { name: 'Fit' }));
+    expect(width()).toBe('0px');
+  });
+
+  // A grid 2000 px wide shown in 500 px, as when zoomed in on a long timeline.
+  function makeScrollable(grid) {
+    Object.defineProperty(grid, 'scrollWidth', { configurable: true, value: 2000 });
+    Object.defineProperty(grid, 'clientWidth', { configurable: true, value: 500 });
+    grid.scrollLeft = 0;
+  }
+
+  it('scrolls a zoomed-in timeline sideways with an ordinary mouse wheel, and lets the page have it at the start', async () => {
+    const user = userEvent.setup();
+    renderView(withTimeline([redBlock]));
+    await user.click(screen.getByRole('button', { name: 'Zoom in' }));
+    const grid = screen.getByRole('group', { name: 'Timeline, 4 bars' });
+    makeScrollable(grid);
+    const atStart = fireEvent.wheel(grid, { deltaY: -100 });
+    expect(atStart).toBe(true); // not cancelled: the page scrolls up as usual
+    const down = fireEvent.wheel(grid, { deltaY: 120 });
+    expect(down).toBe(false);
+    expect(grid.scrollLeft).toBe(120);
+  });
+
+  it('pans a zoomed-in timeline by dragging the bar numbers', async () => {
+    const user = userEvent.setup();
+    renderView(withTimeline([redBlock]));
+    await user.click(screen.getByRole('button', { name: 'Zoom in' }));
+    const grid = screen.getByRole('group', { name: 'Timeline, 4 bars' });
+    makeScrollable(grid);
+    grid.scrollLeft = 300;
+    const ruler = grid.querySelector('.tl-ruler-track');
+    fireEvent.pointerDown(ruler, { button: 0, clientX: 400, pointerId: 1 });
+    fireEvent.pointerMove(ruler, { clientX: 250, pointerId: 1 });
+    fireEvent.pointerUp(ruler, { clientX: 250, pointerId: 1 });
+    expect(grid.scrollLeft).toBe(450);
+    expect(latest.timelines[0].blocks).toHaveLength(1); // panning draws nothing
+  });
+
+  it('stops zooming in at the closest level', async () => {
+    const user = userEvent.setup();
+    renderView(withTimeline([redBlock]));
+    for (let step = 0; step < 8; step += 1) {
+      if (!screen.getByRole('button', { name: 'Zoom in' }).disabled) {
+        await user.click(screen.getByRole('button', { name: 'Zoom in' }));
+      }
+    }
+    expect(screen.getByRole('group', { name: 'Timeline, 4 bars' }).style.getPropertyValue('--tl-beat-px')).toBe('40px');
+    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeDisabled();
   });
 
   it('has no automated accessibility violations', async () => {

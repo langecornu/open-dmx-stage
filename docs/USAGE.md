@@ -115,8 +115,12 @@ The step that is playing is highlighted. Use the arrow buttons to reorder steps 
 A timeline has one lane for each light in your rig and a grid of beats, with a stronger line at each bar. It plays in a
 loop and follows the tempo: a faster tempo plays it faster.
 
-1. Choose **Timeline**, then **New sequence**. Set its **Length** (1 to 16 bars) and the **Grid** (1, 1/2 or 1/4
-   beat), which is what blocks snap to.
+1. Choose **Timeline**, then **New sequence**. Set its **Length** (1 to 64 bars) and the **Grid** (1, 1/2 or 1/4
+   beat), which is what blocks snap to. A timeline opens fitted to the width (**Fit**), however long it
+   is. **+** and **−** above the grid zoom in and out (or hold **Ctrl** or **⌘** and turn the mouse wheel over it);
+   zoomed in, the grid scrolls sideways: turn the mouse wheel over it, drag the bar numbers, or use the
+   scrollbar under it. The light names stay in view. In Timeline mode the screen uses the whole
+   width of the window.
 2. **Drag across a lane** to draw a block over those beats. Drag across several lanes to draw the same block on each
    of those lights at once.
 3. The new blocks are selected, and the **Block** panel beside the grid edits them all:
@@ -129,13 +133,17 @@ loop and follows the tempo: a faster tempo plays it faster.
 
    New blocks are drawn in the look you chose last, so a run of similar blocks needs no repeated edits.
 
-4. **Click** a block to select it, **Shift-click** to add more. **Drag** a block to move it (selected blocks move
+4. **Repeat** copies the selected blocks straight after themselves, keeping their lights and the gaps between them;
+   the copies become the selection, so pressing **Repeat** again carries the pattern on. Draw one bar, then repeat it
+   to fill a long timeline.
+5. **Click** a block to select it, **Shift-click** to add more. **Drag** a block to move it (selected blocks move
    together), or drag its **right edge** to change its length. A click on an empty part of a lane clears the
    selection.
-5. Press **Play**. A playhead shows where the timeline is; press **Stop** to end it, or play it from Perform.
+6. Press **Play**. A playhead shows where the timeline is, and the grid scrolls to follow it when zoomed in; press
+   **Stop** to end it, or play it from Perform.
 
 Where blocks overlap on a lane, the one drawn last plays. Where a lane has no block, that light is dark. Making a
-timeline shorter cuts the blocks that run past the new end.
+timeline shorter removes the blocks past the new end and shortens those that run past it; the app asks first.
 
 **From the keyboard:** the **+** beside a light's name adds a one-bar block on that lane. A block is a button: **Tab**
 to it and press **Enter** to select it, **←** and **→** to move it by one grid step, **Shift** with **←** and **→** to

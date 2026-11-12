@@ -62,11 +62,23 @@ function addTimelines(project) {
   return { ...project, timelines: Array.isArray(project.timelines) ? project.timelines : [] };
 }
 
+/**
+ * Version 5 lets a timeline be up to 64 bars long (version 4 allowed 16). The data does not change; the new version
+ * number is what makes an older app refuse a show with a long timeline ("saved by a newer version") instead of treating
+ * it as damaged.
+ * @param {Record<string, any>} project
+ * @returns {Record<string, any>}
+ */
+function allowLongTimelines(project) {
+  return project;
+}
+
 /** Ordered migrations: each takes a project at version `from` and returns one at version `to`. */
 const MIGRATIONS = [
   { from: 1, to: 2, up: addChaseStepIds },
   { from: 2, to: 3, up: addGroupsAndBeatTiming },
   { from: 3, to: 4, up: addTimelines },
+  { from: 4, to: 5, up: allowLongTimelines },
 ];
 
 /**

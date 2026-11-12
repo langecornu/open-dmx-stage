@@ -2,8 +2,23 @@
 // an end colour and intensity, and can strobe. Pure, and shared by the engine (which plays a timeline) and the editor
 // (which previews it), so what you draw is exactly what plays.
 
-/** Lengths a timeline can have, in beats: one, two, four, eight or sixteen bars of four beats. */
-export const TIMELINE_BEATS = [4, 8, 16, 32, 64];
+export const BEATS_PER_BAR = 4;
+
+/** Lengths offered in the editor, in bars of four beats. Any whole number of bars up to the maximum is valid. */
+export const TIMELINE_BARS = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64];
+
+/** The longest timeline: 64 bars. */
+export const MAX_TIMELINE_BEATS = 64 * BEATS_PER_BAR;
+
+/**
+ * @param {number} beats
+ * @returns {boolean} whether a timeline can be this long: a whole number of bars, from one bar to the maximum
+ */
+export function isTimelineLength(beats) {
+  return (
+    Number.isInteger(beats) && beats % BEATS_PER_BAR === 0 && beats >= BEATS_PER_BAR && beats <= MAX_TIMELINE_BEATS
+  );
+}
 
 /** The shortest block, and the finest grid step, in beats. */
 export const MIN_BLOCK_BEATS = 0.25;

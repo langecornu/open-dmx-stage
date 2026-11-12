@@ -162,3 +162,36 @@ export function timelineGradient(timeline) {
 export function newTimeline(count, makeId) {
   return { id: makeId(), name: `Timeline ${count + 1}`, beats: 16, blocks: [] };
 }
+
+/**
+ * Copies of the selected blocks placed straight after them, so a pattern carries on: blocks covering beats 1 to 4 are
+ * copied to 5 to 8, keeping their lights, gaps and looks. Copies that would run past the end are left out.
+ * @param {import('../../shared/timeline.js').TimelineBlock[]} blocks the selection
+ * @param {number} beats the timeline's length
+ * @param {() => string} makeId
+ * @returns {import('../../shared/timeline.js').TimelineBlock[]}
+ */
+export function repeatBlocks(blocks, beats, makeId) {
+  if (blocks.length === 0) {
+    return [];
+  }
+  const first = Math.min(...blocks.map((block) => block.start));
+  const last = Math.max(...blocks.map((block) => block.start + block.length));
+  const span = last - first;
+  return blocks
+    .map((block) => ({ ...block, id: makeId(), start: round(block.start + span) }))
+    .filter((copy) => copy.start + copy.length <= beats + 1e-9);
+}
+
+/**
+ * What making a timeline shorter would do to its blocks.
+ * @param {import('../../shared/timeline.js').TimelineBlock[]} blocks
+ * @param {number} beats the new length
+ * @returns {{ removed: number, cut: number }} blocks that start past the end, and blocks that run past it
+ */
+export function shorteningLoss(blocks, beats) {
+  return {
+    removed: blocks.filter((block) => block.start >= beats).length,
+    cut: blocks.filter((block) => block.start < beats && block.start + block.length > beats).length,
+  };
+}
