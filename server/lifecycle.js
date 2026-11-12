@@ -5,7 +5,7 @@ const DEFAULT_TIMEOUT_MS = 3000;
 
 /**
  * @param {{
- *   server: import('node:http').Server,
+ *   server: { close: (done: () => void) => unknown, closeAllConnections: () => void },
  *   liveSocket: { close: () => void },
  *   engine: { stop: () => Promise<void> },
  *   outputManager: { stopWatchdog: () => void },
@@ -44,7 +44,7 @@ export function createShutdown({
     outputManager.stopWatchdog();
     // The browsers' live sockets and idle keep-alive connections would otherwise keep server.close() waiting forever.
     liveSocket.close();
-    const closed = new Promise((resolve) => server.close(resolve));
+    const closed = new Promise((resolve) => server.close(() => resolve(undefined)));
     server.closeAllConnections();
 
     try {

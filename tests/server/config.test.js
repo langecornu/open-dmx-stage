@@ -10,6 +10,7 @@ describe('loadConfig', () => {
     assert.equal(config.port, 4000, 'default port');
     assert.equal(config.host, '0.0.0.0', 'reachable from a phone or tablet on the same network');
     assert.equal(config.dmxDriver, 'mock', 'the simulator');
+    assert.equal(config.httpsPort, 4443, 'a secure address beside it, for phones');
     assert.equal(config.isOflEnabled, true, 'online fixture search is on');
   });
 
@@ -52,6 +53,14 @@ describe('trusted browser origins', () => {
     const { allowedOrigins } = loadConfig({}, { ownAddresses: () => ['192.168.1.50', 'stage-mac.local'] });
     assert.ok(allowedOrigins.includes('http://192.168.1.50:4000'));
     assert.ok(allowedOrigins.includes('http://stage-mac.local:4000'));
+    assert.ok(allowedOrigins.includes('https://192.168.1.50:4443'), 'the secure address too');
+    assert.ok(allowedOrigins.includes('https://localhost:4443'));
+    const off = loadConfig({ HTTPS_PORT: '0' }, { ownAddresses: () => ['192.168.1.50'] });
+    assert.equal(
+      off.allowedOrigins.some((origin) => origin.startsWith('https:')),
+      false,
+      'none when https is off',
+    );
   });
 
   it('do not trust other addresses on the network, other ports, or own addresses when kept to this computer', () => {

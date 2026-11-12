@@ -232,3 +232,10 @@ describe('Security headers for the app on the local network', () => {
     assert.equal(res.headers.get('strict-transport-security'), null);
   });
 });
+
+describe('Secure address for phones', () => {
+  it('says there is none when the server runs without https', async () => {
+    const res = await fetch(`${baseUrl}/settings/network`);
+    assert.deepEqual(await res.json(), { httpsPort: 0, fingerprint: null, validTo: null, addresses: [] });
+  });
+});

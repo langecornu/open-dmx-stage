@@ -2,7 +2,7 @@
 const STATUS_TEXT = {
   unsupported:
     typeof window !== 'undefined' && window.isSecureContext === false
-      ? 'MIDI controllers work on the computer running Open DMX Stage: plug the controller in there and open the app at localhost. Browsers only allow MIDI on secure pages.'
+      ? 'Browsers only allow MIDI on secure pages. Open the app at its secure address (https, shown in Settings under Phones and tablets), or plug the controller into the computer running Open DMX Stage.'
       : 'This browser does not support MIDI. Use Chrome or Edge to connect a controller.',
   idle: 'Connect a MIDI controller to play looks and sequences from its pads, keys and knobs.',
   requesting: 'Waiting for the browser to allow MIDI…',

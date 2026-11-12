@@ -56,13 +56,13 @@ describe('useBeatFollower', () => {
     expect(result.current.error).toBeNull();
   });
 
-  it("explains that a phone at this computer's network address cannot listen, without asking for the microphone", async () => {
+  it('explains that a page that is not secure cannot listen, without asking for the microphone', async () => {
     Object.defineProperty(window, 'isSecureContext', { configurable: true, value: false });
     try {
       const { result } = await startedHook();
       expect(audio.mediaDevices.getUserMedia).not.toHaveBeenCalled();
       expect(result.current.status).not.toBe('listening');
-      expect(result.current.error).toMatch(/works on the computer running Open DMX Stage/);
+      expect(result.current.error).toMatch(/Open the app at its secure address/);
     } finally {
       delete window.isSecureContext;
     }

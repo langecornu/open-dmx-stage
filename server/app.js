@@ -22,10 +22,20 @@ const SHOW_BODY_LIMIT = '8mb';
  *   ofl?: ReturnType<typeof import('./clients/oflClient.js').createOflClient> | null,
  *   aiKeys?: import('./services/aiKeyStore.js').AiKeyStore,
  *   aiClient?: (apiKey: string) => import('@anthropic-ai/sdk').default,
- * }} options `aiKeys` and `aiClient` replace the API key store and the Anthropic client, for tests
+ *   network?: { httpsPort: number, fingerprint: string | null, validTo: string | null, addresses: string[] } | null,
+ * }} options `network`: the https address for phones (ADR 0009); live, so a port that failed to open shows as off `aiKeys` and `aiClient` replace the API key store and the Anthropic client, for tests
  * @returns {import('express').Express}
  */
-export function createApp({ config, engine, projectService, outputManager, ofl = null, aiKeys, aiClient }) {
+export function createApp({
+  config,
+  engine,
+  projectService,
+  outputManager,
+  ofl = null,
+  aiKeys,
+  aiClient,
+  network = null,
+}) {
   const app = express();
   app.disable('x-powered-by');
   app.use(requestId);
@@ -62,7 +72,7 @@ export function createApp({ config, engine, projectService, outputManager, ofl =
   });
 
   app.use('/api/v1', rateLimit({ windowMs: 60_000, limit: 600, standardHeaders: true, legacyHeaders: false }));
-  app.use('/api/v1', createApiRouter({ engine, projectService, outputManager, ofl, aiKeys, aiClient }));
+  app.use('/api/v1', createApiRouter({ engine, projectService, outputManager, ofl, aiKeys, aiClient, network }));
 
   if (existsSync(config.distDir)) {
     app.use(express.static(config.distDir));

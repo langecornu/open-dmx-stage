@@ -2066,3 +2066,23 @@ a.btn {
   align-items: center;
   gap: 4px;
 }
+
+/* Settings: the secure addresses for phones and tablets. */
+.phones-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 600;
+}
+
+.phones-fingerprint code {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.ai-key > .badge {
+  align-self: flex-start;
+}
