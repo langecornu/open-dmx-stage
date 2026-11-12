@@ -16,6 +16,7 @@ const log = logger.child({ module: 'project' });
 export class ProjectService {
   /** @param {{ dataDir: string }} options */
   constructor({ dataDir }) {
+    this.dataDir = dataDir;
     this.filePath = path.join(dataDir, 'project.json');
     this.backupPath = `${this.filePath}.bak`;
     /** @type {Project} */

@@ -24,6 +24,11 @@ export const api = {
   getProject: () => request('/project'),
   saveProject: (project) => request('/project', jsonBody('PUT', project)),
   importProject: (project) => request('/project/import', jsonBody('POST', project)),
+  listShows: () => request('/shows'),
+  openShow: (id) => request(`/shows/${encodeURIComponent(id)}/open`, { method: 'POST' }),
+  newShow: (name) => request('/shows/new', jsonBody('POST', { name })),
+  saveShowAs: (name) => request('/shows/save-as', jsonBody('POST', { name })),
+  deleteShow: (id) => request(`/shows/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   getFixtureLibrary: () => request('/fixtures/library'),
   importOpenFixture: (fixture, manufacturer) =>
     request('/fixtures/import-ofl', jsonBody('POST', { fixture, manufacturer })),

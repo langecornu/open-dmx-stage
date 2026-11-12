@@ -305,9 +305,27 @@ Use **Setup** to manage your fixtures.
 - **Remove:** the bin icon takes a fixture out of the rig (and out of any group).
 - **Groups:** once you have lights, a **Groups** card lets you name sets of them, such as a front row, by ticking the
   lights in each. Effects on the Perform screen can run on just one group.
-- **Your show file:** **Export show** downloads your whole show (fixtures, looks and sequences) as a file you can back up
-  or move to another computer. **Import show** loads one back in, after asking you to confirm, because it replaces the
-  current show. Files from older versions of the app are upgraded automatically.
+- **Your show:** the **Your show** card has **Shows…**, which opens the show list (see Saving), and **Export show**.
+
+### Venues
+
+If you play the same show in different places, each with its own lights on its own DMX addresses, give each place a
+**venue**. Your looks and sequences belong to the show and go with it; each venue has its own lights and groups. The
+rig on Setup is always the venue you are at now, named at the top of the screen and in the **venue picker** beside
+the show name in the top bar.
+
+1. In the **Venues** card on Setup, type a name under **New venue**. Choose **Start with: the lights here** to copy
+   this venue's lights (then change their addresses there), or **No lights** to start from nothing. Press **Add
+   venue**.
+2. Press **Switch here** on a venue (or pick it in the venue picker). The app says how many lights match one there
+   and which do not, and asks before it switches.
+3. Set up the lights there as usual: add, remove, re-address, group.
+
+When you switch, each light is matched to one of the same fixture and mode at the other venue: the same light first
+(in a copied venue), then one with the same name, then the next of its kind. Looks and sequence blocks move onto the
+matched lights' addresses. A light with no match there loses nothing: what your looks do with it is kept aside and
+comes back when you switch to a venue that has it. Rename a venue by editing its name; remove one with the bin (not
+the one you are at). Output settings (cable, Art-Net and so on) are the same for every venue.
 
 Make sure each fixture's real DMX address and mode match what is shown here.
 
@@ -405,11 +423,25 @@ them back.
   the show from a phone or tablet on the same network (the server must be set to listen beyond this computer: see the
   [install guide](INSTALL.md#control-it-from-a-phone-or-tablet)).
 
-## 10. Saving
+## 10. Saving, and other shows
 
-Your show (fixtures, looks, sequences) saves automatically a moment after each change. The top bar shows
-_Unsaved_, _Saving…_ or _Saved_. The data lives in `server/data/project.json` on the machine running the server, and the previous save is kept as
-`project.json.bak`.
+Your show (venues, fixtures, looks, sequences) saves automatically a moment after each change. The top bar shows
+_Unsaved_, _Saving…_ or _Saved_. There is no Save button to remember.
+
+Press **Shows** beside the show name in the top bar (or **Shows…** on Setup) to see the show list:
+
+- **Open now:** the show you are working on, with **Export to a file** (a backup, or to take it to another computer)
+  and **Import a show file**. An imported show opens as a show of its own; the one you were on goes to the list.
+- **Save as:** keeps the show as it is now in the list, and carries on in a copy with the new name.
+- **New show:** starts an empty show with that name; the one you were on goes to the list.
+- **Your other shows:** **Open** one to work on it (the one you were on goes to the list, saved), or delete one with
+  the bin. A show only exists once: in the list, or open.
+
+Opening another show stops whatever is playing. Rename the open show by editing its name in the top bar.
+
+The open show lives in `server/data/project.json` on the machine running the server (the previous save is kept as
+`project.json.bak`), and the others in `server/data/shows/`. Files from older versions of the app are upgraded
+automatically.
 
 ## Current limits
 

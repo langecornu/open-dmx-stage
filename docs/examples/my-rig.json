@@ -1,6 +1,12 @@
 {
-  "schemaVersion": 5,
+  "schemaVersion": 6,
+  "id": "1b965a94-97fc-4823-95fa-b68d2e7a99a3",
   "name": "My rig (starter)",
+  "venue": {
+    "id": "main",
+    "name": "My venue"
+  },
+  "venues": [],
   "fixtureTypes": [],
   "fixtures": [
     {

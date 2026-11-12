@@ -2,6 +2,7 @@
 // moves its looks and blocks onto that rig's addresses.
 import { describe, expect, it } from 'vitest';
 
+import { matchLights } from '../../shared/lightMatch.js';
 import { buildPatch } from '../../shared/patch.js';
 import {
   CURRENT_SEQUENCE_FILE_VERSION,
@@ -9,7 +10,6 @@ import {
   checkSequenceFile,
   exportSequence,
   importSequence,
-  matchLights,
   sequenceDownload,
 } from '../../src/utils/sequenceFile.js';
 import { BUILTIN_TYPES } from './fixtures.js';

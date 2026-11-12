@@ -1,4 +1,6 @@
 // zod schemas for the project document, live socket messages and imports. Unknown keys are rejected.
+import { randomUUID } from 'node:crypto';
+
 import { z } from 'zod';
 
 import { AUTO_BEATS, AUTO_ORDERS, AUTO_SOURCES } from '../../shared/autoShow.js';
@@ -6,6 +8,7 @@ import { EFFECT_BEATS, EFFECT_TYPES, MAX_BPM, MIN_BPM } from '../../shared/effec
 import { CAPABILITY_TYPES } from '../../shared/capabilities.js';
 import { DEVICE_CATEGORIES } from '../../shared/categories.js';
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
+import { FIRST_VENUE, MAX_VENUES } from '../../shared/venues.js';
 import { BLOCK_EFFECTS, MAX_SEQUENCE_UNITS, MIN_BLOCK_BEATS, TRANSITIONS } from '../../shared/timeline.js';
 import { HOST_HELP, isAllowedHost } from '../utils/networkHost.js';
 
@@ -67,17 +70,34 @@ const channelKey = z
   .regex(/^[1-9]\d{0,2}$/)
   .refine((key) => Number(key) <= DMX_CHANNELS, 'DMX channel must be 1-512');
 
+/** A channel of a light counted from its first, 0 to 511. */
+const offsetKey = z
+  .string()
+  .regex(/^(0|[1-9]\d{0,2})$/)
+  .refine((key) => Number(key) < DMX_CHANNELS, 'Channel offset must be 0-511');
+
+/** A look's values for a light the active venue does not have, kept until a venue has it again. */
+const parkedLightSchema = z
+  .object({
+    kind: z.string().max(140), // fixture type and mode, so the values only return to the same kind of light
+    values: z.record(offsetKey, dmxValue).refine((values) => Object.keys(values).length <= DMX_CHANNELS),
+  })
+  .strict();
+
 export const sceneSchema = z
   .object({
     id,
     name: label,
     values: z.record(channelKey, dmxValue).refine((values) => Object.keys(values).length <= DMX_CHANNELS),
+    parked: z
+      .record(id, parkedLightSchema)
+      .refine((parked) => Object.keys(parked).length <= 256)
+      .optional(),
   })
   .strict();
 
 /** Bump with every change to the saved show format, and add a migration in server/services/projectMigrations.js. */
-export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (5);
-
+export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (6);
 
 export const groupSchema = z.object({ id, name: label, fixtureIds: z.array(id).max(256) }).strict();
 
@@ -93,7 +113,10 @@ export const timelineBlockSchema = z
     id,
     fixtureId: id,
     start: z.number().min(0).max(MAX_SEQUENCE_UNITS),
-    length: z.number().min(MIN_BLOCK_BEATS / 4).max(MAX_SEQUENCE_UNITS),
+    length: z
+      .number()
+      .min(MIN_BLOCK_BEATS / 4)
+      .max(MAX_SEQUENCE_UNITS),
     color: hexColour,
     intensity: percent,
     transition: z.enum(TRANSITIONS),
@@ -138,11 +161,29 @@ export const chaseSchema = z
   })
   .strict();
 
+/** A rig that is not the active one: its lights and groups, waiting for the show to move there. */
+export const venueSchema = z
+  .object({
+    id,
+    name: label,
+    fixtures: z.array(fixtureSchema).max(256),
+    groups: z.array(groupSchema).max(100),
+  })
+  .strict();
 
 export const projectSchema = z
   .object({
     schemaVersion: z.literal(CURRENT_SCHEMA_VERSION),
+    id: id.default(() => randomUUID()), // tells saved shows apart in the show list
     name: label,
+    venue: z
+      .object({ id, name: label })
+      .strict()
+      .default({ ...FIRST_VENUE }), // the active venue: fixtures and groups
+    venues: z
+      .array(venueSchema)
+      .max(MAX_VENUES - 1)
+      .default([]), // the other venues
     fixtureTypes: z.array(fixtureTypeSchema).max(200),
     fixtures: z.array(fixtureSchema).max(256),
     scenes: z.array(sceneSchema).max(500),
@@ -150,6 +191,9 @@ export const projectSchema = z
     groups: z.array(groupSchema).max(100),
   })
   .strict();
+
+/** The name for a new show, or for a copy saved under another name. */
+export const showNameSchema = z.object({ name: label }).strict();
 
 export const liveMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('set'), values: z.record(channelKey, dmxValue) }).strict(),
@@ -229,7 +273,10 @@ export const outputSettingsSchema = z
 export function createEmptyProject() {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
+    id: randomUUID(),
     name: 'Untitled show',
+    venue: { ...FIRST_VENUE },
+    venues: [],
     fixtureTypes: [],
     fixtures: [],
     scenes: [],

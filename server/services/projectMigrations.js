@@ -3,6 +3,7 @@
 // loads an old file.
 import { randomUUID } from 'node:crypto';
 
+import { FIRST_VENUE } from '../../shared/venues.js';
 import { CURRENT_SCHEMA_VERSION } from '../schemas/projectSchema.js';
 import { httpError } from '../utils/httpError.js';
 
@@ -97,12 +98,21 @@ export function mergeTimelinesIntoSequences(project) {
   };
 }
 
+/**
+ * Version 5 to 6: shows get an id, for the show list, and venues. The rig a show has becomes its first venue.
+ * @param {Record<string, any>} project
+ */
+export function addVenues(project) {
+  return { ...project, id: project.id ?? randomUUID(), venue: { ...FIRST_VENUE }, venues: [] };
+}
+
 /** Ordered migrations: each takes a project at version `from` and returns one at version `to`. */
 const MIGRATIONS = [
   { from: 1, to: 2, up: addChaseStepIds },
   { from: 2, to: 3, up: addGroupsAndBeatTiming },
   { from: 3, to: 4, up: addTimelines },
   { from: 4, to: 5, up: mergeTimelinesIntoSequences },
+  { from: 5, to: 6, up: addVenues },
 ];
 
 /**

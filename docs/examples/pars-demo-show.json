@@ -1,6 +1,12 @@
 {
-  "schemaVersion": 5,
+  "schemaVersion": 6,
+  "id": "e661ba05-13a3-47f9-b54a-83d8a7082a3e",
   "name": "Demo light show",
+  "venue": {
+    "id": "main",
+    "name": "My venue"
+  },
+  "venues": [],
   "fixtureTypes": [],
   "fixtures": [
     {

@@ -8,7 +8,6 @@ export const BEATS_PER_BAR = 4;
 /** Lengths offered in the editor, in bars of four beats. Any whole number of bars up to the maximum is valid. */
 export const TIMELINE_BARS = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64];
 
-
 /** The shortest block, and the finest grid step, in beats. */
 export const MIN_BLOCK_BEATS = 0.25;
 

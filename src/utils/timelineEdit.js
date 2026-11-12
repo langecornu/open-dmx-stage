@@ -167,7 +167,6 @@ export function timelineGradient(timeline) {
   return colours.length === 1 ? colours[0] : `linear-gradient(120deg, ${colours.slice(0, 8).join(', ')})`;
 }
 
-
 /**
  * Copies of the selected blocks placed straight after them, so a pattern carries on: blocks covering beats 1 to 4 are
  * copied to 5 to 8, keeping their lights, gaps and looks. Copies that would run past the end are left out.

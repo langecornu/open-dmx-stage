@@ -3,6 +3,8 @@
 // the same fixture type and mode in rig order) and moves every look value and block onto the matched lights' addresses,
 // so a sequence made for one venue plays at another where the lights sit on other channels. Pure, so the rules are
 // easy to test.
+import { matchLights } from '../../shared/lightMatch.js';
+
 export const SEQUENCE_FILE_FORMAT = 'open-dmx-stage.sequence';
 
 /** Bump when the file changes shape, and keep reading older files. */
@@ -41,39 +43,6 @@ export function exportSequence(project, sequence, patch) {
         return { id, name, typeId, mode, address, channels, ...(category ? { category } : {}) };
       }),
   };
-}
-
-/**
- * Which light of the rig each light of the file becomes: the same name and kind first, then the next light of the same
- * kind (fixture type and mode) in rig order.
- * @param {{ id: string, name: string, typeId: string, mode: number }[]} from the file's lights
- * @param {{ id: string, name: string, typeId: string, mode: number }[]} to the rig
- * @returns {Map<string, { id: string, address: number }>}
- */
-export function matchLights(from, to) {
-  const kind = (light) => `${light.typeId}:${light.mode}`;
-  const taken = new Set();
-  const matches = new Map();
-  for (const light of from) {
-    const same = to.find(
-      (target) => !taken.has(target.id) && target.name === light.name && kind(target) === kind(light),
-    );
-    if (same) {
-      taken.add(same.id);
-      matches.set(light.id, same);
-    }
-  }
-  for (const light of from) {
-    if (matches.has(light.id)) {
-      continue;
-    }
-    const next = to.find((target) => !taken.has(target.id) && kind(target) === kind(light));
-    if (next) {
-      taken.add(next.id);
-      matches.set(light.id, next);
-    }
-  }
-  return matches;
 }
 
 /**
