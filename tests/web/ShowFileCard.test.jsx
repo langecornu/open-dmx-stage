@@ -17,7 +17,7 @@ describe('ShowFileCard', () => {
     const user = userEvent.setup();
     const onOpenShows = vi.fn();
     render(<ShowFileCard onOpenShows={onOpenShows} />);
-    await user.click(screen.getByRole('button', { name: /Shows/ }));
+    await user.click(screen.getByRole('button', { name: /Open File/ }));
     expect(onOpenShows).toHaveBeenCalled();
   });
 });

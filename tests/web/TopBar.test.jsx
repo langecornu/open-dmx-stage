@@ -39,7 +39,7 @@ describe('TopBar', () => {
         { id: 'club', name: 'Club', isActive: false },
       ],
     });
-    await user.click(screen.getByRole('button', { name: 'Shows' }));
+    await user.click(screen.getByRole('button', { name: 'File' }));
     expect(onOpenShows).toHaveBeenCalled();
     const picker = screen.getByRole('combobox', { name: 'Venue' });
     expect(picker).toHaveValue('main');

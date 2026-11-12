@@ -315,7 +315,7 @@ Use **Setup** to manage your fixtures.
 - **Groups:** once you have lights, a **Groups** card lets you name sets of them, such as a front row, by ticking the
   lights in each. Effects on the Perform screen can run on just one group. Lights that are in no group are named under
   the groups, so lights added later are easy to spot.
-- **Your show:** the **Your show** card has **Shows…**, which opens the show list (see Saving), and **Export show**.
+- **Your show:** the **Your show** card has **Open File** (see File) and **Export show**.
 
 ### Venues
 
@@ -465,25 +465,24 @@ Play the song from your deck, start the sequence on its first downbeat (from Per
 What is sent to Anthropic: your lights' names, fixtures and controls, your choices, and the song's numbers. Nothing else
 from your show, and never the audio.
 
-## 10. Saving, and other shows
+## 10. File: save and open shows
 
-Your show (venues, fixtures, looks, sequences) saves automatically a moment after each change. The top bar shows
-_Unsaved_, _Saving…_ or _Saved_. There is no Save button to remember.
+Your show (venues, fixtures, looks, sequences) saves itself a moment after each change; the top bar shows _Unsaved_,
+_Saving…_ or _Saved_. **File** (in the sidebar under Home, or the **File** button beside the show name) keeps your list
+of shows:
 
-Press **Shows** beside the show name in the top bar (or **Shows…** on Setup) to see the show list:
+- **Save:** the **Name** starts as the show's name from the top bar. Pick a folder in the **Save in** tree (the top is
+  **Shows**), or make one with **New folder** (inside the selected folder), then press **Save**. The show gets that
+  name and its place in the list; saving again updates it, and saving in another folder moves it there.
+- **Open:** every saved show, grouped by folder, with its venue (and how many more it has), its fixtures, looks,
+  sequences and when it was saved. **Open** one to work on it: the show you were on is saved to its place in the list
+  first, and whatever is playing stops. The open show is marked **Open now**. Delete a saved show with the bin.
+- **More:** **New show** starts an empty show with that name (the one you were on is saved to the list first).
+  **Export to a file** saves a copy anywhere (a USB stick, another computer); **Import a show file** opens one and adds
+  it to the list. Files from older versions of the app are upgraded automatically.
 
-- **Open now:** the show you are working on, with **Export to a file** (a backup, or to take it to another computer)
-  and **Import a show file**. An imported show opens as a show of its own; the one you were on goes to the list.
-- **Save as:** keeps the show as it is now in the list, and carries on in a copy with the new name.
-- **New show:** starts an empty show with that name; the one you were on goes to the list.
-- **Your other shows:** **Open** one to work on it (the one you were on goes to the list, saved), or delete one with
-  the bin. A show only exists once: in the list, or open.
-
-Opening another show stops whatever is playing. Rename the open show by editing its name in the top bar.
-
-The open show lives in `server/data/project.json` on the machine running the server (the previous save is kept as
-`project.json.bak`), and the others in `server/data/shows/`. Files from older versions of the app are upgraded
-automatically.
+The folders are in the app's own show list, on the computer running Open DMX Stage: the open show is in
+`server/data/project.json` (the previous save is kept as `project.json.bak`) and the saved ones in `server/data/shows/`.
 
 ## Current limits
 

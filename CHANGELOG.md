@@ -18,10 +18,12 @@ the project follows [Semantic Versioning](https://semver.org/).
   and can be removed in one go. Uses your own Anthropic API key, pasted once on the new **Settings** screen and never
   shown again (or `ANTHROPIC_API_KEY` on the server). See ADR 0007.
 - When a save fails because the app was updated while the page was open, it now says to reload the page.
-- **Shows: open, new, save as, import**: a **Shows** button beside the show name opens the show list. Open another
-  show, start a **New show**, **Save as** to carry on in a copy under another name, delete a show, export the open one
-  or import a file. Importing a file now adds it as a show of its own instead of replacing yours, and the show you
-  were on always goes to the list, saved. The other shows live in `server/data/shows/`.
+- **File**: a new screen under Home (also the **File** button beside the show name). **Save** keeps the show in your
+  list under its name, in a folder you pick from a tree (make folders inside folders); **Open** lists every saved show
+  by folder with its venue, fixtures, looks, sequences and when it was saved. **New show**, **Export to a file** and
+  **Import a show file** are there too. Opening, starting or importing a show saves the one you were on to the list
+  first, and an imported file is added as a show of its own instead of replacing yours. Saved shows live in
+  `server/data/shows/`.
 - **Venues**: one show, several rigs. Each venue has its own lights, addresses and groups; looks and sequences are
   shared. Add a venue empty or as a copy of this one, then switch with the venue picker in the top bar or the new
   **Venues** card on Setup. Switching says which lights match, then moves looks and blocks onto that venue's addresses;

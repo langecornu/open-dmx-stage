@@ -273,8 +273,17 @@ export const aiGenerateSchema = z
   })
   .strict();
 
-/** The name for a new show, or for a copy saved under another name. */
+/** The name for a new show. */
 export const showNameSchema = z.object({ name: label }).strict();
+
+/** A folder in the show list, as "Clubs/Montreal"; "" is the top. Checked further by the show library. */
+const showFolder = z.string().max(400).default('');
+
+/** File > Save: the show's name, and the folder to keep it in. */
+export const showSaveSchema = z.object({ name: label, folder: showFolder }).strict();
+
+/** A folder to make or remove in the show list. */
+export const showFolderSchema = z.object({ folder: showFolder }).strict();
 
 export const liveMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('set'), values: z.record(channelKey, dmxValue) }).strict(),

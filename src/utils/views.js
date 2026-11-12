@@ -3,6 +3,7 @@
 /** @type {{ id: string, label: string, icon: string, group: 'Show' | 'Rig', summary: string }[]} */
 export const VIEWS = [
   { id: 'home', label: 'Home', icon: 'home', group: 'Show', summary: 'Status, quick launch and next steps' },
+  { id: 'file', label: 'File', icon: 'folder', group: 'Show', summary: 'Save this show, open another' },
   { id: 'control', label: 'Lights', icon: 'control', group: 'Show', summary: 'Colour and brightness by hand' },
   { id: 'scenes', label: 'Looks', icon: 'scenes', group: 'Show', summary: 'Save and recall looks' },
   { id: 'chases', label: 'Sequences', icon: 'chases', group: 'Show', summary: 'Chain looks into a show' },

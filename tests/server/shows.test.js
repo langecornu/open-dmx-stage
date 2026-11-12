@@ -1,5 +1,5 @@
-// Integration tests for the show list: opening, starting, saving under another name, deleting and importing shows,
-// with the show being worked on in project.json and the others in the shows folder.
+// Integration tests for File: saving the show being worked on into folders, opening, starting, deleting and importing
+// shows, with the open show in project.json and the saved ones in the shows folder.
 import assert from 'node:assert/strict';
 import { mkdtemp, readdir, rm, writeFile, mkdir } from 'node:fs/promises';
 import { createServer } from 'node:http';
@@ -62,66 +62,102 @@ const clubShow = {
   groups: [],
 };
 
-describe('Show list', () => {
-  it('starts a new show, keeping the one being worked on in the list', async () => {
+describe('File: save and open shows, in folders', () => {
+  it('saves the show being worked on under a name, in a folder it makes, and lists it with its details', async () => {
     assert.equal((await call('PUT', '/project', clubShow)).status, 200);
-    const created = await call('POST', '/shows/new', { name: 'Wedding' });
-    assert.equal(created.status, 200);
-    assert.equal(created.body.name, 'Wedding');
-    assert.equal(created.body.fixtures.length, 0);
-    assert.notEqual(created.body.id, 'club-show');
+    const saved = await call('POST', '/shows/save', { name: 'Club night', folder: 'Clubs/Montréal' });
+    assert.equal(saved.status, 200);
+    assert.deepEqual([saved.body.project.name, saved.body.folder], ['Club night', 'Clubs/Montréal']);
     const list = await call('GET', '/shows');
-    assert.equal(list.body.current.name, 'Wedding');
+    assert.deepEqual(list.body.folders, ['Clubs', 'Clubs/Montréal']);
     assert.deepEqual(
-      list.body.shows.map((show) => [show.id, show.name, show.lights, show.looks]),
-      [['club-show', 'Club night', 1, 1]],
+      list.body.shows.map((show) => [
+        show.id,
+        show.name,
+        show.folder,
+        show.venue,
+        show.lights,
+        show.looks,
+        show.sequences,
+      ]),
+      [['club-show', 'Club night', 'Clubs/Montréal', 'My venue', 1, 1, 0]],
+    );
+    assert.equal(list.body.current.folder, 'Clubs/Montréal', 'the open show knows where it is saved');
+    assert.ok(list.body.current.savedAt);
+  });
+
+  it('moves a show to another folder when saved there, keeping one copy', async () => {
+    await call('POST', '/shows/save', { name: 'Club night', folder: 'Clubs' });
+    const shows = (await call('GET', '/shows')).body.shows;
+    assert.deepEqual(
+      shows.map((show) => [show.id, show.folder]),
+      [['club-show', 'Clubs']],
     );
   });
 
-  it('opens a show from the list, swapping it with the one being worked on, and stops what was playing', async () => {
+  it('starts a new show, saving the one being worked on to its place first', async () => {
+    await call('PUT', '/project', {
+      ...clubShow,
+      scenes: [...clubShow.scenes, { id: 's2', name: 'Blue', values: { 3: 255 } }],
+    });
+    const created = await call('POST', '/shows/new', { name: 'Wedding' });
+    assert.equal(created.status, 200);
+    assert.equal(created.body.fixtures.length, 0);
+    const list = await call('GET', '/shows');
+    assert.equal(list.body.current.name, 'Wedding');
+    assert.equal(list.body.current.folder, null, 'not saved yet');
+    const club = list.body.shows.find((show) => show.id === 'club-show');
+    assert.deepEqual([club.folder, club.looks], ['Clubs', 2], 'saved where it was, with the latest changes');
+  });
+
+  it('opens a saved show, which stays in the list, and stops what was playing', async () => {
     engine.recallScene({ id: 'x', name: 'X', values: { 1: 255 } });
     const opened = await call('POST', '/shows/club-show/open');
     assert.equal(opened.status, 200);
     assert.equal(opened.body.name, 'Club night');
-    assert.equal(engine.getState().activeSceneId, null, 'the old show stopped playing');
+    assert.equal(engine.getState().activeSceneId, null);
     const list = await call('GET', '/shows');
     assert.equal(list.body.current.id, 'club-show');
     assert.deepEqual(
-      list.body.shows.map((show) => show.name),
-      ['Wedding'],
-      'the show that was open went to the list, and the opened one is not listed twice',
+      list.body.shows.map((show) => show.name).sort(),
+      ['Club night', 'Wedding'],
+      'Wedding was kept because it was named; Club night is still listed',
     );
   });
 
-  it('saves under another name and carries on in the copy, keeping the original in the list', async () => {
-    const copy = await call('POST', '/shows/save-as', { name: 'Club night (summer)' });
-    assert.equal(copy.status, 200);
-    assert.equal(copy.body.name, 'Club night (summer)');
-    assert.notEqual(copy.body.id, 'club-show');
-    assert.deepEqual(copy.body.scenes, clubShow.scenes, 'the copy has everything');
-    const names = (await call('GET', '/shows')).body.shows.map((show) => show.name);
-    assert.ok(names.includes('Club night'));
-    assert.equal((await call('POST', '/shows/save-as', { name: '' })).status, 400, 'a name is needed');
-  });
-
-  it('imports a show file as a new show, keeping the current one, even when the file is imported twice', async () => {
+  it('imports a show file as a new show in the list, even when the same file is imported twice', async () => {
     const first = await call('POST', '/project/import', { ...clubShow, name: 'From a friend' });
     const second = await call('POST', '/project/import', { ...clubShow, name: 'From a friend' });
     assert.equal(first.status, 200);
     assert.notEqual(first.body.id, second.body.id);
-    assert.notEqual(first.body.id, 'club-show', 'an imported file does not overwrite a show in the list');
-    const names = (await call('GET', '/shows')).body.shows.map((show) => show.name);
-    assert.ok(names.includes('Club night (summer)'));
-    assert.ok(names.includes('From a friend'));
+    assert.notEqual(first.body.id, 'club-show', 'an imported file does not overwrite a saved show');
+    const friends = (await call('GET', '/shows')).body.shows.filter((show) => show.name === 'From a friend');
+    assert.equal(friends.length, 2);
+    assert.ok(friends.every((show) => show.folder === ''));
   });
 
-  it('deletes a show from the list, but not the one being worked on', async () => {
+  it('deletes a saved show, but not the one being worked on', async () => {
     const current = (await call('GET', '/shows')).body.current.id;
     assert.equal((await call('DELETE', `/shows/${current}`)).status, 409);
     assert.equal((await call('DELETE', '/shows/club-show')).status, 200);
     const ids = (await call('GET', '/shows')).body.shows.map((show) => show.id);
     assert.equal(ids.includes('club-show'), false);
     assert.equal((await call('POST', '/shows/club-show/open')).status, 404);
+  });
+
+  it('makes and removes folders, refusing one that is not empty, and names that could leave the list', async () => {
+    assert.deepEqual(
+      (await call('POST', '/shows/folders', { folder: 'Weddings/2027' })).body.folders.includes('Weddings/2027'),
+      true,
+    );
+    assert.equal((await call('DELETE', '/shows/folders', { folder: 'Weddings' })).status, 409);
+    assert.equal((await call('DELETE', '/shows/folders', { folder: 'Weddings/2027' })).status, 200);
+    assert.equal((await call('DELETE', '/shows/folders', { folder: 'Weddings' })).status, 200);
+    for (const folder of ['../outside', '.hidden', 'a/'.repeat(6) + 'b', 'bad\\name']) {
+      assert.equal((await call('POST', '/shows/folders', { folder })).status, 400, folder);
+      assert.equal((await call('POST', '/shows/save', { name: 'X', folder })).status, 400, folder);
+    }
+    assert.equal((await call('POST', '/shows/folders', { folder: '' })).status, 400);
   });
 
   it('refuses ids that are not show ids, and lists a damaged file without breaking the list', async () => {

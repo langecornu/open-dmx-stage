@@ -25,14 +25,16 @@ import {
   aiKeySchema,
   createEmptyProject,
   projectSchema,
+  showFolderSchema,
   showNameSchema,
+  showSaveSchema,
 } from '../schemas/projectSchema.js';
 import { BUILTIN_FIXTURE_TYPES, convertOpenFixtureLibrary, oflFixtureId } from '../services/fixtureLibrary.js';
 import { summariseOflFixture } from '../services/oflDetails.js';
 import { convertQlcPlus } from '../services/qlcImporter.js';
 import { migrateProject } from '../services/projectMigrations.js';
 import { AiKeyStore } from '../services/aiKeyStore.js';
-import { ShowLibrary, isEmptyShow, summariseShow } from '../services/showLibrary.js';
+import { ShowLibrary, checkFolder, isEmptyShow, summariseShow } from '../services/showLibrary.js';
 import { checkApiKey, generateShow } from '../services/showGenerator.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { httpError } from '../utils/httpError.js';
@@ -150,15 +152,35 @@ export function createApiRouter({
     }),
   );
 
-  // The show list: the show being worked on, then the others, newest first.
+  // File: the saved shows in their folders, and the show being worked on (with where it is saved, if it is).
   router.get(
     '/shows',
     asyncHandler(async (_req, res) => {
       const current = projectService.get();
+      const { folders, shows: saved } = await shows.list();
+      const savedCopy = saved.find((show) => show.id === current.id);
       res.json({
-        current: summariseShow(current, null),
-        shows: (await shows.list()).filter((show) => show.id !== current.id),
+        current: {
+          ...summariseShow(current),
+          folder: savedCopy ? savedCopy.folder : null,
+          savedAt: savedCopy?.savedAt ?? null,
+        },
+        shows: saved,
+        folders,
       });
+    }),
+  );
+
+  // Save: names the show being worked on and puts it in the list, in a folder (moving it there if it was saved
+  // elsewhere). It carries on saving itself as before.
+  router.post(
+    '/shows/save',
+    validateBody(showSaveSchema),
+    asyncHandler(async (req, res) => {
+      const folder = checkFolder(req.body.folder);
+      const renamed = await projectService.save({ ...projectService.get(), name: req.body.name });
+      await shows.write(renamed, folder);
+      res.json({ project: renamed, folder });
     }),
   );
 
@@ -170,9 +192,7 @@ export function createApiRouter({
         res.json(projectService.get());
         return;
       }
-      const opened = await takeTheStage(await shows.read(id));
-      await shows.remove(id);
-      res.json(opened);
+      res.json(await takeTheStage(await shows.read(id)));
     }),
   );
 
@@ -184,12 +204,21 @@ export function createApiRouter({
     }),
   );
 
-  // Keeps the show as it is now in the list, and carries on in a copy under the new name.
   router.post(
-    '/shows/save-as',
-    validateBody(showNameSchema),
+    '/shows/folders',
+    validateBody(showFolderSchema),
     asyncHandler(async (req, res) => {
-      res.json(await takeTheStage({ ...projectService.get(), id: randomUUID(), name: req.body.name }));
+      await shows.createFolder(checkFolder(req.body.folder));
+      res.json({ folders: (await shows.list()).folders });
+    }),
+  );
+
+  router.delete(
+    '/shows/folders',
+    validateBody(showFolderSchema),
+    asyncHandler(async (req, res) => {
+      await shows.removeFolder(checkFolder(req.body.folder));
+      res.json({ folders: (await shows.list()).folders });
     }),
   );
 
@@ -197,8 +226,9 @@ export function createApiRouter({
     '/shows/:id',
     asyncHandler(async (req, res) => {
       const id = String(req.params.id);
+      ShowLibrary.checkId(id);
       if (id === projectService.get().id) {
-        throw httpError(409, 'Open another show before deleting this one.');
+        throw httpError(409, 'This show is open. Open another show before deleting it from the list.');
       }
       await shows.remove(id);
       res.json({ ok: true });
@@ -225,8 +255,8 @@ export function createApiRouter({
     res.type('application/json').send(JSON.stringify(projectService.get(), null, 2));
   });
 
-  // Opens an uploaded show file of any supported version (older files are migrated). The show being worked on moves to
-  // the show list, and the imported one gets an id of its own, so importing the same file twice keeps both.
+  // Opens an uploaded show file of any supported version (older files are migrated). The show being worked on is saved
+  // to the list first, and the imported one gets an id of its own, so importing the same file twice keeps both.
   router.post(
     '/project/import',
     asyncHandler(async (req, res) => {
@@ -234,7 +264,9 @@ export function createApiRouter({
       if (!parsed.success) {
         throw httpError(400, 'That file is not a valid Open DMX Stage show.');
       }
-      res.json(await takeTheStage({ ...parsed.data, id: randomUUID() }, { replaceNewerShow: true }));
+      const opened = await takeTheStage({ ...parsed.data, id: randomUUID() }, { replaceNewerShow: true });
+      await shows.write(opened); // listed under File > Open, at the top
+      res.json(opened);
     }),
   );
 

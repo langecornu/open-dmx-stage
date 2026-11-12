@@ -1,4 +1,4 @@
-// Top bar: show name with the show list, the venue, status, master brightness, theme switch and blackout.
+// Top bar: show name with File (save and open), the venue, status, master brightness, theme switch and blackout.
 import { describeOutput } from '../utils/outputStatus.js';
 import { Icon } from './Icon.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
@@ -38,7 +38,7 @@ export function TopBar({
       {onOpenShows ? (
         <button type="button" className="btn btn-ghost btn-compact topbar-shows" onClick={onOpenShows}>
           <Icon name="folder" size={16} />
-          <span className="btn-label">Shows</span>
+          <span className="btn-label">File</span>
         </button>
       ) : null}
       {venues.length > 0 ? (
