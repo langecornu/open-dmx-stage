@@ -67,8 +67,11 @@ export function networkAddresses() {
     .flat()
     .filter((entry) => entry && entry.family === 'IPv4' && !entry.internal)
     .map((entry) => /** @type {os.NetworkInterfaceInfo} */ (entry).address);
+  // The name nearby devices find it by is its first label plus .local (MorpheusMacmini.local), even when the router
+  // gives it a longer one (MorpheusMacmini.askey.com).
   const name = os.hostname();
-  return [...addresses, name, name.endsWith('.local') ? name : `${name}.local`];
+  const local = `${name.split('.')[0]}.local`;
+  return [...new Set([...addresses, name, local])];
 }
 
 /**
