@@ -80,7 +80,11 @@ export function FileView({ project, flush, replaceProject }) {
     setName(project.name);
   }, [project.name, project.id]);
   useEffect(() => {
-    refresh().then((next) => setFolder(next?.current.folder ?? TOP));
+    let isCurrent = true;
+    refresh().then((next) => isCurrent && setFolder(next?.current.folder ?? TOP));
+    return () => {
+      isCurrent = false;
+    };
   }, [refresh, project.id]);
 
   const run = async (action, done) => {

@@ -22,6 +22,11 @@ export default [
     languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: globals.node },
   },
   {
+    // Shared code runs in both the browser and Node, so it may only use what both have.
+    files: ['shared/**/*.js'],
+    languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: { structuredClone: 'readonly' } },
+  },
+  {
     // All server output goes through server/logger.js (Standards 4.1).
     files: ['server/**/*.js'],
     rules: { 'no-console': 'error' },

@@ -228,7 +228,7 @@ export function removeVenue(project, venueId) {
 
 /** A deep copy of plain show data. */
 /** @template T @param {T} value @returns {T} */
-const copy = (value) => JSON.parse(JSON.stringify(value));
+const copy = (value) => structuredClone(value);
 
 /**
  * A venue name not already used in the show: "Club" becomes "Club 2" when there is a Club.
