@@ -11,8 +11,10 @@ costs the owner money, a description of the rig, and some knowledge of the song.
 ## Decision
 
 - **Claude through the official Anthropic SDK, on the server only.** The browser never talks to Anthropic and never sees
-  the key. The model is `claude-opus-5-5` with medium effort, streamed, with server-side refusal fallbacks
-  (`fallbacks: "default"`).
+  the key. The person picks the model for each generation: Claude Haiku 5.5, Sonnet 5.5 or Opus 5.5 (the default),
+  with an estimate of its cost from the number of lights, looks and sequences and the song's length. It runs at medium
+  effort, streamed, with up to 128,000 output tokens, and with server-side refusal fallbacks (`fallbacks: "default"`)
+  on Sonnet and Opus; Haiku has none, so a request it declines says so.
 - **A write-only key.** It is pasted once on Settings, checked with Anthropic, and stored in `server/data/secrets.json`
   with permissions for the owner only (the data folder's JSON files are git-ignored). No route returns it; the page only
   learns whether a key is saved. `ANTHROPIC_API_KEY` in the environment takes precedence.

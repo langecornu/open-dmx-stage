@@ -7,6 +7,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Choose the AI model** for each AI show: Claude Haiku 5.5 (fastest and cheapest), Sonnet 5.5 (balanced) or Opus
+  5.5 (the default, most careful), each with a rough cost estimate for this rig and song before you press Generate.
+  The cost shown afterwards is at the prices of the model that answered. A big rig no longer runs out of room: answers
+  may use up to 128,000 tokens.
 - **Decks on Perform**: two DJ decks that play the music folder on the computer running the app (`~/Music` until you
   choose another) out of the device showing them. Each deck has a spinning platter in a ring of lights that runs round
   once a bar and flashes on the beat, a waveform to scrub, Cue, Play/Pause, Sync and a ±8 % tempo fader; a mixer has

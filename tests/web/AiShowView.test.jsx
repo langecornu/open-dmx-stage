@@ -84,6 +84,7 @@ function Harness({ initial = start }) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  localStorage.clear();
   navigate = vi.fn();
   flush = vi.fn().mockResolvedValue(undefined);
   api.getAiSettings.mockResolvedValue({ hasKey: true, source: 'saved' });
@@ -108,17 +109,51 @@ describe('AiShowView', () => {
     await user.click(screen.getByRole('button', { name: 'Generate the show' }));
     expect(flush).toHaveBeenCalled();
     expect(api.generateShow).toHaveBeenCalledWith(
-      expect.objectContaining({ auto: true, looks: 8, sequences: 2, bars: 16, song: null }),
+      expect.objectContaining({ auto: true, looks: 8, sequences: 2, bars: 16, song: null, model: 'claude-opus-5-5' }),
     );
     const result = await screen.findByRole('region', { name: 'Added to your show' });
     expect(result).toHaveTextContent('Cool, then hot.');
     expect(result).toHaveTextContent('124 BPM, follows the song');
-    expect(result).toHaveTextContent('about $0.44');
+    expect(result).toHaveTextContent('on Opus 5.5, 44¢ at list prices');
     expect(latest.scenes.map((scene) => scene.name)).toEqual(['Old look', 'Ice']);
     expect(latest.chases.map((chase) => chase.name)).toEqual(['Song']);
     await user.click(within(result).getByRole('button', { name: /Remove these/ }));
     expect(latest.scenes.map((scene) => scene.name)).toEqual(['Old look']);
     expect(latest.chases).toEqual([]);
+  });
+
+  it('offers three models with an estimate for this rig, sends the chosen one, and remembers it', async () => {
+    const user = userEvent.setup();
+    api.generateShow.mockResolvedValue({ ...generated, model: 'claude-haiku-5-5' });
+    const { container } = render(<Harness />);
+    const models = screen.getByRole('group', { name: 'Model' });
+    const opus = within(models).getByRole('radio', { name: /Opus 5\.5/ });
+    expect(opus).toBeChecked();
+    expect(within(models).getAllByRole('radio')).toHaveLength(3);
+    expect(models).toHaveTextContent('for 2 lights, 8 looks and 2 sequences');
+    expect(opus.closest('label')).toHaveTextContent(/about \d+¢ to \d+¢/);
+    expect(screen.getByText(/^Opus 5\.5, about/)).toBeInTheDocument();
+
+    await user.click(within(models).getByRole('radio', { name: /Haiku 5\.5/ }));
+    expect(screen.getByText(/^Haiku 5\.5, under 1¢/)).toBeInTheDocument();
+    expect(localStorage.getItem('odmx-ai-model')).toBe('claude-haiku-5-5');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Generate the show' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: 'Generate the show' }));
+    expect(api.generateShow).toHaveBeenCalledWith(expect.objectContaining({ model: 'claude-haiku-5-5' }));
+    expect(await screen.findByRole('region', { name: 'Added to your show' })).toHaveTextContent(
+      'on Haiku 5.5, 1¢ at list prices',
+    );
+    expect(await accessibilityViolations(container)).toEqual([]);
+  });
+
+  it('starts from the model chosen last time in this browser, or Opus when that is not a model', () => {
+    localStorage.setItem('odmx-ai-model', 'claude-sonnet-5-5');
+    const { unmount } = render(<Harness />);
+    expect(screen.getByRole('radio', { name: /Sonnet 5\.5/ })).toBeChecked();
+    unmount();
+    localStorage.setItem('odmx-ai-model', 'not-a-model');
+    render(<Harness />);
+    expect(screen.getByRole('radio', { name: /Opus 5\.5/ })).toBeChecked();
   });
 
   it('sends the steering choices, offering only what this venue can do', async () => {

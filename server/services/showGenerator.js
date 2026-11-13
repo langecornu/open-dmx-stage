@@ -13,13 +13,12 @@ import Anthropic, {
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { z } from 'zod';
 
+import { DEFAULT_AI_MODEL, aiModel } from '../../shared/aiModels.js';
 import { MAX_AI_BLOCKS, buildGeneratedShow, describeRig, venueFeatures } from '../../shared/aiShow.js';
 import { logger } from '../logger.js';
 import { httpError } from '../utils/httpError.js';
 
 const log = logger.child({ module: 'ai' });
-
-export const AI_MODEL = 'claude-opus-5-5';
 
 /** A setting on a light: a control by its key, with a choice by its label for a control with choices, and a level. */
 const settingSchema = z.object({
@@ -186,7 +185,7 @@ export function explainAiError(error) {
  */
 export async function checkApiKey(apiKey, createClient = (key) => new Anthropic({ apiKey: key })) {
   try {
-    await createClient(apiKey).models.retrieve(AI_MODEL);
+    await createClient(apiKey).models.retrieve(DEFAULT_AI_MODEL);
   } catch (error) {
     log.warn({ status: error instanceof Anthropic.APIError ? error.status : undefined }, 'API key check failed');
     throw explainAiError(error);
@@ -217,12 +216,13 @@ export async function generateShow({
   const { text } = buildRequest(project, builtinTypes, preferences);
   let message;
   try {
-    // Streamed, so a long answer does not hit an HTTP timeout. A request the model declines is retried on a fallback.
+    // Streamed, so a long answer does not hit an HTTP timeout. On models that have one, a request the model declines is
+    // retried on a fallback model. The answer may use the model's full output, so a big rig does not run out of room.
+    const model = aiModel(preferences.model ?? DEFAULT_AI_MODEL);
     const stream = createClient(apiKey).beta.messages.stream({
-      model: AI_MODEL,
-      max_tokens: 64000,
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
+      model: model.id,
+      max_tokens: 128000,
+      ...(model.hasFallback ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' } : {}),
       output_config: { effort: 'medium', format: zodOutputFormat(generatedShowSchema) },
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: text }],
@@ -249,6 +249,7 @@ export async function generateShow({
   const show = buildGeneratedShow(generated, project, builtinTypes, { makeId, tempo });
   log.info(
     {
+      model: message.model,
       looks: show.looks.length,
       sequences: show.sequences.length,
       inputTokens: message.usage.input_tokens,
@@ -258,6 +259,8 @@ export async function generateShow({
   );
   return {
     ...show,
+    // The model that answered, which a fallback may have changed, so the cost shown is at its prices.
+    model: message.model,
     usage: { inputTokens: message.usage.input_tokens, outputTokens: message.usage.output_tokens },
   };
 }

@@ -1935,6 +1935,82 @@ a.btn {
   align-items: center;
 }
 
+/* The model choice: three cards side by side, each with its price for this show. */
+.ai-models {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  width: 100%;
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  border: none;
+}
+
+.ai-models legend {
+  margin-bottom: var(--space-2);
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ai-model {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-3) var(--space-3) 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.ai-model input {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.ai-model[data-selected] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ai-model:has(input:focus-visible) {
+  box-shadow: var(--ring);
+}
+
+.ai-model-name {
+  font-weight: 800;
+}
+
+.ai-model-summary {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.ai-model-cost {
+  color: var(--on-accent-soft);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ai-models-note {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .ai-models {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .ai-looks {
   display: flex;
   flex-wrap: wrap;

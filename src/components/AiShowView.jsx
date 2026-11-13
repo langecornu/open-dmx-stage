@@ -5,17 +5,35 @@
 // follows the song section by section. The new looks and sequences are added to the show, marked as made by AI.
 import { useEffect, useMemo, useState } from 'react';
 
+import {
+  AI_MODELS,
+  DEFAULT_AI_MODEL,
+  aiModel,
+  costOf,
+  estimateCost,
+  formatPrice,
+  formatPriceRange,
+} from '../../shared/aiModels.js';
 import { venueFeatures } from '../../shared/aiShow.js';
 import { api } from '../api.js';
 import { averageColor, fixtureColors } from '../utils/sceneColors.js';
 import { formatTime, plural } from '../utils/format.js';
 import { AiChoicesCard } from './AiChoicesCard.jsx';
+import { AiModelPicker } from './AiModelPicker.jsx';
 import { AiSongCard } from './AiSongCard.jsx';
 import { Icon } from './Icon.jsx';
 
-// Claude Opus 5.5 list prices, US dollars per million tokens, for an estimate shown after each generation.
-const PRICE_IN = 4;
-const PRICE_OUT = 20;
+const MODEL_KEY = 'odmx-ai-model';
+
+/** The model chosen last time in this browser, or the default. */
+function savedModel() {
+  try {
+    const saved = localStorage.getItem(MODEL_KEY);
+    return AI_MODELS.some((model) => model.id === saved) ? /** @type {string} */ (saved) : DEFAULT_AI_MODEL;
+  } catch {
+    return DEFAULT_AI_MODEL; // storage blocked: start from the default each time
+  }
+}
 
 export function AiShowView({ project, library, patch, update, flush, navigate }) {
   const [hasKey, setHasKey] = useState(/** @type {boolean | null} */ (null));
@@ -30,6 +48,7 @@ export function AiShowView({ project, library, patch, update, flush, navigate })
     sequences: 2,
     bars: 16,
   });
+  const [modelId, setModelId] = useState(savedModel);
   const [run, setRun] = useState(/** @type {{ startedAt: number } | null} */ (null));
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState(/** @type {string | null} */ (null));
@@ -64,6 +83,7 @@ export function AiShowView({ project, library, patch, update, flush, navigate })
       await flush(); // the AI designs for the rig as saved
       const request = {
         ...choices,
+        model: modelId,
         features: Object.fromEntries(
           Object.entries(choices.features).filter(([id]) => features.some((feature) => feature.id === id)),
         ),
@@ -102,7 +122,22 @@ export function AiShowView({ project, library, patch, update, flush, navigate })
     setResult(null);
   };
 
-  const cost = result ? (result.usage.inputTokens * PRICE_IN + result.usage.outputTokens * PRICE_OUT) / 1_000_000 : 0;
+  const cost = result ? costOf(result.usage, result.model ?? modelId) : 0;
+  const chooseModel = (id) => {
+    setModelId(id);
+    try {
+      localStorage.setItem(MODEL_KEY, id);
+    } catch {
+      // Storage blocked: the choice holds until the page is closed.
+    }
+  };
+  const estimateRequest = {
+    lights: project.fixtures.length,
+    looks: choices.looks,
+    sequences: choices.sequences,
+    bars: choices.bars,
+    song,
+  };
 
   return (
     <section className="view" aria-labelledby="ai-title">
@@ -150,6 +185,7 @@ export function AiShowView({ project, library, patch, update, flush, navigate })
       <AiChoicesCard choices={choices} setChoices={setChoices} features={features} hasSong={Boolean(song)} />
 
       <div className="card card-pad ai-card ai-go">
+        <AiModelPicker value={modelId} onChange={chooseModel} request={estimateRequest} disabled={Boolean(run)} />
         <button
           type="button"
           className="btn btn-primary"
@@ -165,7 +201,8 @@ export function AiShowView({ project, library, patch, update, flush, navigate })
           </span>
         ) : (
           <span className="fixture-meta">
-            Uses your API key; each generation costs a little on your Anthropic account.
+            {aiModel(modelId).name}, {formatPriceRange(estimateCost(estimateRequest, modelId))} on your Anthropic
+            account.
           </span>
         )}
       </div>
@@ -224,7 +261,7 @@ export function AiShowView({ project, library, patch, update, flush, navigate })
           </div>
           <p className="fixture-meta">
             Used {result.usage.inputTokens.toLocaleString()} input and {result.usage.outputTokens.toLocaleString()}{' '}
-            output tokens, about ${cost.toFixed(2)} at list prices.
+            output tokens on {aiModel(result.model ?? modelId).name}, {formatPrice(cost)} at list prices.
           </p>
         </section>
       ) : null}

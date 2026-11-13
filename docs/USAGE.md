@@ -551,8 +551,14 @@ an estimate in dollars).
    lights at this venue can do (only what they have is offered: strobe always, movement only with moving heads, smoke
    only with a smoke machine or hazer, and so on). Choose how many looks and sequences, and their length when there is
    no song.
-4. Press **Generate the show**. It usually takes one to three minutes. The new looks and sequences are added to your
-   show; **Remove these** takes them out again.
+4. **Choose the model:** **Haiku 5.5** (fastest and cheapest, a cent or two), **Sonnet 5.5** (balanced, about half the
+   price of Opus) or **Opus 5.5** (the most creative and careful). Each shows roughly what this show would cost on it,
+   worked out from your number of lights, looks and sequences and the song's length, at Anthropic's list prices: for
+   12 lights, 8 looks and 2 sequences to a three-minute song, about 45¢ to 58¢ on Opus. The app remembers your choice
+   in this browser.
+5. Press **Generate the show**. It usually takes one to three minutes. The new looks and sequences are added to your
+   show, and the app says which model made them, the tokens used and what they cost; **Remove these** takes them out
+   again.
 
 With a song, the first sequence follows the whole song, section by section, plays once, and starts at the song's tempo.
 Play the song on one of the app's **Decks** and start the sequence: the lights lock to the deck's beat by themselves.
