@@ -69,10 +69,10 @@ export function DjPlatter({ side, deck, position, isCompact = false }) {
           ))}
           <path className="dj-shine" d="M50 12 A38 38 0 0 1 83 31 L50 50 Z" />
           <circle className="dj-label" cx="50" cy="50" r="13" />
-          <text className="dj-label-text" x="50" y="48" textAnchor="middle">
+          <text className="dj-label-text" x="50" y="46" textAnchor="middle">
             {side}
           </text>
-          <text className="dj-label-sub" x="50" y="56" textAnchor="middle">
+          <text className="dj-label-sub" x="50" y="57.5" textAnchor="middle">
             {title.slice(0, 12)}
           </text>
           <circle className="dj-marker" cx="50" cy="16" r="1.6" />
