@@ -21,6 +21,7 @@ import { buildPerformItems } from '../utils/performItems.js';
 import { isActionPlaying, playAction } from '../utils/playActions.js';
 import { useTapTempo } from '../hooks/useTapTempo.js';
 import { AutoShowPanel } from './AutoShowPanel.jsx';
+import { DjConsole } from './DjConsole.jsx';
 import { EffectsPanel } from './EffectsPanel.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { Icon } from './Icon.jsx';
@@ -277,6 +278,8 @@ export function PerformView({ project, patch, live, flush, update, library = [] 
           ) : null}
         </>
       )}
+
+      <DjConsole />
 
       <div className="console">
         <TempoPanel

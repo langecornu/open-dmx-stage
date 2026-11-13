@@ -1,5 +1,5 @@
 // Single place for HTTP access to the server. Every call checks res.ok and throws a readable error.
-async function request(path, options) {
+async function send(path, options) {
   const res = await fetch(`/api/v1${path}`, options);
   if (!res.ok) {
     let message = `Request failed (${res.status})`;
@@ -11,8 +11,15 @@ async function request(path, options) {
     }
     throw new Error(message);
   }
-  return res.json();
+  return res;
 }
+
+async function request(path, options) {
+  return (await send(path, options)).json();
+}
+
+/** @param {string} id @returns {string} where a library track streams from */
+const trackAudioUrl = (id) => `/api/v1/music/tracks/${encodeURIComponent(id)}/audio`;
 
 const jsonBody = (method, body) => ({
   method,
@@ -47,4 +54,11 @@ export const api = {
   listOutputPorts: () => request('/output/ports'),
   saveOutputSettings: (settings) => request('/output/settings', jsonBody('PUT', settings)),
   getOutput: () => request('/output'),
+  getMusic: (rescan = false) => request(rescan ? '/music?rescan=1' : '/music'),
+  setMusicFolder: (folder) => request('/settings/music', jsonBody('PUT', { folder })),
+  trackAudioUrl,
+  getTrackAudio: async (id) => (await send(`/music/tracks/${encodeURIComponent(id)}/audio`)).arrayBuffer(),
+  getTrackAnalysis: (id) => request(`/music/tracks/${encodeURIComponent(id)}/analysis`),
+  saveTrackAnalysis: (id, analysis) =>
+    request(`/music/tracks/${encodeURIComponent(id)}/analysis`, jsonBody('PUT', analysis)),
 };

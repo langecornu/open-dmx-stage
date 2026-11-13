@@ -6,7 +6,9 @@ import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildPatch } from '../../shared/patch.js';
+import { api } from '../../src/api.js';
 import { Visualizer } from '../../src/components/Visualizer.jsx';
+import { DecksProvider } from '../../src/hooks/useDecks.js';
 import { accessibilityViolations } from './axe.js';
 import { BUILTIN_TYPES } from './fixtures.js';
 
@@ -137,6 +139,22 @@ describe('Visualizer', () => {
     expect(await accessibilityViolations(document.body)).toEqual([]);
     await user.click(screen.getByRole('button', { name: /Arrange lights/ }));
     expect(await accessibilityViolations(document.body)).toEqual([]);
+  });
+
+  it('opens the compact decks from the pad bar, so music plays while watching', async () => {
+    vi.spyOn(api, 'getMusic').mockResolvedValue({ folder: '/music', exists: true, tracks: [] });
+    const user = userEvent.setup();
+    render(
+      <DecksProvider send={live.send}>
+        <Harness />
+      </DecksProvider>,
+    );
+    const toggle = screen.getByRole('button', { name: 'Decks' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('region', { name: 'Deck A' })).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: /Crossfader/ })).toBeInTheDocument();
   });
 });
 

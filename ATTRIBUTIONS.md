@@ -15,6 +15,7 @@ All runtime and build dependencies below are MIT licensed (versions as installed
 | ws                    | WebSocket server                       | https://github.com/websockets/ws                         |
 | zod                   | Input validation                       | https://github.com/colinhacks/zod                        |
 | fast-xml-parser       | Reads QLC+ fixture files               | https://github.com/NaturalIntelligence/fast-xml-parser   |
+| music-metadata        | Reads the tags of the decks' music     | https://github.com/Borewit/music-metadata                |
 | serialport (optional) | USB/serial access to the DMX interface | https://github.com/serialport/node-serialport            |
 
 ## Build and quality tooling

@@ -23,6 +23,7 @@ const SHOW_BODY_LIMIT = '8mb';
  *   aiKeys?: import('./services/aiKeyStore.js').AiKeyStore,
  *   aiClient?: (apiKey: string) => import('@anthropic-ai/sdk').default,
  *   network?: { httpsPort: number, fingerprint: string | null, validTo: string | null, addresses: string[] } | null,
+ *   music?: import('./services/musicLibrary.js').MusicLibrary,
  * }} options `network`: the https address for phones (ADR 0009); live, so a port that failed to open shows as off `aiKeys` and `aiClient` replace the API key store and the Anthropic client, for tests
  * @returns {import('express').Express}
  */
@@ -35,6 +36,7 @@ export function createApp({
   aiKeys,
   aiClient,
   network = null,
+  music,
 }) {
   const app = express();
   app.disable('x-powered-by');
@@ -72,7 +74,7 @@ export function createApp({
   });
 
   app.use('/api/v1', rateLimit({ windowMs: 60_000, limit: 600, standardHeaders: true, legacyHeaders: false }));
-  app.use('/api/v1', createApiRouter({ engine, projectService, outputManager, ofl, aiKeys, aiClient, network }));
+  app.use('/api/v1', createApiRouter({ engine, projectService, outputManager, ofl, aiKeys, aiClient, network, music }));
 
   if (existsSync(config.distDir)) {
     app.use(express.static(config.distDir));

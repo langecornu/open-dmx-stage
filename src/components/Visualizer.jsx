@@ -24,6 +24,7 @@ import { isActionPlaying, playAction } from '../utils/playActions.js';
 import { createStageRenderer } from '../utils/stageRenderer.js';
 import { VIEWS, VIEW_LABELS, screenToMount } from '../utils/stageCamera.js';
 import { visualState } from '../utils/visualState.js';
+import { DjConsole } from './DjConsole.jsx';
 import { Icon } from './Icon.jsx';
 
 const SETTINGS_KEY = 'odmx-visualizer';
@@ -79,6 +80,7 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
   const rendererRef = useRef(/** @type {ReturnType<typeof createStageRenderer>} */ (null));
   const [settings, setSettings] = useState(loadSettings);
   const [isArranging, setIsArranging] = useState(false);
+  const [isDecksOpen, setIsDecksOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(/** @type {string | null} */ (null));
   /** Places being dragged, before they are saved. @type {[Map<string, {x:number,y:number}>, Function]} */
   const [moving, setMoving] = useState(() => new Map());
@@ -499,7 +501,18 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
         ) : null}
       </div>
 
+      {isDecksOpen ? <DjConsole isCompact /> : null}
+
       <div className="visualizer-pads" role="group" aria-label="Play">
+        <button
+          type="button"
+          className="visualizer-chip"
+          aria-pressed={isDecksOpen}
+          onClick={() => setIsDecksOpen((open) => !open)}
+        >
+          <Icon name="music" size={14} />
+          Decks
+        </button>
         {live.engine.activeChaseId ? (
           <button
             type="button"
