@@ -2,7 +2,7 @@
 // with buttons to load it on deck A or B. Long libraries show the first matches only, so the list stays quick.
 import { useEffect, useState } from 'react';
 
-import { formatTime } from '../utils/deckMaths.js';
+import { formatTime } from '../utils/format.js';
 import { Icon } from './Icon.jsx';
 
 const SHOWN = 150;

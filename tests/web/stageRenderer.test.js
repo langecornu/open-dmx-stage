@@ -6,7 +6,7 @@ import { positionOf } from '../../shared/stageRig.js';
 import { createStageRenderer } from '../../src/utils/stageRenderer.js';
 
 /** A stand-in 2D context: every drawing call is counted; gradients and patterns are inert. */
-function fakeContext(counts) {
+function mockContext(counts) {
   const gradient = { addColorStop: () => {} };
   return new Proxy(
     {
@@ -91,7 +91,7 @@ let counts;
 let canvas;
 beforeEach(() => {
   counts = {};
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => fakeContext(counts));
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => mockContext(counts));
   canvas = document.createElement('canvas');
 });
 afterEach(() => vi.restoreAllMocks());

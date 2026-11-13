@@ -5,10 +5,6 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Security
-
-- The https certificate's private key (`server/data/tls/`) is now ignored by git, so it cannot be committed by mistake.
-
 ### Added
 
 - **Decks on Perform**: two DJ decks that play the music folder on the computer running the app (`~/Music` until you
@@ -127,7 +123,52 @@ the project follows [Semantic Versioning](https://semver.org/).
   look, or manual changes), shows an effect or manual changes running underneath, and has one obvious **Stop** (or
   **Reset**) button. During a blackout the bar turns red, says the lights are off, and has a **Lights on** button.
 
+- **Demo light show** for two 36 LED pars: a show file with 13 looks, 4 sequences (one in seconds, three in beats) and 3
+  groups ([docs/examples/pars-demo-show.json](docs/examples/pars-demo-show.json)), and `npm run demo:show`, which plays a
+  two-minute routine through the live link using looks with fades, hand-mixed colours, master dimming, the pulse, sweep
+  and rainbow effects on all lights and on one group, tempo changes, sequences in seconds and in beats, strobe and
+  blackout. `--no-strobe` leaves out the flashing, `--dry-run` prints the plan, `--load` loads the show first.
+
+- **Follow the music:** a panel on Perform that listens to the microphone or a browser tab's sound, finds the beat (the
+  low frequencies, measured on the audio thread so it keeps working when the page is in the background) and sets the
+  tempo, so the effects and the sequences timed in beats keep time with the music. The sound is analysed in the page and
+  is never recorded or sent anywhere. Tried with a synthetic 128 and 100 beats per minute track in a real browser; not yet
+  with real music.
+- **First light checklist** ([docs/FIRST_LIGHT.md](docs/FIRST_LIGHT.md)) with a starter show to import
+  ([docs/examples/my-rig.json](docs/examples/my-rig.json)), and `--channels` for `npm run dmx:ramp`.
+- **Find a fixture online:** search the Open Fixture Library from the Fixtures screen and copy a light's modes and
+  channels into your fixtures, with credit to the library and its authors in the description. Only the search words
+  are sent, to one fixed host; `OFL_ENABLED=false` turns it off. Entries that only redirect to another brand are
+  followed. **View details** shows a light's authors, specifications, links and every mode and channel with its value
+  ranges before you add it. Pixel and matrix modes are marked and left out for now.
+- Channels the library defines through pixel templates (for example "Red Master") are now imported with the right type,
+  so colour and master controls work on them.
+- **Tempo and tap tempo:** a shared tempo (30 to 300 beats per minute) set by typing, tapping (button or the `.` key)
+  or halving and doubling it.
+- **Effects:** pulse, sweep and rainbow, locked to the tempo, over all lights or one group. Live only; not saved.
+- **Fixture groups** in Setup, used to aim effects at part of the rig.
+- **Sequences in beats:** a sequence can time its steps in beats and follow the tempo.
+- **Fixtures screen:** write your own fixture definitions by hand: manufacturer, model, description, and the channels of
+  each mode (name, what it does, resting value; add, reorder and remove). Built-in fixtures are read-only examples you
+  can copy. Your fixtures are saved in the show file. Fixtures have a new `description` field (optional in older shows).
+- **More built-in fixtures, from maker manuals:** 36 LED RGB par (7 channel), Mini Spider Light (7 channel) and Mini Moving
+  Head Gobo Light (12 and 10 channel). Reset and program channels rest at 0 and are never scaled by master. Tried on real
+  lights: the 36 LED par profile works (channels 1 to 5 checked: dimmer, red, green, blue and strobe); the others have not been tried yet.
+- **U`King 40W RGBW Moving Head Light** built-in fixture (13 channel mode, from the maker's manual) and the worked
+  example for the Fixtures screen. Not yet tried on the real light.
+
+- **Perform screen:** big buttons for every look and sequence, keyboard shortcuts (Space blackout, Escape stop, [ and ]
+  master), and MIDI controller mapping with learn mode (pads to looks and sequences, a knob to the master). MIDI
+  links are saved in the browser.
+- **Detect adapter:** asks a USB adapter to identify itself (the ENTTEC Pro query) and selects the matching interface;
+  a passive cable stays silent (tried on one passive cable; not yet on an active adapter).
+- **Test lights:** cycles every patched fixture through red, green, blue and white from the Connection card.
+
 ### Changed
+
+- The HTTP API is split into one router per area, with switching shows in a service of its own; the AI show screen
+  and the visualizer's Arrange panel are split into smaller components; the decks' beat lock is a hook of its own.
+- Music tags are read eight files at a time, and devices asking for the library at once share one scan.
 
 - **The server listens on your network by default** (`HOST=0.0.0.0`), so a phone or tablet on the same network can
   open the app at this computer's address or name and run the show, with no extra settings: the computer's own
@@ -148,7 +189,17 @@ the project follows [Semantic Versioning](https://semver.org/).
   something to worry about.
 - The Output screen says **Using: Open DMX (simple USB cable)** rather than "Active", which read like the cable type.
 
+- Server errors (5xx) can now carry a message written for the person to read (for example that the online library is
+  unreachable); all other 5xx errors still show a generic message.
+- The show file is now `schemaVersion` 3 (adds `groups`, and `timing` plus beat fields on sequences). Older shows are
+  upgraded automatically; a show saved by this version cannot be opened by an older app.
+
 ### Fixed
+
+- A time such as 59.6 seconds showed as "0:60" on the AI show screen.
+- Screens that load settings or the show list no longer update after you leave them.
+- `ATTRIBUTIONS.md` listed every dependency as MIT; the Anthropic SDK (Apache-2.0) and `selfsigned` are now listed,
+  with the licences of the test tools.
 
 - **iPad and phone layout**: no screen scrolls sideways any more, from a phone to an iPad Pro, in portrait and landscape,
   and Blackout and Master always stay on screen. The top bar wraps onto two rows in portrait; the bottom bar fits every
@@ -188,63 +239,22 @@ the project follows [Semantic Versioning](https://semver.org/).
 - The built app served by `npm start` could not open its live link with default settings, so it said "Server offline" and
   faders, blackout and the lights test did nothing. The server's own address is now always trusted.
 
-### Added
+### Security
 
-- **Demo light show** for two 36 LED pars: a show file with 13 looks, 4 sequences (one in seconds, three in beats) and 3
-  groups ([docs/examples/pars-demo-show.json](docs/examples/pars-demo-show.json)), and `npm run demo:show`, which plays a
-  two-minute routine through the live link using looks with fades, hand-mixed colours, master dimming, the pulse, sweep
-  and rainbow effects on all lights and on one group, tempo changes, sequences in seconds and in beats, strobe and
-  blackout. `--no-strobe` leaves out the flashing, `--dry-run` prints the plan, `--load` loads the show first.
+- The https certificate's private key (`server/data/tls/`) is now ignored by git, so it cannot be committed by mistake.
+- Requests a browser is tricked into sending are refused: changes are only taken from the app's own pages (Origin and
+  Sec-Fetch-Site checks), and requests must be addressed to this computer, which stops DNS rebinding. Opening the app
+  at a name other than its addresses and `.local` name now needs that address in `ALLOWED_ORIGINS`.
+- The control socket drops the extra messages of a client that floods it, and accepts at most 64 connections.
+- AI shows are made one at a time, so two devices pressing Generate together do not pay twice.
+- The music folder scan stops after 50,000 entries, so choosing the whole disk by mistake cannot keep the server busy.
+- `SECURITY.md` has a threat model.
 
 ### Verified
 
 - **USB output on real lights:** a DSD TECH SH-RS09B passive cable on a Mac (macOS 26, Apple silicon, Node 24) drove two
   LED par lights with steady colours, brightness and no flicker. See the first light checklist and ADR 0003. Not yet
   verified: other computers and operating systems, ENTTEC Pro adapters, Art-Net and sACN on real lights, the moving head.
-
-### Added
-
-- **Follow the music:** a panel on Perform that listens to the microphone or a browser tab's sound, finds the beat (the
-  low frequencies, measured on the audio thread so it keeps working when the page is in the background) and sets the
-  tempo, so the effects and the sequences timed in beats keep time with the music. The sound is analysed in the page and
-  is never recorded or sent anywhere. Tried with a synthetic 128 and 100 beats per minute track in a real browser; not yet
-  with real music.
-- **First light checklist** ([docs/FIRST_LIGHT.md](docs/FIRST_LIGHT.md)) with a starter show to import
-  ([docs/examples/my-rig.json](docs/examples/my-rig.json)), and `--channels` for `npm run dmx:ramp`.
-- **Find a fixture online:** search the Open Fixture Library from the Fixtures screen and copy a light's modes and
-  channels into your fixtures, with credit to the library and its authors in the description. Only the search words
-  are sent, to one fixed host; `OFL_ENABLED=false` turns it off. Entries that only redirect to another brand are
-  followed. **View details** shows a light's authors, specifications, links and every mode and channel with its value
-  ranges before you add it. Pixel and matrix modes are marked and left out for now.
-- Channels the library defines through pixel templates (for example "Red Master") are now imported with the right type,
-  so colour and master controls work on them.
-- **Tempo and tap tempo:** a shared tempo (30 to 300 beats per minute) set by typing, tapping (button or the `.` key)
-  or halving and doubling it.
-- **Effects:** pulse, sweep and rainbow, locked to the tempo, over all lights or one group. Live only; not saved.
-- **Fixture groups** in Setup, used to aim effects at part of the rig.
-- **Sequences in beats:** a sequence can time its steps in beats and follow the tempo.
-- **Fixtures screen:** write your own fixture definitions by hand: manufacturer, model, description, and the channels of
-  each mode (name, what it does, resting value; add, reorder and remove). Built-in fixtures are read-only examples you
-  can copy. Your fixtures are saved in the show file. Fixtures have a new `description` field (optional in older shows).
-- **More built-in fixtures, from maker manuals:** 36 LED RGB par (7 channel), Mini Spider Light (7 channel) and Mini Moving
-  Head Gobo Light (12 and 10 channel). Reset and program channels rest at 0 and are never scaled by master. Tried on real
-  lights: the 36 LED par profile works (channels 1 to 5 checked: dimmer, red, green, blue and strobe); the others have not been tried yet.
-- **U`King 40W RGBW Moving Head Light** built-in fixture (13 channel mode, from the maker's manual) and the worked
-  example for the Fixtures screen. Not yet tried on the real light.
-
-- **Perform screen:** big buttons for every look and sequence, keyboard shortcuts (Space blackout, Escape stop, [ and ]
-  master), and MIDI controller mapping with learn mode (pads to looks and sequences, a knob to the master). MIDI
-  links are saved in the browser.
-- **Detect adapter:** asks a USB adapter to identify itself (the ENTTEC Pro query) and selects the matching interface;
-  a passive cable stays silent (tried on one passive cable; not yet on an active adapter).
-- **Test lights:** cycles every patched fixture through red, green, blue and white from the Connection card.
-
-### Changed
-
-- Server errors (5xx) can now carry a message written for the person to read (for example that the online library is
-  unreachable); all other 5xx errors still show a generic message.
-- The show file is now `schemaVersion` 3 (adds `groups`, and `timing` plus beat fields on sequences). Older shows are
-  upgraded automatically; a show saved by this version cannot be opened by an older app.
 
 ## [0.1.0] - 2026-11-09
 

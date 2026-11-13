@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 
 import { useAnimationFrame } from '../hooks/useAnimationFrame.js';
-import { formatTime } from '../utils/deckMaths.js';
+import { formatTime } from '../utils/format.js';
 
 /**
  * The outline as one SVG path, mirrored about the middle.

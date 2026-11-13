@@ -6,14 +6,9 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 import { api } from '../api.js';
-import { crossfadeGains, heardDeck, nextDownbeat, peaksOf, PITCH_RANGE, pitchToMatch } from '../utils/deckMaths.js';
+import { crossfadeGains, peaksOf, PITCH_RANGE, pitchToMatch } from '../utils/deckMaths.js';
 import { analyseSong, decodeMono } from '../utils/songAnalysis.js';
-import { clampBpm } from '../utils/tempo.js';
-
-/** How often the beat lock looks at the music, in milliseconds. */
-const TICK_MS = 100;
-/** A downbeat this close (in seconds) is scheduled now, to the millisecond. */
-const LOOKAHEAD = 0.3;
+import { useBeatLock } from './useBeatLock.js';
 
 /**
  * @typedef {import('../utils/deckMaths.js').Analysis} Analysis
@@ -245,43 +240,7 @@ function useDeckEngine({ send }) {
   /** Where a deck is, in seconds, read live (for animation, without re-rendering). */
   const positionOf = useCallback((index) => audio.current?.elements[index].currentTime ?? 0, []);
 
-  // The lights follow the deck being heard: its tempo as soon as it changes, then its beat on every downbeat.
-  useEffect(() => {
-    let timer = 0;
-    let sentBar = '';
-    let sentBpm = 0;
-    /** @type {Set<number>} */
-    const pending = new Set();
-    const tick = () => {
-      const index = heardDeck(decksRef.current, crossfaderRef.current);
-      const deck = decksRef.current[index];
-      const element = audio.current?.elements[index];
-      if (deck?.analysis && element && !element.paused) {
-        const rate = element.playbackRate;
-        const bpm = clampBpm(Math.round(deck.analysis.bpm * rate * 10) / 10);
-        if (Math.abs(bpm - sentBpm) >= 0.1) {
-          sentBpm = bpm;
-          sendRef.current({ type: 'tempo', bpm });
-        }
-        const next = nextDownbeat(deck.analysis, element.currentTime, rate);
-        const key = `${deck.track?.id}:${next?.bar}`;
-        if (next && next.wait < LOOKAHEAD && key !== sentBar) {
-          sentBar = key;
-          const id = window.setTimeout(() => {
-            pending.delete(id);
-            sendRef.current({ type: 'tempo', bpm, sync: true });
-          }, next.wait * 1000);
-          pending.add(id);
-        }
-      }
-      timer = window.setTimeout(tick, TICK_MS);
-    };
-    tick();
-    return () => {
-      window.clearTimeout(timer);
-      pending.forEach((id) => window.clearTimeout(id));
-    };
-  }, []);
+  useBeatLock({ decksRef, crossfaderRef, elementOf: (index) => audio.current?.elements[index], sendRef });
 
   // Stop the music when the app closes.
   useEffect(

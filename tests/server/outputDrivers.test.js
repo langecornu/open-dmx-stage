@@ -193,7 +193,7 @@ describe('sACN', () => {
   });
 });
 
-function createFakeSocket(sendResults) {
+function createMockSocket(sendResults) {
   const sent = [];
   return {
     sent,
@@ -217,7 +217,7 @@ function createFakeSocket(sendResults) {
 
 describe('network driver status', () => {
   it('reports not connected while sends fail and recovers when they succeed again', async () => {
-    const socket = createFakeSocket([new Error('ENETUNREACH'), null]);
+    const socket = createMockSocket([new Error('ENETUNREACH'), null]);
     const driver = new ArtNetDriver({ host: '192.168.1.50', createSocket: () => socket });
     await driver.open();
     driver.send(frameWith(1));
@@ -229,7 +229,7 @@ describe('network driver status', () => {
   });
 
   it('applies the same status rules to sACN and uses multicast when no host is set', async () => {
-    const socket = createFakeSocket([new Error('EHOSTUNREACH')]);
+    const socket = createMockSocket([new Error('EHOSTUNREACH')]);
     const driver = new SacnDriver({ universe: 3, createSocket: () => socket });
     await driver.open();
     driver.send(frameWith(1));

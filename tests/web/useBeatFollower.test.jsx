@@ -1,15 +1,15 @@
-// Tests for the hook that listens to music and sets the tempo, with a fake audio system and made-up music.
+// Tests for the hook that listens to music and sets the tempo, with a mock audio system and made-up music.
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SOURCES, useBeatFollower } from '../../src/hooks/useBeatFollower.js';
-import { createStream, installFakeAudio, musicWindows, silence, steadyNoise } from './audioFakes.js';
+import { createStream, installMockAudio, musicWindows, silence, steadyNoise } from './audioMocks.js';
 
 let audio;
 let send;
 
 beforeEach(() => {
-  audio = installFakeAudio({
+  audio = installMockAudio({
     devices: [
       { kind: 'audioinput', deviceId: 'mic-1', label: 'Built-in microphone' },
       { kind: 'audioinput', deviceId: 'loop-2', label: '' },

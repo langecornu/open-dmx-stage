@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createBeatTracker, estimateTempo, foldTempo, smoothTempo } from '../../src/utils/beatTracker.js';
-import { musicWindows, silence, steadyNoise } from './audioFakes.js';
+import { musicWindows, silence, steadyNoise } from './audioMocks.js';
 
 /** Runs windows through a fresh tracker and returns what it said at the end, with all beats found. */
 function follow(windowsList, tracker = createBeatTracker()) {

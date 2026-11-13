@@ -13,10 +13,14 @@ export function AiKeyCard() {
   const [message, setMessage] = useState(/** @type {{ kind: 'ok' | 'error', text: string } | null} */ (null));
 
   useEffect(() => {
+    let isCurrent = true;
     api
       .getAiSettings()
-      .then(setStatus)
-      .catch((error) => setMessage({ kind: 'error', text: error.message }));
+      .then((loaded) => isCurrent && setStatus(loaded))
+      .catch((error) => isCurrent && setMessage({ kind: 'error', text: error.message }));
+    return () => {
+      isCurrent = false;
+    };
   }, []);
 
   const handleSave = async (event) => {
@@ -133,10 +137,14 @@ export function PhonesCard() {
   );
   const [error, setError] = useState(/** @type {string | null} */ (null));
   useEffect(() => {
+    let isCurrent = true;
     api
       .getNetwork()
-      .then(setNetwork)
-      .catch((loadError) => setError(loadError.message));
+      .then((loaded) => isCurrent && setNetwork(loaded))
+      .catch((loadError) => isCurrent && setError(loadError.message));
+    return () => {
+      isCurrent = false;
+    };
   }, []);
   const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
 

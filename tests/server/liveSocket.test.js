@@ -12,7 +12,7 @@ import { MockDriver } from '../../server/clients/mockDriver.js';
 import { DmxEngine } from '../../server/services/dmxEngine.js';
 import { OutputManager } from '../../server/services/outputManager.js';
 import { ProjectService } from '../../server/services/projectService.js';
-import { attachLiveSocket } from '../../server/ws/liveSocket.js';
+import { attachLiveSocket, messageBudget } from '../../server/ws/liveSocket.js';
 
 const ALLOWED_ORIGIN = 'http://localhost:5173';
 let server;
@@ -201,6 +201,19 @@ describe('live socket', () => {
     }
   });
 
+  it('drops the extra messages of a client that floods the socket, and says so', async () => {
+    const { socket, messages } = connect(ALLOWED_ORIGIN);
+    await new Promise((resolve) => socket.on('open', resolve));
+    for (let index = 0; index < 800; index += 1) {
+      socket.send(JSON.stringify({ type: 'master', level: 1 }));
+    }
+    await waitFor(
+      () => messages.some((message) => message.type === 'error' && message.message === 'Too many messages'),
+      'a too-many-messages notice',
+    );
+    socket.close();
+  });
+
   it('rejects a browser origin that is not allowed', async () => {
     const { socket } = connect('http://evil.example');
     const outcome = await new Promise((resolve) => {
@@ -240,5 +253,21 @@ describe('live socket', () => {
     api.close();
     await new Promise((resolve) => heartbeatServer.close(resolve));
     await rm(dir, { recursive: true, force: true });
+  });
+});
+
+describe('messageBudget', () => {
+  it('allows a burst, then a steady rate, and refills over time', () => {
+    let now = 0;
+    const isWithin = messageBudget(() => now, 3, 10);
+    assert.deepEqual([isWithin(), isWithin(), isWithin(), isWithin()], [true, true, true, false]);
+    now = 100; // a tenth of a second at 10 a second: one more
+    assert.deepEqual([isWithin(), isWithin()], [true, false]);
+    now = 10_000;
+    assert.deepEqual(
+      [isWithin(), isWithin(), isWithin(), isWithin()],
+      [true, true, true, false],
+      'never above the burst',
+    );
   });
 });

@@ -9,15 +9,7 @@ import { createPortal } from 'react-dom';
 import { controlsByFixture } from '../../shared/capabilities.js';
 import { categoryOf } from '../../shared/categories.js';
 import { indexFixtureTypes } from '../../shared/patch.js';
-import {
-  RIG_LIMITS,
-  RIG_SHAPES,
-  RIG_SHAPE_LABELS,
-  mountsOf,
-  positionOf,
-  railsOf,
-  rigOrDefault,
-} from '../../shared/stageRig.js';
+import { mountsOf, positionOf, railsOf, rigOrDefault } from '../../shared/stageRig.js';
 import { frameStore } from '../hooks/frameStore.js';
 import { buildPerformItems } from '../utils/performItems.js';
 import { isActionPlaying, playAction } from '../utils/playActions.js';
@@ -26,38 +18,9 @@ import { VIEWS, VIEW_LABELS, screenToMount } from '../utils/stageCamera.js';
 import { visualState } from '../utils/visualState.js';
 import { DjConsole } from './DjConsole.jsx';
 import { Icon } from './Icon.jsx';
+import { VisualizerArrange } from './VisualizerArrange.jsx';
 
 const SETTINGS_KEY = 'odmx-visualizer';
-
-/**
- * A size in metres: what is typed is kept while typing, and saved as soon as it is a valid size, so "12" can be typed
- * through "1" (too small on its own). Leaving the field puts back the saved size if what was typed is not valid.
- * @param {{ label: string, value: number, limits: [number, number], onChange: (value: number) => void }} props
- */
-function SizeInput({ label, value, limits, onChange }) {
-  const [draft, setDraft] = useState(String(value));
-  useEffect(() => setDraft(String(value)), [value]);
-  return (
-    <label>
-      {label}
-      <input
-        type="number"
-        min={limits[0]}
-        max={limits[1]}
-        step="0.5"
-        value={draft}
-        onChange={(event) => {
-          setDraft(event.target.value);
-          const next = Number(event.target.value);
-          if (event.target.value !== '' && Number.isFinite(next) && next >= limits[0] && next <= limits[1]) {
-            onChange(next);
-          }
-        }}
-        onBlur={() => setDraft(String(value))}
-      />
-    </label>
-  );
-}
 
 function loadSettings() {
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -424,80 +387,19 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
           onPointerCancel={handlePointerUp}
         />
         {isArranging ? (
-          <div className="visualizer-arrange" role="group" aria-label="Arrange lights">
-            <fieldset className="visualizer-rig">
-              <legend>The rig at {project.venue?.name ?? 'this venue'}</legend>
-              <label>
-                Truss
-                <select value={rig.shape} onChange={(event) => changeRig({ shape: event.target.value })}>
-                  {RIG_SHAPES.map((shape) => (
-                    <option key={shape} value={shape}>
-                      {RIG_SHAPE_LABELS[shape]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="visualizer-check">
-                <input
-                  type="checkbox"
-                  checked={rig.uprights}
-                  disabled={rig.shape === 'none'}
-                  onChange={(event) => changeRig({ uprights: event.target.checked })}
-                />
-                Uprights at the corners
-              </label>
-              <div className="visualizer-size">
-                {
-                  /** @type {const} */ (['width', 'depth', 'height']).map((key) => (
-                    <SizeInput
-                      key={key}
-                      label={`${{ width: 'Width', depth: 'Depth', height: 'Height' }[key]} (m)`}
-                      value={rig[key]}
-                      limits={RIG_LIMITS[key]}
-                      onChange={(value) => changeRig({ [key]: value })}
-                    />
-                  ))
-                }
-              </div>
-            </fieldset>
-            <p>
-              Drag a light onto any rail, an upright or the floor, and along it. Or pick one here: choose its rail, then
-              move it with the arrow keys.
-            </p>
-            <div className="visualizer-lights">
-              {project.fixtures.map((fixture) => (
-                <button
-                  key={fixture.id}
-                  type="button"
-                  className="visualizer-chip"
-                  aria-pressed={selectedId === fixture.id}
-                  onClick={() => setSelectedId(fixture.id)}
-                  onKeyDown={nudge}
-                >
-                  {fixture.name}
-                </button>
-              ))}
-            </div>
-            {selectedId ? (
-              <label>
-                {project.fixtures.find((fixture) => fixture.id === selectedId)?.name} is on
-                <select
-                  value={mounts.get(selectedId)?.rail ?? 'floor'}
-                  onChange={(event) => moveToRail(event.target.value)}
-                >
-                  {rails.map((rail) => (
-                    <option key={rail.id} value={rail.id}>
-                      {rail.label}
-                    </option>
-                  ))}
-                  <option value="floor">The floor</option>
-                </select>
-              </label>
-            ) : null}
-            <button type="button" className="visualizer-btn" onClick={resetLayout}>
-              Reset layout
-            </button>
-          </div>
+          <VisualizerArrange
+            venueName={project.venue?.name ?? 'this venue'}
+            rig={rig}
+            onRigChange={changeRig}
+            fixtures={project.fixtures}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onNudge={nudge}
+            selectedRail={selectedId ? (mounts.get(selectedId)?.rail ?? 'floor') : null}
+            rails={rails}
+            onMoveToRail={moveToRail}
+            onReset={resetLayout}
+          />
         ) : null}
       </div>
 

@@ -240,7 +240,7 @@ describe('PerformView', () => {
 });
 
 describe('PerformView MIDI', () => {
-  function installFakeMidi() {
+  function installMockMidi() {
     const input = { name: 'Test Pad', onmidimessage: null };
     const access = { inputs: new Map([['one', input]]), onstatechange: null };
     Object.defineProperty(navigator, 'requestMIDIAccess', {
@@ -260,7 +260,7 @@ describe('PerformView MIDI', () => {
 
   it('links a pad to a look in learn mode, shows the link, then plays the look from the pad', async () => {
     const user = userEvent.setup();
-    const { input } = installFakeMidi();
+    const { input } = installMockMidi();
     renderView();
     await user.click(screen.getByRole('button', { name: 'Turn on MIDI' }));
     const midiPanel = screen.getByRole('region', { name: 'MIDI' });
@@ -282,7 +282,7 @@ describe('PerformView MIDI', () => {
 
   it('links the master to a knob and follows it', async () => {
     const user = userEvent.setup();
-    const { input } = installFakeMidi();
+    const { input } = installMockMidi();
     renderView();
     await user.click(screen.getByRole('button', { name: 'Turn on MIDI' }));
     await within(screen.getByRole('region', { name: 'MIDI' })).findByText('Test Pad');
@@ -303,7 +303,7 @@ describe('PerformView MIDI', () => {
       'odmx-midi-map',
       JSON.stringify({ 'note:1:1': { type: 'look', id: 'deleted' }, 'note:1:2': { type: 'look', id: 'warm' } }),
     );
-    installFakeMidi();
+    installMockMidi();
     renderView();
     expect(JSON.parse(localStorage.getItem('odmx-midi-map'))).toEqual({ 'note:1:2': { type: 'look', id: 'warm' } });
     await user.click(screen.getByRole('button', { name: 'Turn on MIDI' }));
@@ -315,7 +315,7 @@ describe('PerformView MIDI', () => {
 
   it('only offers to link blackout and stop to a controller while learning', async () => {
     const user = userEvent.setup();
-    installFakeMidi();
+    installMockMidi();
     renderView();
     expect(screen.queryByRole('button', { name: 'Link blackout to a pad' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Turn on MIDI' }));

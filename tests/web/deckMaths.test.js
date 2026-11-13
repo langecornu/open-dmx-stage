@@ -5,7 +5,6 @@ import { describe, expect, it } from 'vitest';
 import {
   beatAt,
   crossfadeGains,
-  formatTime,
   heardDeck,
   nextDownbeat,
   peaksOf,
@@ -94,14 +93,5 @@ describe('peaksOf', () => {
     samples.fill(-0.5, 800);
     expect(peaksOf(samples, 2)).toEqual([0.5, 1]);
     expect(peaksOf(new Float32Array(16), 2)).toEqual([0, 0]);
-  });
-});
-
-describe('formatTime', () => {
-  it('shows minutes and seconds', () => {
-    expect(formatTime(0)).toBe('0:00');
-    expect(formatTime(75.9)).toBe('1:15');
-    expect(formatTime(-3)).toBe('0:00');
-    expect(formatTime(Number.NaN)).toBe('0:00');
   });
 });

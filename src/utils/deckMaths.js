@@ -129,13 +129,3 @@ export function peaksOf(samples, count = PEAKS) {
   }
   return peaks.map((peak) => Math.round((peak / (loudest || 1)) * 1000) / 1000);
 }
-
-/**
- * A time as minutes and seconds.
- * @param {number} seconds
- * @returns {string}
- */
-export function formatTime(seconds) {
-  const whole = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0));
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
-}

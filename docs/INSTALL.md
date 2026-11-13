@@ -200,3 +200,8 @@ The server has **no login** and listens on your network by default, so anyone on
 lights and start AI shows on your saved key. Use a network you trust, or set `HOST=127.0.0.1` to keep it on this
 computer, and do not expose it to the internet. To report a vulnerability, see
 [SECURITY.md](../SECURITY.md).
+
+To protect against web pages that try to use the app from your browser, it only answers at this computer's own
+addresses (its IP addresses, `localhost` and its `.local` name, as listed in Settings) and only takes changes from its
+own pages. If you open it at another name (for example one your router gives it, such as `pi.lan`), add that address to
+`ALLOWED_ORIGINS`, for example `ALLOWED_ORIGINS=http://pi.lan:4000`, and restart.
