@@ -4,7 +4,10 @@ A quick tour of Open DMX Stage. If you have not installed it yet, start with the
 
 Open DMX Stage drives **one DMX512 universe** (512 channels) over a USB cable, Art-Net or sACN. More universes may come
 in a future version. Feedback is welcome, on the
-[GitHub page](https://github.com/langecornu/open-dmx-stage/issues) or in the comments of the how-to video.
+[GitHub page](https://github.com/langecornu/open-dmx-stage/issues) or in the comments of the
+[how-to video](https://www.youtube.com/watch?v=Ss5yQ1Y8TnE).
+
+[![Watch the how-to video on YouTube](images/video-how-to.jpg)](https://www.youtube.com/watch?v=Ss5yQ1Y8TnE)
 
 The app has eleven screens, reached from the left rail (or the bottom bar on phones and tablets), grouped under
 **Show** and **Rig**:

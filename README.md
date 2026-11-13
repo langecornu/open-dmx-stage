@@ -7,8 +7,12 @@ simulator when you have no hardware. It drives one DMX512 universe (512 channels
 
 ![Open DMX Stage, the live stage view with the decks](docs/images/21-visualize-decks-dark.jpg)
 
-Feedback is welcome: open an [issue](https://github.com/langecornu/open-dmx-stage/issues) or comment on the how-to
-video. The [usage guide](docs/USAGE.md) walks through every screen.
+**Watch the how-to video** (3½ minutes, from the rig to a full AI light show):
+
+[![Watch the how-to video on YouTube](docs/images/video-how-to.jpg)](https://www.youtube.com/watch?v=Ss5yQ1Y8TnE)
+
+Feedback is welcome: open an [issue](https://github.com/langecornu/open-dmx-stage/issues) or comment on the
+[video](https://www.youtube.com/watch?v=Ss5yQ1Y8TnE). The [usage guide](docs/USAGE.md) walks through every screen.
 
 ## Features
 
