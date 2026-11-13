@@ -19,6 +19,8 @@ fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a
   can do; leave it all to the AI or steer colours, energy and features. Uses your own Anthropic API key.
 - **File and venues:** save shows into folders and open them from a list (with each show's venue, fixtures, looks and sequences), and venues with their own lights and addresses that
   share one show's looks and sequences.
+- **Runs on a Raspberry Pi** as a lighting box that starts by itself, controlled from phones and tablets
+  ([guide](docs/RASPBERRY_PI.md)).
 - **Setup:** auto-addressing, conflict warnings, and fixture import from QLC+ (`.qxf`) and Open Fixture Library
   (`.json`) files.
 - **Output monitor:** a live view of all 512 DMX channels.

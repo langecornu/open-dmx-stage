@@ -74,17 +74,12 @@ Then open **http://localhost:5173**.
 
 ### Control it from a phone or tablet
 
-By default the server only accepts connections from the computer it runs on, because the control surface has no
-login. To use another device on the **same trusted network**, build the app and tell the server to listen more widely
-and which page address to trust (use your computer's own address):
+The server listens on your network by default (ADR 0008), so after `npm run build` and `npm start`, open
+`http://<this computer's name or address>:4000` on a phone or tablet on the same network. For the microphone and MIDI
+there, use the secure address, `https://<name or address>:4443`, and accept the warning once (see the usage guide,
+"Phones and tablets"). The control surface has no login: on a network you do not trust, set `HOST=127.0.0.1`.
 
-```bash
-npm run build
-HOST=0.0.0.0 ALLOWED_ORIGINS=http://192.168.1.20:4000 npm start
-```
-
-Then open `http://192.168.1.20:4000` on the phone. Anyone on that network could do the same, so do not do this on
-public Wi-Fi.
+To run it on a **Raspberry Pi** as a box that starts by itself, see [RASPBERRY_PI.md](RASPBERRY_PI.md).
 
 ## 4. Connect real DMX lights
 
@@ -193,7 +188,7 @@ The server also answers `GET /healthz` (is it up) and `GET /readyz` (and which o
 | `EBADENGINE` warning on `npm install`               | You are on Node older than 24.15. Install Node 24 (`nvm install 24`) to remove the warning; the tests need it.                                                      |
 | Port 5173 is already in use                         | Run the web app on another port and allow it: `ALLOWED_ORIGINS=http://localhost:5180 npm run dev:api` in one terminal, `npm run dev:web -- --port 5180` in another. |
 | Top bar says **Server offline**                     | The API is not running or the browser origin is not in `ALLOWED_ORIGINS`. Check the terminal for errors.                                                            |
-| A phone or tablet cannot connect                    | The server listens on this computer only by default. See "Control it from a phone or tablet" above.                                                                 |
+| A phone or tablet cannot connect                    | Check both are on the same network and use the computer's address (not `localhost`). If `HOST` is set to `127.0.0.1`, remove it.                                    |
 | Top bar says **DMX not connected**                  | The device was unplugged, the wrong port was chosen, or another program is using it. Close other DMX software, re-plug, then reconnect on the **Output** screen.    |
 | `Permission denied` opening the serial port (Linux) | Add your user to the `dialout` group (see step 4) and log back in.                                                                                                  |
 | Lights do not respond but the app shows output      | Check the fixture's DMX address and mode match the studio's **Setup** screen, the cable is firmly connected, and Master is above 0 and Blackout is off.             |

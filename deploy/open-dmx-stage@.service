@@ -1,0 +1,44 @@
+# Runs Open DMX Stage as a service on Linux (a Raspberry Pi, for example): it starts on boot, restarts if it stops, and
+# logs to the system journal. The part after @ is the user that owns the app, installed in that user's home folder:
+#
+#   sudo cp deploy/open-dmx-stage@.service /etc/systemd/system/
+#   sudo systemctl enable --now open-dmx-stage@$USER
+#   journalctl -u open-dmx-stage@$USER -f        # follow the log
+#
+# Settings go in ~/open-dmx-stage/.env (see .env.example), for example HTTPS_PORT or DMX_DRIVER.
+# See docs/RASPBERRY_PI.md.
+
+[Unit]
+Description=Open DMX Stage (lighting control)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=%i
+Group=%i
+# The USB-DMX cable is a serial port, which needs the dialout group.
+SupplementaryGroups=dialout
+WorkingDirectory=/home/%i/open-dmx-stage
+Environment=NODE_ENV=production
+EnvironmentFile=-/home/%i/open-dmx-stage/.env
+ExecStart=/usr/bin/node server/index.js
+Restart=on-failure
+RestartSec=3
+# Lets the app close the output cleanly on stop (it gives itself 3 seconds).
+TimeoutStopSec=10
+
+# Hardening: the app only needs to write its data folder (shows, settings, certificate).
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/%i/open-dmx-stage/server/data
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target
