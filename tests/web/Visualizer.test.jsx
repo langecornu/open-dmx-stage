@@ -1,6 +1,6 @@
 // Component tests for the visualizer window: opening and closing, the views, the rig set up per venue, placing lights on
 // rails by list and keyboard, and the pads that play while it is open. The drawing itself needs a real browser canvas.
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -137,5 +137,62 @@ describe('Visualizer', () => {
     expect(await accessibilityViolations(document.body)).toEqual([]);
     await user.click(screen.getByRole('button', { name: /Arrange lights/ }));
     expect(await accessibilityViolations(document.body)).toEqual([]);
+  });
+});
+
+describe('Visualizer drawing and dragging, with a stand-in canvas', () => {
+  /** A 2D context that counts what is drawn. */
+  const counted = (counts) => {
+    const gradient = { addColorStop: () => {} };
+    const known = {
+      createLinearGradient: () => gradient,
+      createRadialGradient: () => gradient,
+      createPattern: () => ({}),
+      createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }),
+      measureText: () => ({ width: 40 }),
+    };
+    return new Proxy(known, {
+      get: (target, key) =>
+        key in target
+          ? target[key]
+          : () => {
+              counts[key] = (counts[key] ?? 0) + 1;
+            },
+      set: () => true,
+    });
+  };
+
+  it('draws frames while open, and saves a light dragged from the truss onto the floor', async () => {
+    const { makeCamera } = await import('../../src/utils/stageCamera.js');
+    const { positionOf, mountsOf, rigOrDefault } = await import('../../shared/stageRig.js');
+    const counts = {};
+    vi.restoreAllMocks();
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => counted(counts));
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(1000);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(700);
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'performance'] });
+    try {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<Harness />);
+      await act(async () => vi.advanceTimersByTime(500));
+      expect(counts.fill).toBeGreaterThan(0);
+
+      await user.click(screen.getByRole('button', { name: /Arrange lights/ }));
+      await act(async () => vi.advanceTimersByTime(100));
+      // Where Par 1 is on screen: its first place on the default rig, from the corner view.
+      const rig = rigOrDefault(undefined);
+      const camera = makeCamera(1000, 700, 'corner', rig);
+      const mount = mountsOf(start.fixtures, () => 'par', rig).get('p1');
+      const at = camera.project(positionOf(rig, mount));
+      const centre = camera.project({ x: 0, y: 0, z: 0 });
+      const canvas = screen.getByRole('img', { name: /lights on stage/ });
+      fireEvent.pointerDown(canvas, { clientX: at.x, clientY: at.y + 0.15 * at.scale, pointerId: 1, button: 0 });
+      fireEvent.pointerMove(canvas, { clientX: centre.x, clientY: centre.y, pointerId: 1 });
+      fireEvent.pointerUp(canvas, { clientX: centre.x, clientY: centre.y, pointerId: 1 });
+      expect(latest.fixtures[0].stage).toMatchObject({ rail: 'floor' });
+      expect(latest.fixtures[0].stage.x).toBeCloseTo(0.5, 1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
