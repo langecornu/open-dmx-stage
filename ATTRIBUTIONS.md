@@ -1,12 +1,14 @@
 # Attributions
 
 Open DMX Stage is built on open-source software and public specifications. Thank you to their authors.
-All runtime and build dependencies below are MIT licensed (versions as installed; see `package-lock.json`).
+Runtime dependencies are MIT licensed unless the table says otherwise; every licence is compatible with this project's
+MIT licence (versions as installed; see `package-lock.json`).
 
 ## Runtime dependencies
 
 | Package               | Use                                    | Project                                                  |
 | --------------------- | -------------------------------------- | -------------------------------------------------------- |
+| @anthropic-ai/sdk     | AI shows (Apache-2.0)                  | https://github.com/anthropics/anthropic-sdk-typescript   |
 | React, React DOM      | UI                                     | https://github.com/facebook/react                        |
 | Express               | HTTP server                            | https://github.com/expressjs/express                     |
 | cors                  | CORS middleware                        | https://github.com/expressjs/cors                        |
@@ -16,12 +18,15 @@ All runtime and build dependencies below are MIT licensed (versions as installed
 | zod                   | Input validation                       | https://github.com/colinhacks/zod                        |
 | fast-xml-parser       | Reads QLC+ fixture files               | https://github.com/NaturalIntelligence/fast-xml-parser   |
 | music-metadata        | Reads the tags of the decks' music     | https://github.com/Borewit/music-metadata                |
+| selfsigned            | Makes the https certificate (ADR 0009) | https://github.com/jfromaniello/selfsigned               |
 | serialport (optional) | USB/serial access to the DMX interface | https://github.com/serialport/node-serialport            |
 
 ## Build and quality tooling
 
 Vite and `@vitejs/plugin-react` (https://github.com/vitejs/vite), ESLint (https://github.com/eslint/eslint),
-Prettier (https://github.com/prettier/prettier), concurrently (https://github.com/open-cli-tools/concurrently).
+Prettier (https://github.com/prettier/prettier), concurrently (https://github.com/open-cli-tools/concurrently), all MIT.
+Tests and checks, not shipped in the app: Vitest and its v8 coverage, jsdom, Testing Library and the ESLint React and
+accessibility plugins (MIT), TypeScript for type checking (Apache-2.0), and axe-core for accessibility checks (MPL-2.0).
 
 ## Fonts
 
