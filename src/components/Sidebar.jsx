@@ -31,12 +31,13 @@ export function Sidebar({ current, onSelect, liveViews = [], output, isServerUp 
                 type="button"
                 className="nav-item"
                 aria-current={current === view.id ? 'page' : undefined}
+                title={view.label}
                 onClick={() => onSelect(view.id)}
               >
                 <span className="nav-icon">
                   <Icon name={view.icon} size={17} />
                 </span>
-                {view.label}
+                <span className="nav-label">{view.label}</span>
                 {liveViews.includes(view.id) ? (
                   <>
                     <span className="nav-live" aria-hidden="true" />

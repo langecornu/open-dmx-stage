@@ -124,6 +124,11 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **iPad and phone layout**: no screen scrolls sideways any more, from a phone to an iPad Pro, in portrait and landscape,
+  and Blackout and Master always stay on screen. The top bar wraps onto two rows in portrait; the bottom bar fits every
+  screen on an iPad and scrolls by itself on a phone; mid-size iPads in landscape get an icon-only sidebar; On stage and
+  the stage view share a row. On touch screens, controls are at least 40 px, timeline edges are easier to grab, and
+  keyboard hints are hidden. Setup's light rows and the Lights swatches fit narrow screens.
 - **A phone or tablet showed a black page** when opening the app at this computer's network address: the security
   headers told it to fetch the app over https. They no longer do, new looks and sequences get ids on such pages too,
   and listening to the music or connecting a MIDI controller there says to use the computer running the app instead.
