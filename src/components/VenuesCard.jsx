@@ -4,9 +4,11 @@
 import { useState } from 'react';
 
 import { MAX_VENUES, addVenue, removeVenue, renameVenue, venuesOf } from '../../shared/venues.js';
+import { downloadFile } from '../utils/download.js';
+import { makeId } from '../utils/ids.js';
+import { checkVenueFile, exportVenue, importVenue, venueFileName } from '../utils/venueFile.js';
 import { confirmVenueSwitch, describeOutput } from '../utils/venueSwitch.js';
 import { Icon } from './Icon.jsx';
-import { makeId } from '../utils/ids.js';
 
 const plural = (count, word) => `${count} ${count === 1 ? word : `${word}s`}`;
 
@@ -17,6 +19,42 @@ const plural = (count, word) => `${count} ${count === 1 ? word : `${word}s`}`;
 export function VenuesCard({ project, library, update, output = null }) {
   const [name, setName] = useState('');
   const [problem, setProblem] = useState(/** @type {string | null} */ (null));
+  const [notice, setNotice] = useState(/** @type {string | null} */ (null));
+
+  const handleExport = (venueId, venueName) => {
+    const file = exportVenue(project, venueId, { output });
+    downloadFile(venueFileName(venueName), `${JSON.stringify(file, null, 2)}\n`);
+  };
+
+  const handleImport = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) {
+      return;
+    }
+    setProblem(null);
+    setNotice(null);
+    let parsed;
+    try {
+      parsed = JSON.parse(await file.text());
+    } catch {
+      setProblem('That file is not a venue file (it is not JSON).');
+      return;
+    }
+    const why = checkVenueFile(parsed);
+    if (why) {
+      setProblem(why);
+      return;
+    }
+    // What it brings, for the message; the import itself runs on the show as it is when it is applied.
+    const { report } = importVenue(project, parsed, makeId);
+    update((current) => importVenue(current, parsed, makeId).project);
+    setNotice(
+      `Added the venue ${report.name}, with ${plural(report.lights, 'light')}` +
+        (report.addedTypes > 0 ? ` and ${plural(report.addedTypes, 'fixture definition')}` : '') +
+        '. Switch to it to use it.',
+    );
+  };
   const [start, setStart] = useState('copy');
   const venues = venuesOf(project);
   const isFull = venues.length >= MAX_VENUES;
@@ -26,7 +64,7 @@ export function VenuesCard({ project, library, update, output = null }) {
     if (!name.trim() || isFull) {
       return;
     }
-    update((current) => addVenue(current, name, { copyActive: start === 'copy', makeId: makeId }).project);
+    update((current) => addVenue(current, name, { copyActive: start === 'copy', makeId }).project);
     setName('');
   };
 
@@ -64,6 +102,15 @@ export function VenuesCard({ project, library, update, output = null }) {
                   ? `output: ${describeOutput(venue.output)}`
                   : 'keeps the output as it is'}
             </span>
+            <button
+              type="button"
+              className="btn btn-ghost btn-compact"
+              aria-label={`Export ${venue.name} to a file`}
+              onClick={() => handleExport(venue.id, venue.name)}
+            >
+              <Icon name="down" size={16} />
+              Export
+            </button>
             {venue.isActive ? (
               <span className="badge badge-live">Here now</span>
             ) : (
@@ -124,6 +171,19 @@ export function VenuesCard({ project, library, update, output = null }) {
           Add venue
         </button>
       </form>
+      <div className="toolbar">
+        <label className="btn">
+          <Icon name="upload" size={16} />
+          Import venue
+          <input className="sr-only" type="file" accept=".json,application/json" onChange={handleImport} />
+        </label>
+        <span className="fixture-meta">A venue file brings its lights, groups, output and rig into this show.</span>
+      </div>
+      {notice ? (
+        <p className="view-sub" role="status">
+          {notice}
+        </p>
+      ) : null}
       {problem ? (
         <p className="error-banner" role="alert">
           {problem}

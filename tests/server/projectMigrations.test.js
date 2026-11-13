@@ -125,6 +125,27 @@ describe('migrateProject', () => {
     assert.doesNotThrow(() => projectSchema.parse(migrated), 'the result is a valid show');
   });
 
+  it('upgrades a version 6 show unchanged, and then accepts a rig and lights mounted on it', () => {
+    const version6 = { ...migrateProject(VERSION_1), schemaVersion: 6 };
+    const migrated = migrateProject(version6);
+    assert.equal(migrated.schemaVersion, CURRENT_SCHEMA_VERSION);
+    assert.deepEqual(migrated.fixtures, version6.fixtures);
+    const withRig = {
+      ...migrated,
+      rig: { shape: 'square', uprights: true, width: 9, depth: 7, height: 4 },
+      fixtures: migrated.fixtures.map((fixture, index) => ({
+        ...fixture,
+        stage: index === 0 ? { rail: 'back', at: 0.25 } : { rail: 'floor', x: 0.1, z: 0.9 },
+      })),
+    };
+    assert.doesNotThrow(() => projectSchema.parse(withRig), 'a rig and mounts are valid');
+    assert.throws(() => projectSchema.parse({ ...withRig, rig: { ...withRig.rig, width: 500 } }), 'sizes are limited');
+    assert.throws(
+      () => projectSchema.parse({ ...withRig, rig: { ...withRig.rig, shape: 'circle' } }),
+      'only the known shapes',
+    );
+  });
+
   it('is a no-op for a current show, and refuses newer or non-show input', () => {
     const current = { ...VERSION_1, schemaVersion: CURRENT_SCHEMA_VERSION };
     assert.equal(migrateProject(current).schemaVersion, CURRENT_SCHEMA_VERSION, 'current files pass through');

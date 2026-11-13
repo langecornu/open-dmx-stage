@@ -7,7 +7,7 @@ const withChannels = (name, ...types) => ({ name, modes: [{ channels: types.map(
 
 describe('guessCategory', () => {
   it('reads the name first', () => {
-    expect(guessCategory(withChannels('Mini Spider Light', 'tilt', 'tilt'))).toBe('effect');
+    expect(guessCategory(withChannels('Mini Spider Light', 'tilt', 'tilt'))).toBe('spider');
     expect(guessCategory(withChannels('Hazer 2', 'fog', 'fan'))).toBe('hazer');
     expect(guessCategory(withChannels('Smoke machine', 'fog'))).toBe('smoke');
     expect(guessCategory(withChannels('RGB laser', 'other'))).toBe('laser');

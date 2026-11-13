@@ -19,7 +19,8 @@ export const MAX_VENUES = 20;
  * @typedef {import('./types.js').Project} Project
  * @typedef {import('./types.js').Fixture} Fixture
  * @typedef {import('./types.js').OutputSettings} OutputSettings
- * @typedef {{ id: string, name: string, fixtures: Fixture[], groups: Project['groups'], output?: OutputSettings }} Venue
+ * @typedef {{ id: string, name: string, fixtures: Fixture[], groups: Project['groups'], output?: OutputSettings,
+ *   rig?: Project['rig'] }} Venue
  */
 
 /**
@@ -30,7 +31,14 @@ export const MAX_VENUES = 20;
 export function venuesOf(project) {
   const active = project.venue ?? FIRST_VENUE;
   return [
-    { id: active.id, name: active.name, fixtures: project.fixtures, groups: project.groups, isActive: true },
+    {
+      id: active.id,
+      name: active.name,
+      fixtures: project.fixtures,
+      groups: project.groups,
+      ...(project.rig ? { rig: project.rig } : {}),
+      isActive: true,
+    },
     ...[...(project.venues ?? [])]
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((venue) => ({ ...venue, isActive: false })),
@@ -131,8 +139,12 @@ export function switchVenue(project, venueId, builtinTypes, { currentOutput = nu
   }));
 
   // The venue's own output, if it has one, is set by the caller on the server; it is not part of the active rig.
+  // The rig is the venue's: the one being left goes with it above; the one coming in replaces it (or there is none).
+  const rest = { ...project };
+  delete rest.rig;
   return {
-    ...project,
+    ...rest,
+    ...(venue.rig ? { rig: venue.rig } : {}),
     fixtures: venue.fixtures,
     groups: venue.groups,
     venue: { id: venue.id, name: venue.name },
@@ -144,6 +156,7 @@ export function switchVenue(project, venueId, builtinTypes, { currentOutput = nu
         fixtures: project.fixtures,
         groups: project.groups,
         ...(currentOutput ? { output: currentOutput } : {}),
+        ...(project.rig ? { rig: project.rig } : {}),
       },
     ],
     scenes,
@@ -166,6 +179,7 @@ export function addVenue(project, name, { copyActive, makeId }) {
     name: uniqueName(project, name),
     fixtures: copyActive ? copy(project.fixtures) : [],
     groups: copyActive ? copy(project.groups) : [],
+    ...(copyActive && project.rig ? { rig: copy(project.rig) } : {}),
   };
   return { project: { ...project, venues: [...(project.venues ?? []), venue] }, venueId: id };
 }

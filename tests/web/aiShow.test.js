@@ -35,7 +35,7 @@ const head = {
 };
 
 const pars = {
-  schemaVersion: 6,
+  schemaVersion: 7,
   id: 'show',
   name: 'Show',
   venue: { id: 'main', name: 'Club' },

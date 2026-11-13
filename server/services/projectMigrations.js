@@ -106,6 +106,15 @@ export function addVenues(project) {
   return { ...project, id: project.id ?? randomUUID(), venue: { ...FIRST_VENUE }, venues: [] };
 }
 
+/**
+ * Version 6 to 7: venues may have a truss for the visualizer (`rig`) and lights a mount on it (`stage`). Nothing
+ * changes in an older show; its lights get a place when they are first shown.
+ * @param {Record<string, any>} project
+ */
+export function allowStagePositions(project) {
+  return project;
+}
+
 /** Ordered migrations: each takes a project at version `from` and returns one at version `to`. */
 const MIGRATIONS = [
   { from: 1, to: 2, up: addChaseStepIds },
@@ -113,6 +122,7 @@ const MIGRATIONS = [
   { from: 3, to: 4, up: addTimelines },
   { from: 4, to: 5, up: mergeTimelinesIntoSequences },
   { from: 5, to: 6, up: addVenues },
+  { from: 6, to: 7, up: allowStagePositions },
 ];
 
 /**
