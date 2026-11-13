@@ -49,6 +49,7 @@ function mockClient(apiKey) {
                 throw mock.error;
               }
               return {
+                model: 'answered-by',
                 stop_reason: mock.stopReason,
                 content: [{ type: 'text', text: JSON.stringify(mock.answer) }],
                 usage: { input_tokens: 1200, output_tokens: 3400 },
@@ -203,6 +204,41 @@ describe('AI show generation', () => {
     assert.match(text, /cool to warm/);
     assert.match(text, /#00ff00: avoid/);
     assert.match(text, /Strobe: off/);
+  });
+
+  it('uses the chosen model, keeps the refusal fallback where the model has one, and says who answered', async () => {
+    // Its own server, so these requests do not use up the shared one's rate limit.
+    const dir = await mkdtemp(path.join(tmpdir(), 'odmx-ai-models-'));
+    const app = await startApp(dir);
+    await app.aiKeys.save(KEY);
+    const send = async (method, route, body) => {
+      const res = await fetch(`${app.url}${route}`, {
+        method,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return { status: res.status, text: await res.text() };
+    };
+    await send('PUT', '/project', show);
+
+    const sonnet = await send('POST', '/ai/generate', { auto: true, model: 'claude-sonnet-5-5' });
+    assert.equal(sonnet.status, 200, sonnet.text);
+    const [sonnetRequest] = mock.requests;
+    assert.equal(sonnetRequest.model, 'claude-sonnet-5-5');
+    assert.equal(sonnetRequest.fallbacks, 'default');
+    assert.equal(sonnetRequest.max_tokens, 128000, 'a big rig has room to finish');
+
+    const haiku = await send('POST', '/ai/generate', { auto: true, model: 'claude-haiku-5-5' });
+    assert.equal(haiku.status, 200, haiku.text);
+    const haikuRequest = mock.requests[1];
+    assert.equal(haikuRequest.model, 'claude-haiku-5-5');
+    assert.equal(haikuRequest.fallbacks, undefined, 'Haiku has no server-side fallback');
+    assert.equal(haikuRequest.betas, undefined);
+    assert.equal(json(haiku).model, 'answered-by', 'the model that answered comes back');
+
+    assert.equal((await send('POST', '/ai/generate', { auto: true, model: 'gpt-5' })).status, 400);
+    await new Promise((resolve) => app.server.close(resolve));
+    await rm(dir, { recursive: true, force: true });
   });
 
   it('explains a refusal, an answer too long to finish, and a key Anthropic refuses', async () => {

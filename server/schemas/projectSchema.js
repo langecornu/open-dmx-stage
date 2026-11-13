@@ -8,6 +8,7 @@ import { EFFECT_BEATS, EFFECT_TYPES, MAX_BPM, MIN_BPM } from '../../shared/effec
 import { CAPABILITY_TYPES } from '../../shared/capabilities.js';
 import { DEVICE_CATEGORIES } from '../../shared/categories.js';
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
+import { AI_MODEL_IDS, DEFAULT_AI_MODEL } from '../../shared/aiModels.js';
 import { AMOUNTS, COLOUR_AMOUNTS, MAX_AI_LOOKS, MAX_AI_SEQUENCES } from '../../shared/aiShow.js';
 import { FIRST_VENUE, MAX_VENUES } from '../../shared/venues.js';
 import { RIG_LIMITS, RIG_SHAPES } from '../../shared/stageRig.js';
@@ -261,6 +262,8 @@ export const aiKeySchema = z
 /** What the person asks AI show generation for. The song is numbers only, worked out in the browser. */
 export const aiGenerateSchema = z
   .object({
+    // Which Claude model designs the show: cheaper and quicker, or more careful.
+    model: z.enum(AI_MODEL_IDS).default(DEFAULT_AI_MODEL),
     auto: z.boolean(),
     mood: z.string().trim().max(500).default(''),
     energy: z.number().int().min(0).max(100).nullable().default(null),
