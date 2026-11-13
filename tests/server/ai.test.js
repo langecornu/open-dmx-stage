@@ -25,15 +25,15 @@ let server;
 let baseUrl;
 let dataDir;
 /** What the stand-in client saw and will answer. */
-const fake = { keys: [], requests: [], answer: null, error: null, stopReason: 'end_turn' };
+const mock = { keys: [], requests: [], answer: null, error: null, stopReason: 'end_turn', gate: null };
 
-function fakeClient(apiKey) {
-  fake.keys.push(apiKey);
+function mockClient(apiKey) {
+  mock.keys.push(apiKey);
   return {
     models: {
       retrieve: async (model) => {
-        if (fake.error) {
-          throw fake.error;
+        if (mock.error) {
+          throw mock.error;
         }
         return { id: model };
       },
@@ -41,15 +41,16 @@ function fakeClient(apiKey) {
     beta: {
       messages: {
         stream: (body) => {
-          fake.requests.push(body);
+          mock.requests.push(body);
           return {
             finalMessage: async () => {
-              if (fake.error) {
-                throw fake.error;
+              await mock.gate;
+              if (mock.error) {
+                throw mock.error;
               }
               return {
-                stop_reason: fake.stopReason,
-                content: [{ type: 'text', text: JSON.stringify(fake.answer) }],
+                stop_reason: mock.stopReason,
+                content: [{ type: 'text', text: JSON.stringify(mock.answer) }],
                 usage: { input_tokens: 1200, output_tokens: 3400 },
               };
             },
@@ -93,25 +94,30 @@ const answer = {
   ],
 };
 
-before(async () => {
-  dataDir = await mkdtemp(path.join(tmpdir(), 'odmx-ai-'));
-  const config = { allowedOrigins: ['http://localhost:5173'], distDir: path.join(dataDir, 'none') };
-  const projectService = new ProjectService({ dataDir });
+/** Starts the app on a free port, with its own rate limits, the stand-in client and a key store in `dir`. */
+async function startApp(dir) {
+  const config = { allowedOrigins: ['http://localhost:5173'], distDir: path.join(dir, 'none') };
+  const projectService = new ProjectService({ dataDir: dir });
   await projectService.load();
   const engine = new DmxEngine({ driver: new MockDriver() });
   const outputManager = new OutputManager({
     engine,
-    dataDir,
+    dataDir: dir,
     defaults: { driver: 'mock' },
     listPorts: async () => [],
     probe: async () => ({ kind: 'no-response', suggestedInterface: 'open-dmx', message: 'stub' }),
   });
-  const aiKeys = new AiKeyStore({ dataDir, env: {} });
-  server = createServer(
-    createApp({ config, engine, projectService, outputManager, aiKeys, aiClient: /** @type {any} */ (fakeClient) }),
+  const aiKeys = new AiKeyStore({ dataDir: dir, env: {} });
+  const started = createServer(
+    createApp({ config, engine, projectService, outputManager, aiKeys, aiClient: /** @type {any} */ (mockClient) }),
   );
-  await new Promise((resolve) => server.listen(0, resolve));
-  baseUrl = `http://localhost:${server.address().port}/api/v1`;
+  await new Promise((resolve) => started.listen(0, resolve));
+  return { server: started, url: `http://localhost:${started.address().port}/api/v1`, aiKeys };
+}
+
+before(async () => {
+  dataDir = await mkdtemp(path.join(tmpdir(), 'odmx-ai-'));
+  ({ server, url: baseUrl } = await startApp(dataDir));
 });
 
 after(async () => {
@@ -120,7 +126,7 @@ after(async () => {
 });
 
 beforeEach(() => {
-  Object.assign(fake, { keys: [], requests: [], answer, error: null, stopReason: 'end_turn' });
+  Object.assign(mock, { keys: [], requests: [], answer, error: null, stopReason: 'end_turn', gate: null });
 });
 
 const call = async (method, route, body) => {
@@ -141,11 +147,11 @@ describe('AI API key', () => {
   });
 
   it('checks a key with Anthropic, saves it for this user only, and never sends it back', async () => {
-    fake.error = new AuthenticationError(401, {}, 'invalid x-api-key', new Headers());
+    mock.error = new AuthenticationError(401, {}, 'invalid x-api-key', new Headers());
     const refused = await call('PUT', '/settings/ai', { apiKey: KEY });
     assert.equal(refused.status, 400);
     assert.match(json(refused).error, /refused the API key/);
-    fake.error = null;
+    mock.error = null;
     const saved = await call('PUT', '/settings/ai', { apiKey: KEY });
     assert.equal(saved.status, 200);
     assert.deepEqual(json(saved), { hasKey: true, source: 'saved' });
@@ -186,9 +192,9 @@ describe('AI show generation', () => {
     );
     assert.equal(body.sequences[0].steps.length, 2);
     assert.deepEqual(body.usage, { inputTokens: 1200, outputTokens: 3400 });
-    assert.deepEqual(fake.keys, [KEY]);
+    assert.deepEqual(mock.keys, [KEY]);
 
-    const [request] = fake.requests;
+    const [request] = mock.requests;
     assert.equal(request.model, 'claude-opus-5-5');
     assert.equal(request.fallbacks, 'default');
     assert.equal(request.output_config.format.type, 'json_schema');
@@ -200,13 +206,50 @@ describe('AI show generation', () => {
   });
 
   it('explains a refusal, an answer too long to finish, and a key Anthropic refuses', async () => {
-    fake.stopReason = 'refusal';
+    mock.stopReason = 'refusal';
     assert.equal((await call('POST', '/ai/generate', { auto: true })).status, 422);
-    fake.stopReason = 'max_tokens';
+    mock.stopReason = 'max_tokens';
     assert.match(json(await call('POST', '/ai/generate', { auto: true })).error, /too big/);
-    fake.stopReason = 'end_turn';
-    fake.error = new AuthenticationError(401, {}, 'invalid x-api-key', new Headers());
+    mock.stopReason = 'end_turn';
+    mock.error = new AuthenticationError(401, {}, 'invalid x-api-key', new Headers());
     assert.match(json(await call('POST', '/ai/generate', { auto: true })).error, /refused the API key/);
+  });
+
+  it('makes one show at a time, so two devices do not pay twice', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'odmx-ai-one-'));
+    const app = await startApp(dir);
+    await app.aiKeys.save(KEY);
+    await fetch(`${app.url}/project`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(show),
+    });
+    const post = async () => {
+      const res = await fetch(`${app.url}/ai/generate`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ auto: true }),
+      });
+      return { status: res.status, text: await res.text() };
+    };
+    let release;
+    mock.gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    const first = post();
+    const deadline = Date.now() + 2000;
+    while (mock.requests.length === 0) {
+      assert.ok(Date.now() < deadline, 'the first generation reaches Anthropic');
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    const second = await post();
+    assert.equal(second.status, 409);
+    assert.match(json(second).error, /already being made/);
+    release();
+    assert.equal((await first).status, 200, 'the first one finishes');
+    assert.equal((await post()).status, 200, 'and the next one can start');
+    await new Promise((resolve) => app.server.close(resolve));
+    await rm(dir, { recursive: true, force: true });
   });
 
   it('forgets the key when it is removed', async () => {
