@@ -14,7 +14,7 @@ const TEMPO_STEP = 0.3; // send a tempo change without a beat only when it moved
 /** @param {unknown} error @param {string} source @returns {string} */
 /** Shown when the page was opened at this computer's network address (plain http), as on a phone. */
 export const INSECURE_MESSAGE =
-  'Listening to the music works on the computer running Open DMX Stage (open it there at localhost), not on a phone or tablet opened at its network address: browsers only allow the microphone on secure pages. The lights follow the tempo for every device either way.';
+  'Browsers only allow the microphone on secure pages. Open the app at its secure address (https, shown in Settings under Phones and tablets), or listen on the computer running Open DMX Stage. The lights follow the tempo for every device either way.';
 
 function describeError(error, source) {
   const name = error instanceof Error ? error.name : '';

@@ -124,6 +124,74 @@ export function AiKeyCard() {
   );
 }
 
+/** The secure (https) addresses to open on a phone or tablet, so the microphone and MIDI work there too. */
+export function PhonesCard() {
+  const [network, setNetwork] = useState(
+    /** @type {{ httpsPort: number, fingerprint: string | null, validTo: string | null, addresses: string[] } | null} */ (
+      null
+    ),
+  );
+  const [error, setError] = useState(/** @type {string | null} */ (null));
+  useEffect(() => {
+    api
+      .getNetwork()
+      .then(setNetwork)
+      .catch((loadError) => setError(loadError.message));
+  }, []);
+  const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+
+  return (
+    <section className="card card-pad ai-key" aria-labelledby="phones-title">
+      <h2 className="section-title" id="phones-title">
+        Phones and tablets
+      </h2>
+      <p className="view-sub">
+        Any device on your network can open the app. To also use the microphone (Follow the music) or a MIDI controller
+        there, open its secure address: browsers only allow those on secure pages.
+      </p>
+      {isSecure ? (
+        <p className="badge badge-live">
+          <Icon name="check" size={14} />
+          This page is secure
+        </p>
+      ) : null}
+      {error ? (
+        <p className="error-banner" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {network && network.httpsPort === 0 ? (
+        <p className="fixture-meta">
+          The secure address is turned off on this computer (HTTPS_PORT=0), or could not start. See the server log.
+        </p>
+      ) : null}
+      {network && network.httpsPort > 0 ? (
+        <>
+          <ul className="phones-list">
+            {network.addresses.map((address) => (
+              <li key={address}>
+                <a href={address}>{address}</a>
+              </li>
+            ))}
+          </ul>
+          <p className="fixture-meta">
+            The first time, the browser warns that the connection is not private, because the certificate is made by
+            this app rather than bought. Check the certificate&apos;s SHA-256 fingerprint matches the one below, then
+            continue: in Chrome, choose Advanced and Proceed; in Safari, Show details and visit this website. Each
+            device asks once.
+          </p>
+          <p className="fixture-meta phones-fingerprint">
+            Fingerprint: <code>{network.fingerprint}</code>
+            {network.validTo
+              ? ` · renewed by itself before ${new Date(network.validTo).toLocaleDateString(undefined, { dateStyle: 'medium' })}`
+              : ''}
+          </p>
+        </>
+      ) : null}
+    </section>
+  );
+}
+
 export function SettingsView() {
   return (
     <section className="view" aria-labelledby="settings-title">
@@ -132,9 +200,10 @@ export function SettingsView() {
           <h1 className="view-title" id="settings-title">
             Settings
           </h1>
-          <p className="view-sub">Connections to other services.</p>
+          <p className="view-sub">Connections to other devices and services.</p>
         </div>
       </div>
+      <PhonesCard />
       <AiKeyCard />
     </section>
   );

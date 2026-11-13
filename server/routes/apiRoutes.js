@@ -47,6 +47,7 @@ import { httpError } from '../utils/httpError.js';
  *   ofl?: ReturnType<typeof import('../clients/oflClient.js').createOflClient> | null,
  *   aiKeys?: AiKeyStore,
  *   aiClient?: (apiKey: string) => import('@anthropic-ai/sdk').default,
+ *   network?: { httpsPort: number, fingerprint: string | null, validTo: string | null, addresses: string[] } | null,
  * }} options `ofl` is null when online fixture search is turned off
  * @returns {import('express').Router}
  */
@@ -57,6 +58,7 @@ export function createApiRouter({
   ofl = null,
   aiKeys = new AiKeyStore({ dataDir: projectService.dataDir }),
   aiClient = undefined,
+  network = null,
 }) {
   const router = Router();
 
@@ -101,6 +103,13 @@ export function createApiRouter({
     syncEngineWithProject(saved);
     return saved;
   };
+
+  // The secure (https) addresses for phones and tablets, and the certificate's fingerprint to check the warning by.
+  router.get('/settings/network', (_req, res) => {
+    res.json(
+      network && network.httpsPort ? network : { httpsPort: 0, fingerprint: null, validTo: null, addresses: [] },
+    );
+  });
 
   // AI show generation. The key is write-only: no route ever returns it.
   router.get(

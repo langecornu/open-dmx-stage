@@ -7,6 +7,9 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **A secure address for phones and tablets**: the app also serves https (port 4443, `HTTPS_PORT`), with a certificate
+  it makes itself, so Follow the music and MIDI controllers work on a phone or tablet too. Each device warns once that
+  the connection is not private; Settings lists the secure addresses and the fingerprint to check. See ADR 0009.
 - **Each venue remembers its output**: the USB cable at one venue, Art-Net to a node at another. Leaving a venue
   remembers the output in use there; switching to a venue sets its output again, and the question before switching
   says when the output will change. The Venues card shows each venue's output.

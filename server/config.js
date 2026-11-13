@@ -1,4 +1,5 @@
 // Central configuration. This is the only module allowed to read process.env; it validates at startup.
+import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +12,8 @@ const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+  // The https address beside it, for phones and tablets that need the microphone or MIDI (ADR 0009). 0 turns it off.
+  HTTPS_PORT: z.coerce.number().int().min(0).max(65535).default(4443),
   // Every network address by default, so a phone or tablet on the same network can run the show (ADR 0008). The
   // control surface has no login: set 127.0.0.1 to keep it on this computer.
   HOST: z.string().min(1).max(253).default('0.0.0.0'),
@@ -34,19 +37,27 @@ const envSchema = z.object({
  * live link is refused and the app says "Server offline".
  * @param {string} listed comma-separated origins from ALLOWED_ORIGINS
  * @param {number} port the port this server listens on
+ * @param {number} httpsPort the https port beside it, or 0 when there is none
  * @param {string[]} ownAddresses this computer's network addresses and name, when it listens beyond itself
  * @returns {string[]}
  */
-function trustedOrigins(listed, port, ownAddresses) {
+function trustedOrigins(listed, port, httpsPort, ownAddresses) {
   const configured = listed
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
-  const own = ['localhost', '127.0.0.1', '[::1]', ...ownAddresses].map((address) => `http://${address}:${port}`);
+  const hosts = ['localhost', '127.0.0.1', '[::1]', ...ownAddresses];
+  const own = [
+    ...hosts.map((address) => `http://${address}:${port}`),
+    ...(httpsPort ? hosts.map((address) => `https://${address}:${httpsPort}`) : []),
+  ];
   return [...new Set([...configured, ...own])];
 }
 
 const LOOPBACK = new Set(['127.0.0.1', 'localhost', '::1']);
+
+/** @param {string} host @returns {boolean} true when the server only listens on this computer */
+export const isLoopback = (host) => LOOPBACK.has(host);
 
 /**
  * This computer's addresses on its networks (IPv4) and its name, which a phone or tablet uses to open the app.
@@ -57,8 +68,20 @@ export function networkAddresses() {
     .flat()
     .filter((entry) => entry && entry.family === 'IPv4' && !entry.internal)
     .map((entry) => /** @type {os.NetworkInterfaceInfo} */ (entry).address);
+  // The name nearby devices find it by (Bonjour, or Avahi on Linux) ends in .local. A Mac announces the "local host
+  // name" from its Sharing settings, which can differ from its computer name; elsewhere it is the host name's first
+  // label (raspberrypi.local), even when the router gives a longer one.
   const name = os.hostname();
-  return [...addresses, name, name.endsWith('.local') ? name : `${name}.local`];
+  let announced = name.split('.')[0];
+  if (process.platform === 'darwin') {
+    try {
+      announced =
+        execFileSync('scutil', ['--get', 'LocalHostName'], { encoding: 'utf8', timeout: 2000 }).trim() || announced;
+    } catch {
+      // Keep the host name's first label.
+    }
+  }
+  return [...new Set([...addresses, name, `${announced}.local`])];
 }
 
 /**
@@ -73,6 +96,7 @@ export function loadConfig(env = process.env, { ownAddresses = networkAddresses 
   const values = parsed.data;
   return {
     port: values.PORT,
+    httpsPort: values.HTTPS_PORT,
     host: values.HOST,
     nodeEnv: values.NODE_ENV,
     logLevel: values.LOG_LEVEL,
@@ -82,6 +106,7 @@ export function loadConfig(env = process.env, { ownAddresses = networkAddresses 
     allowedOrigins: trustedOrigins(
       values.ALLOWED_ORIGINS,
       values.PORT,
+      values.HTTPS_PORT,
       LOOPBACK.has(values.HOST) ? [] : ownAddresses(),
     ),
     dmxDriver: values.DMX_DRIVER,

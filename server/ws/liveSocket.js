@@ -17,7 +17,7 @@ const HEARTBEAT_MS = 15000;
 
 /**
  * @param {{
- *   server: import('node:http').Server,
+ *   server: import('node:http').Server | import('node:https').Server,
  *   engine: import('../services/dmxEngine.js').DmxEngine,
  *   projectService: import('../services/projectService.js').ProjectService,
  *   outputManager: import('../services/outputManager.js').OutputManager,

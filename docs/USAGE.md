@@ -484,6 +484,18 @@ of shows:
 The folders are in the app's own show list, on the computer running Open DMX Stage: the open show is in
 `server/data/project.json` (the previous save is kept as `project.json.bak`) and the saved ones in `server/data/shows/`.
 
+## Phones and tablets
+
+Open the app on any device on the same network at this computer's address, for example `http://192.168.1.117:4000`.
+Everything works there except the microphone (**Follow the music**) and MIDI controllers: browsers only allow those on
+secure pages. For them, open the **secure address** instead, listed in **Settings** under **Phones and tablets**, for
+example `https://192.168.1.117:4443`.
+
+The first time, the browser warns that the connection is not private: the certificate is made by Open DMX Stage itself,
+not bought from a company the browser knows. Check that the fingerprint in the warning's certificate details matches the
+one in Settings, then continue (in Chrome: **Advanced**, then **Proceed**; in Safari: **Show details**, then **visit this
+website**). Each device asks once. Safari on iPhone and iPad does not support MIDI controllers at all.
+
 ## Current limits
 
 - One DMX universe (512 channels).

@@ -24,6 +24,7 @@ export const api = {
   getProject: () => request('/project'),
   saveProject: (project) => request('/project', jsonBody('PUT', project)),
   importProject: (project) => request('/project/import', jsonBody('POST', project)),
+  getNetwork: () => request('/settings/network'),
   getAiSettings: () => request('/settings/ai'),
   saveAiKey: (apiKey) => request('/settings/ai', jsonBody('PUT', { apiKey })),
   removeAiKey: () => request('/settings/ai', { method: 'DELETE' }),
