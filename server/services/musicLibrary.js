@@ -27,6 +27,11 @@ export const AUDIO_TYPES = /** @type {Record<string, string>} */ ({
 });
 const MAX_DEPTH = 6;
 const MAX_TRACKS = 5000;
+// A folder chosen by mistake (the whole disk) must not keep the server busy for minutes: the walk stops after this many
+// folder entries, whatever it has found.
+const MAX_ENTRIES = 50_000;
+// Tags are read a few files at a time: quicker than one by one, without opening thousands of files at once.
+const TAG_READERS = 8;
 
 /**
  * @typedef {{ id: string, file: string, title: string, artist: string, album: string, duration: number | null,
@@ -55,6 +60,8 @@ export class MusicLibrary {
     this.index = null;
     /** @type {Record<string, TrackAnalysis & { modified: number }> | null} */
     this.analyses = null;
+    /** @type {Promise<{ folder: string, exists: boolean, tracks: Track[] }> | null} a scan under way, shared */
+    this.scanning = null;
   }
 
   /** @returns {Promise<string>} the folder the library reads */
@@ -100,12 +107,28 @@ export class MusicLibrary {
     if (this.index && this.index.folder === folder && !rescan) {
       return { folder, exists: true, tracks: this.index.tracks };
     }
+    // Several devices asking at once share one scan.
+    if (!this.scanning) {
+      this.scanning = this.scan(folder).finally(() => {
+        this.scanning = null;
+      });
+    }
+    return this.scanning;
+  }
+
+  /**
+   * Walks the folder for audio files and reads their tags, reusing what is known about files that have not changed.
+   * @param {string} folder
+   * @returns {Promise<{ folder: string, exists: boolean, tracks: Track[] }>}
+   */
+  async scan(folder) {
     let exists = true;
+    let entriesSeen = 0;
     /** @type {string[]} */
     const files = [];
     /** @param {string} relative @param {number} depth */
     const walk = async (relative, depth) => {
-      if (files.length >= MAX_TRACKS || depth > MAX_DEPTH) {
+      if (files.length >= MAX_TRACKS || entriesSeen >= MAX_ENTRIES || depth > MAX_DEPTH) {
         return;
       }
       let entries;
@@ -118,6 +141,8 @@ export class MusicLibrary {
         log.warn({ err: error, folder: relative }, 'A music folder could not be read');
         return;
       }
+      entriesSeen += entries.length;
+      // Symbolic links are neither files nor folders here, so the walk never leaves the folder.
       for (const entry of entries) {
         if (entry.name.startsWith('.')) {
           continue;
@@ -128,58 +153,77 @@ export class MusicLibrary {
         } else if (entry.isFile() && AUDIO_TYPES[path.extname(entry.name).toLowerCase()]) {
           files.push(child);
         }
-        if (files.length >= MAX_TRACKS) {
+        if (files.length >= MAX_TRACKS || entriesSeen >= MAX_ENTRIES) {
           return;
         }
       }
     };
     await walk('', 0);
+    if (entriesSeen >= MAX_ENTRIES) {
+      log.warn({ folder }, 'The music folder is very large; only part of it was read');
+    }
 
     const previous = new Map(
       (this.index?.folder === folder ? this.index.tracks : []).map((track) => [track.file, track]),
     );
-    /** @type {Track[]} */
-    const tracks = [];
-    for (const file of files) {
-      const full = path.join(folder, file);
-      let info;
-      try {
-        info = await stat(full);
-      } catch {
-        continue;
+    /** @type {(Track | null)[]} */
+    const tracks = new Array(files.length).fill(null);
+    let next = 0;
+    const reader = async () => {
+      while (next < files.length) {
+        const at = next;
+        next += 1;
+        tracks[at] = await this.readTrack(folder, files[at], previous.get(files[at]));
       }
-      const known = previous.get(file);
-      if (known && known.modified === info.mtimeMs && known.size === info.size) {
-        tracks.push(known);
-        continue;
-      }
-      /** @type {Track} */
-      const track = {
-        id: idOf(file),
-        file,
-        title: path.basename(file, path.extname(file)),
-        artist: '',
-        album: '',
-        duration: null,
-        bpm: null,
-        size: info.size,
-        modified: info.mtimeMs,
-      };
-      try {
-        const { common, format } = await parseFile(full, { duration: false, skipCovers: true });
-        track.title = common.title || track.title;
-        track.artist = common.artist || '';
-        track.album = common.album || '';
-        track.duration = typeof format.duration === 'number' ? Math.round(format.duration * 10) / 10 : null;
-        track.bpm = typeof common.bpm === 'number' && common.bpm > 0 ? Math.round(common.bpm * 10) / 10 : null;
-      } catch (error) {
-        log.warn({ err: error, file }, 'Could not read the tags of a track');
-      }
-      tracks.push(track);
+    };
+    await Promise.all(Array.from({ length: TAG_READERS }, reader));
+    const found = /** @type {Track[]} */ (tracks.filter(Boolean));
+    found.sort((a, b) => (a.artist + a.title).localeCompare(b.artist + b.title));
+    this.index = { folder, tracks: found, scannedAt: Date.now() };
+    return { folder, exists, tracks: found };
+  }
+
+  /**
+   * One track's details, from what is known when the file has not changed, or from its tags.
+   * @param {string} folder
+   * @param {string} file relative to the folder
+   * @param {Track | undefined} known
+   * @returns {Promise<Track | null>} null when the file has gone
+   */
+  async readTrack(folder, file, known) {
+    const full = path.join(folder, file);
+    let info;
+    try {
+      info = await stat(full);
+    } catch {
+      return null; // removed while the folder was being read
     }
-    tracks.sort((a, b) => (a.artist + a.title).localeCompare(b.artist + b.title));
-    this.index = { folder, tracks, scannedAt: Date.now() };
-    return { folder, exists, tracks };
+    if (known && known.modified === info.mtimeMs && known.size === info.size) {
+      return known;
+    }
+    /** @type {Track} */
+    const track = {
+      id: idOf(file),
+      file,
+      title: path.basename(file, path.extname(file)),
+      artist: '',
+      album: '',
+      duration: null,
+      bpm: null,
+      size: info.size,
+      modified: info.mtimeMs,
+    };
+    try {
+      const { common, format } = await parseFile(full, { duration: false, skipCovers: true });
+      track.title = common.title || track.title;
+      track.artist = common.artist || '';
+      track.album = common.album || '';
+      track.duration = typeof format.duration === 'number' ? Math.round(format.duration * 10) / 10 : null;
+      track.bpm = typeof common.bpm === 'number' && common.bpm > 0 ? Math.round(common.bpm * 10) / 10 : null;
+    } catch (error) {
+      log.warn({ err: error, file }, 'Could not read the tags of a track');
+    }
+    return track;
   }
 
   /**

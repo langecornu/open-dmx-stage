@@ -12,6 +12,33 @@ export const PROTOCOL_VERSION = 1;
 const FRAME_BROADCAST_MS = 66;
 const STATUS_CHECK_MS = 2000;
 const HEARTBEAT_MS = 15000;
+// Faders send at most one message per screen refresh (120 a second on the fastest tablets), so a person stays well
+// under this. A runaway or hostile client that floods the socket has its extra messages dropped, so it cannot starve
+// the output for everyone else.
+const MESSAGE_BURST = 480;
+const MESSAGES_PER_SECOND = 240;
+// More than enough phones and tablets for any show; refuses a pile of idle connections.
+const MAX_CLIENTS = 64;
+
+/**
+ * A token bucket: allows a burst, then a steady rate.
+ * @param {() => number} now milliseconds
+ * @returns {() => boolean} true while the client is within its budget
+ */
+export function messageBudget(now = Date.now, burst = MESSAGE_BURST, perSecond = MESSAGES_PER_SECOND) {
+  let tokens = burst;
+  let last = now();
+  return () => {
+    const at = now();
+    tokens = Math.min(burst, tokens + ((at - last) / 1000) * perSecond);
+    last = at;
+    if (tokens < 1) {
+      return false;
+    }
+    tokens -= 1;
+    return true;
+  };
+}
 
 /** @typedef {import('ws').WebSocket & { isAlive?: boolean }} LiveClient */
 
@@ -38,7 +65,8 @@ export function attachLiveSocket({
     server,
     path: '/live',
     maxPayload: 64 * 1024,
-    verifyClient: (/** @type {{ origin: string }} */ { origin }) => !origin || allowedOrigins.includes(origin),
+    verifyClient: (/** @type {{ origin: string }} */ { origin }) =>
+      (!origin || allowedOrigins.includes(origin)) && wss.clients.size < MAX_CLIENTS,
   });
 
   /**
@@ -185,7 +213,17 @@ export function attachLiveSocket({
     send(socket, { type: 'hello', version: PROTOCOL_VERSION });
     send(socket, { type: 'state', state: engine.getState() });
     send(socket, { type: 'output', status: outputManager.getStatus() });
+    const isWithinBudget = messageBudget();
+    let lastWarnedAt = 0;
     socket.on('message', (data) => {
+      if (!isWithinBudget()) {
+        if (Date.now() - lastWarnedAt > 1000) {
+          lastWarnedAt = Date.now();
+          log.warn('A client is sending too many messages; the extra ones are dropped');
+          send(socket, { type: 'error', message: 'Too many messages' });
+        }
+        return;
+      }
       let parsed;
       try {
         parsed = liveMessageSchema.safeParse(JSON.parse(data.toString()));

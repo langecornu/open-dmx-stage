@@ -1,7 +1,7 @@
 // Integration tests for the decks' music library: a folder scanned for audio, chosen from the app, streamed with ranges
 // so a deck can jump anywhere, and each track's beat analysis kept.
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -49,6 +49,11 @@ before(async () => {
   await writeFile(path.join(musicDir, 'Intro.wav'), wav(1));
   await writeFile(path.join(musicDir, 'notes.txt'), 'not audio');
   await writeFile(path.join(musicDir, '.hidden', 'Secret.wav'), wav(1));
+  // A link out of the folder, which must not be followed.
+  await mkdir(path.join(dataDir, 'Elsewhere'), { recursive: true });
+  await writeFile(path.join(dataDir, 'Elsewhere', 'Private.wav'), wav(1));
+  await symlink(path.join(dataDir, 'Elsewhere'), path.join(musicDir, 'Linked'));
+  await symlink(path.join(dataDir, 'Elsewhere', 'Private.wav'), path.join(musicDir, 'Private.wav'));
   const config = { allowedOrigins: ['http://localhost:5173'], distDir: path.join(dataDir, 'none') };
   const projectService = new ProjectService({ dataDir });
   await projectService.load();
@@ -99,7 +104,7 @@ describe('Music library', () => {
         [path.join('House', 'Groove.wav'), 'Groove', 2],
         ['Intro.wav', 'Intro', 1],
       ],
-      'audio files in sub-folders, by title; no text files and nothing hidden',
+      'audio files in sub-folders, by title; no text files, nothing hidden, no links out of the folder',
     );
   });
 
@@ -129,5 +134,10 @@ describe('Music library', () => {
     await writeFile(path.join(musicDir, 'Intro.wav'), wav(1.5));
     await call('GET', '/music?rescan=1');
     assert.deepEqual(await (await call('GET', `/music/tracks/${intro.id}/analysis`)).json(), { analysis: null });
+  });
+
+  it('shares one scan between devices asking at the same time', async () => {
+    const [first, second] = await Promise.all([call('GET', '/music?rescan=1'), call('GET', '/music?rescan=1')]);
+    assert.deepEqual((await first.json()).tracks, (await second.json()).tracks);
   });
 });
