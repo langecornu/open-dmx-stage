@@ -496,6 +496,10 @@ not bought from a company the browser knows. Check that the fingerprint in the w
 one in Settings, then continue (in Chrome: **Advanced**, then **Proceed**; in Safari: **Show details**, then **visit this
 website**). Each device asks once. Safari on iPhone and iPad does not support MIDI controllers at all.
 
+The layout adapts to the screen: on an iPad in landscape the sidebar stays (icons only on smaller iPads); in portrait
+and on a phone the screens are in a bar at the bottom (on a phone, swipe it sideways to reach the last ones). Timeline
+blocks can be drawn and moved with a finger.
+
 ## Current limits
 
 - One DMX universe (512 channels).

@@ -36,7 +36,13 @@ export function TopBar({
         onChange={(event) => onRename(event.target.value)}
       />
       {onOpenShows ? (
-        <button type="button" className="btn btn-ghost btn-compact topbar-shows" onClick={onOpenShows}>
+        <button
+          type="button"
+          className="btn btn-ghost btn-compact topbar-shows"
+          aria-label="File"
+          title="File: save and open shows"
+          onClick={onOpenShows}
+        >
           <Icon name="folder" size={16} />
           <span className="btn-label">File</span>
         </button>
