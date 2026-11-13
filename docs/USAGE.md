@@ -30,7 +30,8 @@ The app has eleven screens, reached from the left rail (or the bottom bar on pho
 
 1. **Setup:** add your lights (or pick them in the welcome screen) at the DMX addresses they are set to.
 2. **Visualize** (on Perform), then **Arrange lights:** shape the truss the way it is in the room (a square around the
-   dance floor, for example) and put each light where it hangs.
+   dance floor, for example) and put each light where it hangs. AI shows need this: the AI designs for where the
+   lights are.
 3. **Looks and sequences:** make them by hand on Lights, Looks and Sequences, or let **AI shows** design them, from a
    song if you like.
 4. **Perform:** play them from pads, keys or a MIDI controller, with your music on the **Decks** so the lights lock to
@@ -370,8 +371,10 @@ play and cue the music while you watch.
    **depth** and **height** in metres.
 2. **Drag a light** onto any truss side, an upright or the floor, and along it; it snaps to the rail under your finger.
    Or pick a light from the list, choose its rail in **… is on**, and move it with the arrow keys (Shift moves further).
-3. **Reset layout** puts every light back in its first place: spread along the truss, smoke machines, hazers, fans and
-   special effects on the floor.
+3. Lights you have not placed stand at a first, guessed place: spread along the truss, smoke machines, hazers, fans
+   and special effects on the floor. Moving any light keeps the places all the others show; **Keep these places** keeps
+   them as they are. AI shows use these places, so they wait until every light has one.
+4. **Reset layout** puts every light back in its first, guessed place.
 
 Hung lights aim at the dance floor; a moving head's pan is centred toward the floor, so its moves look right from any
 side. On a slow device the visualizer lowers its detail by itself to stay smooth.
@@ -543,20 +546,27 @@ an estimate in dollars).
 
    ![The Anthropic API key in Settings, saved and hidden](images/25-settings-dark.jpg)
 
-2. **Optional, a song:** press **Choose a song**. The app listens to it in your browser and finds its tempo, its first
+2. **Place the lights:** the AI designs for where your lights are, so **Generate** waits until every light has a
+   place on the stage. If any has none yet, press **Arrange the lights**: the stage view opens ready to arrange. Set the
+   truss the way it is in the room, drag each light where it hangs (or pick its rail and move it with the arrow keys),
+   or press **Keep these places** if the first places shown are right. The AI then knows each light's place, the lights
+   on each truss in order from left to right (as the audience sees the stage), what each truss faces across the floor,
+   and which lights mirror each other. So it can run chases across the room in order or around a square, move mirror
+   pairs together, answer one side with the other, cross beams, and aim moving heads from where they hang.
+3. **Optional, a song:** press **Choose a song**. The app listens to it in your browser and finds its tempo, its first
    downbeat and how its energy rises and falls, shown as a bar strip. If the tempo is twice too fast or slow, press
    **Half** or **Double**. Only these numbers are sent to the AI, never the audio.
-3. **Your choices:** leave **Let the AI decide everything** ticked, or untick it to steer: a mood or style in your own
+4. **Your choices:** leave **Let the AI decide everything** ticked, or untick it to steer: a mood or style in your own
    words, the energy, colours to use more, use less or avoid, and **More**, **Less** or **Off** for each thing the
    lights at this venue can do (only what they have is offered: strobe always, movement only with moving heads, smoke
    only with a smoke machine or hazer, and so on). Choose how many looks and sequences, and their length when there is
    no song.
-4. **Choose the model:** **Haiku 5.5** (fastest and cheapest, a cent or two), **Sonnet 5.5** (balanced, about half the
+5. **Choose the model:** **Haiku 5.5** (fastest and cheapest, a cent or two), **Sonnet 5.5** (balanced, about half the
    price of Opus) or **Opus 5.5** (the most creative and careful). Each shows roughly what this show would cost on it,
    worked out from your number of lights, looks and sequences and the song's length, at Anthropic's list prices: for
    12 lights, 8 looks and 2 sequences to a three-minute song, about 45¢ to 58¢ on Opus. The app remembers your choice
    in this browser.
-5. Press **Generate the show**. It usually takes one to three minutes. The new looks and sequences are added to your
+6. Press **Generate the show**. It usually takes one to three minutes. The new looks and sequences are added to your
    show, and the app says which model made them, the tokens used and what they cost; **Remove these** takes them out
    again.
 
@@ -565,7 +575,7 @@ Play the song on one of the app's **Decks** and start the sequence: the lights l
 Playing it from another player instead, start the sequence on its first downbeat (from Perform or a MIDI pad) and turn
 on **Follow the music** so the lights stay on the beat. Every AI look and sequence can be edited like any other.
 
-What is sent to Anthropic: your lights' names, fixtures and controls, your choices, and the song's numbers. Nothing else
+What is sent to Anthropic: your lights' names, fixtures, controls and places on the stage, your choices, and the song's numbers. Nothing else
 from your show, and never the audio.
 
 ## 10. File: save and open shows

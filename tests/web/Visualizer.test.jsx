@@ -112,6 +112,28 @@ describe('Visualizer', () => {
     expect(latest.fixtures[1].stage).toEqual({ rail: 'floor', x: 0.5, z: 0.52 });
   });
 
+  it('sets the whole layout once a light is moved, and keeps the first places on request', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: /Arrange lights/ }));
+    expect(screen.getByText(/The lights are at first, guessed places/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Par 2' }));
+    await user.selectOptions(screen.getByLabelText('Par 2 is on'), 'The floor');
+    expect(latest.fixtures[0].stage).toEqual({ rail: 'back', at: 1 / 3 }, 'Par 1 keeps the place it showed');
+    expect(screen.queryByRole('button', { name: 'Keep these places' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the places shown with one press', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: /Arrange lights/ }));
+    await user.click(screen.getByRole('button', { name: 'Keep these places' }));
+    expect(latest.fixtures.map((fixture) => fixture.stage)).toEqual([
+      { rail: 'back', at: 1 / 3 },
+      { rail: 'back', at: 2 / 3 },
+    ]);
+  });
+
   it('puts every light back in its first place, after asking', async () => {
     const user = userEvent.setup();
     vi.spyOn(window, 'confirm').mockReturnValue(true);

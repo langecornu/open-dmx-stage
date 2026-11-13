@@ -37,10 +37,10 @@ describe('AI models', () => {
 });
 
 describe('estimateTokens', () => {
-  it('matches the demo generations: about 3,600 in and 21,000 to 28,000 out', () => {
+  it('matches the demo generations: about 4,400 in (3,600 plus the places) and 21,000 to 28,000 out', () => {
     const { inputTokens, outputTokens } = estimateTokens(demo);
-    expect(inputTokens).toBeGreaterThan(3000);
-    expect(inputTokens).toBeLessThan(4500);
+    expect(inputTokens).toBeGreaterThan(4000);
+    expect(inputTokens).toBeLessThan(5000);
     expect(outputTokens[0]).toBeGreaterThan(19000);
     expect(outputTokens[1]).toBeLessThan(31000);
     expect(outputTokens[0]).toBeLessThan(outputTokens[1]);

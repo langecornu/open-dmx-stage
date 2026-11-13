@@ -67,9 +67,10 @@ const show = {
   name: 'Test',
   fixtureTypes: [],
   fixtures: [
-    { id: 'p1', name: 'Par 1', typeId: 'generic-rgb-par', mode: 0, address: 1 },
-    { id: 'p2', name: 'Par 2', typeId: 'generic-rgb-par', mode: 0, address: 4 },
+    { id: 'p1', name: 'Par 1', typeId: 'generic-rgb-par', mode: 0, address: 1, stage: { rail: 'back', at: 0.2 } },
+    { id: 'p2', name: 'Par 2', typeId: 'generic-rgb-par', mode: 0, address: 4, stage: { rail: 'back', at: 0.8 } },
   ],
+  rig: { shape: 'line', uprights: true, width: 8, depth: 6, height: 4 },
   scenes: [],
   chases: [],
   groups: [],
@@ -201,6 +202,11 @@ describe('AI show generation', () => {
     assert.equal(request.output_config.format.type, 'json_schema');
     const text = request.messages[0].content;
     assert.match(text, /"lightId": "p1"/);
+    assert.match(text, /"where": "Back truss, left of centre"/, 'each light says where it is');
+    assert.match(text, /"x": -2.4/);
+    assert.match(text, /"order": "left to right"/, 'the lights on each rail come in order');
+    assert.match(text, /"mirrorPairs": \[\s*\[\s*"p1",\s*"p2"\s*\]\s*\]/, 'and the pairs that mirror each other');
+    assert.match(request.system[0].text, /Use where the lights are/);
     assert.match(text, /cool to warm/);
     assert.match(text, /#00ff00: avoid/);
     assert.match(text, /Strobe: off/);
@@ -237,6 +243,17 @@ describe('AI show generation', () => {
     assert.equal(json(haiku).model, 'answered-by', 'the model that answered comes back');
 
     assert.equal((await send('POST', '/ai/generate', { auto: true, model: 'gpt-5' })).status, 400);
+
+    // A light with no place on the stage: the AI would only guess where it is, so nothing is sent to Anthropic.
+    const unplaced = {
+      ...show,
+      fixtures: [...show.fixtures, { id: 'p3', name: 'Par 3', typeId: 'generic-rgb-par', mode: 0, address: 7 }],
+    };
+    await send('PUT', '/project', unplaced);
+    const refused = await send('POST', '/ai/generate', { auto: true });
+    assert.equal(refused.status, 400);
+    assert.match(json(refused).error, /Place the lights on the stage first/);
+    assert.equal(mock.requests.length, 2, 'nothing more went to Anthropic');
     await new Promise((resolve) => app.server.close(resolve));
     await rm(dir, { recursive: true, force: true });
   });

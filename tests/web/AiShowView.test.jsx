@@ -39,8 +39,8 @@ const start = {
   venues: [],
   fixtureTypes: [head],
   fixtures: [
-    { id: 'p1', name: 'Par 1', typeId: 'generic-rgb-par', mode: 0, address: 1 },
-    { id: 'h1', name: 'Head', typeId: 'head-type', mode: 0, address: 10 },
+    { id: 'p1', name: 'Par 1', typeId: 'generic-rgb-par', mode: 0, address: 1, stage: { rail: 'back', at: 0.3 } },
+    { id: 'h1', name: 'Head', typeId: 'head-type', mode: 0, address: 10, stage: { rail: 'back', at: 0.7 } },
   ],
   groups: [],
   scenes: [{ id: 'old', name: 'Old look', values: {} }],
@@ -67,7 +67,7 @@ const generated = {
 let latest;
 let navigate;
 let flush;
-function Harness({ initial = start }) {
+function Harness({ initial = start, live }) {
   const [project, setProject] = useState(initial);
   latest = project;
   return (
@@ -78,6 +78,7 @@ function Harness({ initial = start }) {
       update={(mutate) => setProject((current) => mutate(current))}
       flush={flush}
       navigate={navigate}
+      live={live}
     />
   );
 }
@@ -211,6 +212,37 @@ describe('AiShowView', () => {
         { startBar: 16, bars: 87, energy: 0.8 },
       ],
     });
+  });
+
+  it('asks for the lights to be placed on the stage first, and opens the stage view to arrange them', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null); // jsdom has no canvas
+    const unplaced = { ...start, fixtures: start.fixtures.map(({ stage: _stage, ...fixture }) => fixture) };
+    const live = { send: vi.fn(), engine: { blackout: false, activeChaseId: null, activeSceneId: null } };
+    render(<Harness initial={unplaced} live={live} />);
+    expect(await screen.findByText(/None of them has a place on the stage yet/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/Place the lights on the stage first/)).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /Generate the show/ })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: /Arrange the lights/ }));
+    const stage = screen.getByRole('dialog', { name: 'Stage view' });
+    expect(within(stage).getByRole('button', { name: /Arrange lights/ })).toHaveAttribute('aria-pressed', 'true');
+    await user.click(within(stage).getByRole('button', { name: 'Keep these places' }));
+    await user.click(within(stage).getByRole('button', { name: /Close/ }));
+
+    expect(latest.fixtures.every((fixture) => fixture.stage)).toBe(true);
+    expect(screen.getByText(/Every light has its place: one truss, at the back, 8 × 6 m/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Generate the show/ })).toBeEnabled();
+    vi.restoreAllMocks();
+  });
+
+  it('names the lights still waiting for a place', async () => {
+    const partly = {
+      ...start,
+      fixtures: [start.fixtures[0], { ...start.fixtures[1], stage: undefined }],
+    };
+    render(<Harness initial={partly} />);
+    expect(await screen.findByText(/1 light \(Head\) has no place on the stage yet/)).toBeInTheDocument();
   });
 
   it('shows why a generation failed', async () => {

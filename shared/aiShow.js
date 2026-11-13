@@ -6,6 +6,7 @@
 import { controlsByFixture } from './capabilities.js';
 import { categoryOf } from './categories.js';
 import { buildPatch, channelsByFixture, indexFixtureTypes } from './patch.js';
+import { RIG_SHAPE_LABELS, describePlace, mountsOf, positionOf, railsOf, rigOrDefault } from './stageRig.js';
 import { MAX_SEQUENCE_UNITS, MIN_BLOCK_BEATS, blockWrites } from './timeline.js';
 
 /** How strongly the person wants something: left to the AI, more of it, less of it, or none. */
@@ -103,8 +104,10 @@ export function venueFeatures(project, builtinTypes) {
  */
 export function describeRig(project, builtinTypes) {
   const { typesById, channels, controls } = rigOf(project, builtinTypes);
+  const stage = describeStage(project, (fixture) => categoryOf(fixture, typesById.get(fixture.typeId)));
   return {
     venue: project.venue?.name ?? 'My venue',
+    stage: stage.layout,
     lights: project.fixtures.map((fixture) => {
       const type = typesById.get(fixture.typeId);
       const own = channels.get(fixture.id);
@@ -114,6 +117,7 @@ export function describeRig(project, builtinTypes) {
         lightId: fixture.id,
         name: fixture.name,
         type: categoryOf(fixture, type),
+        place: stage.places.get(fixture.id),
         fixture: type ? `${type.manufacturer} ${type.name}`.trim() : 'Unknown fixture',
         colour: hasRgb
           ? 'mixes any colour (red, green, blue)'
@@ -142,6 +146,101 @@ export function describeRig(project, builtinTypes) {
       name: group.name,
       lightIds: group.fixtureIds,
     })),
+  };
+}
+
+/** @param {number} value metres, to the nearest 10 cm */
+const metres = (value) => Math.round(value * 10) / 10;
+
+/**
+ * Where the lights are, for the AI: the truss and its size, each light's place in words and in metres (left and right
+ * as the audience sees the stage), the lights on each rail in order, what each rail faces across the floor, and the
+ * pairs of lights that mirror each other. So it can run chases across the rig in order, keep symmetry, and cross beams.
+ * @param {import('./types.js').Project} project
+ * @param {(fixture: import('./types.js').Fixture) => string} categoryFn
+ */
+export function describeStage(project, categoryFn) {
+  const rig = rigOrDefault(project.rig);
+  const mounts = mountsOf(project.fixtures, categoryFn, rig);
+  const rails = railsOf(rig);
+  /** @type {Map<string, { where: string, x: number, y: number, z: number, aim: string }>} */
+  const places = new Map();
+  /** @type {Map<string, { x: number, y: number, z: number }>} */
+  const points = new Map();
+  for (const fixture of project.fixtures) {
+    const mount = /** @type {import('./stageRig.js').Mount} */ (mounts.get(fixture.id));
+    const position = positionOf(rig, mount);
+    points.set(fixture.id, position);
+    places.set(fixture.id, {
+      where: describePlace(rig, mount),
+      x: metres(position.x),
+      y: metres(position.y),
+      z: metres(position.z),
+      aim: position.hung
+        ? 'hangs from the truss, pointing down at the floor'
+        : position.rail === 'floor'
+          ? 'stands on the floor, facing the middle'
+          : 'on an upright, facing the middle',
+    });
+  }
+  const opposite = /** @type {Record<string, string>} */ ({
+    back: 'front',
+    front: 'back',
+    left: 'right',
+    right: 'left',
+  });
+  const rows = [...rails, { id: 'floor', label: 'The floor', vertical: false }]
+    .map((rail) => {
+      const on = project.fixtures.filter((fixture) => (mounts.get(fixture.id)?.rail ?? 'floor') === rail.id);
+      const across = rail.id === 'back' || rail.id === 'front' || rail.id === 'floor';
+      const key = (/** @type {{ id: string }} */ fixture) => {
+        const point = /** @type {{ x: number, y: number, z: number }} */ (points.get(fixture.id));
+        return rail.vertical ? point.y : across ? point.x : point.z;
+      };
+      const facing = rails.find((candidate) => candidate.id === opposite[rail.id]);
+      return {
+        rail: rail.label,
+        order: rail.vertical ? 'bottom to top' : across ? 'left to right' : 'back to front',
+        lightIds: on.sort((a, b) => key(a) - key(b)).map((fixture) => fixture.id),
+        ...(facing ? { facesAcrossTheFloor: facing.label } : {}),
+      };
+    })
+    .filter((row) => row.lightIds.length > 0);
+  // Mirror pairs: the same kind of light at the same depth and height, on opposite sides of the middle.
+  const tolerance = Math.max(0.4, rig.width * 0.06);
+  /** @type {[string, string][]} */
+  const mirrorPairs = [];
+  const paired = new Set();
+  for (const fixture of project.fixtures) {
+    const a = /** @type {{ x: number, y: number, z: number }} */ (points.get(fixture.id));
+    if (paired.has(fixture.id) || Math.abs(a.x) < tolerance) {
+      continue;
+    }
+    const twin = project.fixtures.find((other) => {
+      const b = /** @type {{ x: number, y: number, z: number }} */ (points.get(other.id));
+      return (
+        other.id !== fixture.id &&
+        !paired.has(other.id) &&
+        categoryFn(other) === categoryFn(fixture) &&
+        Math.abs(a.x + b.x) < tolerance &&
+        Math.abs(a.y - b.y) < tolerance &&
+        Math.abs(a.z - b.z) < tolerance
+      );
+    });
+    if (twin) {
+      paired.add(fixture.id).add(twin.id);
+      mirrorPairs.push(a.x < 0 ? [fixture.id, twin.id] : [twin.id, fixture.id]);
+    }
+  }
+  return {
+    places,
+    layout: {
+      truss: RIG_SHAPE_LABELS[rig.shape],
+      size: `${rig.width} m wide, ${rig.depth} m deep, ${rig.height} m high`,
+      axes: 'In metres from the middle of the dance floor: x is left (negative) to right (positive) as the audience sees the stage, y is the height above the floor, z is the back (negative) to the front, where the audience is (positive).',
+      rows,
+      mirrorPairs,
+    },
   };
 }
 

@@ -7,6 +7,12 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **AI shows design for where the lights are.** Each light's place on the stage goes to the AI, in words and metres as
+  the audience sees it, with the lights on each truss in order, what each truss faces across the floor and the pairs
+  that mirror each other, so chases travel across the room, mirror pairs move together, beams cross and moving heads
+  aim from where they hang. Generate waits until every light has a place; **Arrange the lights** opens the stage view
+  ready to arrange, and **Keep these places** keeps the first places shown. Moving one light now keeps the places all
+  the others show.
 - **Choose the AI model** for each AI show: Claude Haiku 5.5 (fastest and cheapest), Sonnet 5.5 (balanced) or Opus
   5.5 (the default, most careful), each with a rough cost estimate for this rig and song before you press Generate.
   The cost shown afterwards is at the prices of the model that answered. A big rig no longer runs out of room: answers

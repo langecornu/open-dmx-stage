@@ -1840,6 +1840,19 @@ a.btn {
   gap: var(--space-3);
 }
 
+.ai-place {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ai-place p {
+  flex: 1 1 320px;
+  margin: 0;
+}
+
 .ai-auto,
 .ai-card > .btn,
 .ai-fieldset > .btn {
@@ -2577,8 +2590,10 @@ a.btn {
   font-size: 13px;
 }
 
-.visualizer-arrange > .visualizer-btn {
-  align-self: flex-start;
+.visualizer-arrange-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .visualizer-lights {

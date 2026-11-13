@@ -2,7 +2,9 @@
 // choice to the AI, or steer it: a mood, the energy, colours to use more, less or never, and how much of each thing the
 // lights can do (movement, gobos, smoke…; only what this venue has is offered). Optionally pick a song: its tempo,
 // first downbeat and energy map are worked out in this browser, and only those numbers are sent, so one sequence
-// follows the song section by section. The new looks and sequences are added to the show, marked as made by AI.
+// follows the song section by section. The lights must have their places on the stage first (the AI uses them for chases
+// in order, mirror pairs and crossing beams), arranged in the stage view, which opens here. The new looks and sequences
+// are added to the show, marked as made by AI.
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -15,6 +17,7 @@ import {
   formatPriceRange,
 } from '../../shared/aiModels.js';
 import { venueFeatures } from '../../shared/aiShow.js';
+import { RIG_SHAPE_LABELS, rigOrDefault, unplacedLights } from '../../shared/stageRig.js';
 import { api } from '../api.js';
 import { averageColor, fixtureColors } from '../utils/sceneColors.js';
 import { formatTime, plural } from '../utils/format.js';
@@ -22,6 +25,7 @@ import { AiChoicesCard } from './AiChoicesCard.jsx';
 import { AiModelPicker } from './AiModelPicker.jsx';
 import { AiSongCard } from './AiSongCard.jsx';
 import { Icon } from './Icon.jsx';
+import { Visualizer } from './Visualizer.jsx';
 
 const MODEL_KEY = 'odmx-ai-model';
 
@@ -35,7 +39,7 @@ function savedModel() {
   }
 }
 
-export function AiShowView({ project, library, patch, update, flush, navigate }) {
+export function AiShowView({ project, library, patch, update, flush, navigate, live }) {
   const [hasKey, setHasKey] = useState(/** @type {boolean | null} */ (null));
   const [song, setSong] = useState(null);
   const [choices, setChoices] = useState({
@@ -53,7 +57,10 @@ export function AiShowView({ project, library, patch, update, flush, navigate })
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState(/** @type {string | null} */ (null));
   const [result, setResult] = useState(null);
+  const [isArranging, setIsArranging] = useState(false);
   const features = useMemo(() => venueFeatures(project, library), [project, library]);
+  const unplaced = unplacedLights(project.fixtures);
+  const rig = rigOrDefault(project.rig);
 
   useEffect(() => {
     let isCurrent = true;
@@ -179,6 +186,31 @@ export function AiShowView({ project, library, patch, update, flush, navigate })
             another rig.
           </p>
         )}
+        {project.fixtures.length === 0 ? null : unplaced.length > 0 ? (
+          <div className="ai-place" role="note">
+            <p>
+              <strong>Where are the lights?</strong>{' '}
+              {unplaced.length === project.fixtures.length
+                ? 'None of them has a place on the stage yet.'
+                : `${plural(unplaced.length, 'light')} (${unplaced.map((fixture) => fixture.name).join(', ')}) ${unplaced.length === 1 ? 'has' : 'have'} no place on the stage yet.`}{' '}
+              Put them where they really are, so the AI can chase them in order, mirror pairs and cross beams.
+            </p>
+            <button type="button" className="btn btn-primary" onClick={() => setIsArranging(true)}>
+              <Icon name="sliders" size={16} />
+              Arrange the lights
+            </button>
+          </div>
+        ) : (
+          <div className="ai-place">
+            <p className="view-sub">
+              Every light has its place: {RIG_SHAPE_LABELS[rig.shape].toLowerCase()}, {rig.width} × {rig.depth} m.
+            </p>
+            <button type="button" className="btn btn-ghost" onClick={() => setIsArranging(true)}>
+              <Icon name="sliders" size={16} />
+              Arrange the lights
+            </button>
+          </div>
+        )}
       </section>
 
       <AiSongCard song={song} setSong={setSong} />
@@ -189,7 +221,7 @@ export function AiShowView({ project, library, patch, update, flush, navigate })
         <button
           type="button"
           className="btn btn-primary"
-          disabled={Boolean(run) || hasKey !== true || project.fixtures.length === 0}
+          disabled={Boolean(run) || hasKey !== true || project.fixtures.length === 0 || unplaced.length > 0}
           onClick={handleGenerate}
         >
           <Icon name="sparkle" size={16} />
@@ -199,6 +231,8 @@ export function AiShowView({ project, library, patch, update, flush, navigate })
           <span className="fixture-meta" role="status">
             Designing for {formatTime(elapsed)}. This usually takes one to three minutes.
           </span>
+        ) : unplaced.length > 0 && project.fixtures.length > 0 ? (
+          <span className="fixture-meta">Place the lights on the stage first, above.</span>
         ) : (
           <span className="fixture-meta">
             {aiModel(modelId).name}, {formatPriceRange(estimateCost(estimateRequest, modelId))} on your Anthropic
@@ -264,6 +298,20 @@ export function AiShowView({ project, library, patch, update, flush, navigate })
             output tokens on {aiModel(result.model ?? modelId).name}, {formatPrice(cost)} at list prices.
           </p>
         </section>
+      ) : null}
+
+      {live ? (
+        <Visualizer
+          isOpen={isArranging}
+          onClose={() => setIsArranging(false)}
+          project={project}
+          library={library}
+          patch={patch}
+          update={update}
+          live={live}
+          flush={flush}
+          startArranging
+        />
       ) : null}
     </section>
   );

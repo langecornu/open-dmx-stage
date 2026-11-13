@@ -47,7 +47,9 @@ function SizeInput({ label, value, limits, onChange }) {
  *   rails: { id: string, label: string }[],
  *   onMoveToRail: (rail: string) => void,
  *   onReset: () => void,
- * }} props
+ *   unplacedCount?: number,
+ *   onKeepPlaces?: () => void,
+ * }} props unplacedCount: lights still at their first, guessed places; onKeepPlaces saves the places shown
  */
 export function VisualizerArrange({
   venueName,
@@ -61,6 +63,8 @@ export function VisualizerArrange({
   rails,
   onMoveToRail,
   onReset,
+  unplacedCount = 0,
+  onKeepPlaces,
 }) {
   return (
     <div className="visualizer-arrange" role="group" aria-label="Arrange lights">
@@ -130,9 +134,24 @@ export function VisualizerArrange({
           </select>
         </label>
       ) : null}
-      <button type="button" className="visualizer-btn" onClick={onReset}>
-        Reset layout
-      </button>
+      {unplacedCount > 0 && onKeepPlaces ? (
+        <p>
+          {unplacedCount === fixtures.length
+            ? 'The lights are at first, guessed places.'
+            : `${unplacedCount} ${unplacedCount === 1 ? 'light is' : 'lights are'} at a first, guessed place.`}{' '}
+          Move them, or keep the places shown if they are right.
+        </p>
+      ) : null}
+      <div className="visualizer-arrange-actions">
+        {unplacedCount > 0 && onKeepPlaces ? (
+          <button type="button" className="visualizer-btn" onClick={onKeepPlaces}>
+            Keep these places
+          </button>
+        ) : null}
+        <button type="button" className="visualizer-btn" onClick={onReset}>
+          Reset layout
+        </button>
+      </div>
     </div>
   );
 }
