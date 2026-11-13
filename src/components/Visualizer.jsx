@@ -9,7 +9,7 @@ import { createPortal } from 'react-dom';
 import { controlsByFixture } from '../../shared/capabilities.js';
 import { categoryOf } from '../../shared/categories.js';
 import { indexFixtureTypes } from '../../shared/patch.js';
-import { mountsOf, positionOf, railsOf, rigOrDefault } from '../../shared/stageRig.js';
+import { mountsOf, positionOf, railsOf, rigOrDefault, unplacedLights } from '../../shared/stageRig.js';
 import { frameStore } from '../hooks/frameStore.js';
 import { buildPerformItems } from '../utils/performItems.js';
 import { isActionPlaying, playAction } from '../utils/playActions.js';
@@ -34,15 +34,21 @@ function loadSettings() {
 
 /**
  * @param {{ isOpen: boolean, onClose: () => void, project: any, library: any[], patch: any,
- *   update: (mutate: (project: any) => any) => void, live: any, flush: () => Promise<void> }} props
+ *   update: (mutate: (project: any) => any) => void, live: any, flush: () => Promise<void>,
+ *   startArranging?: boolean }} props startArranging: opens with Arrange lights on
  */
-export function Visualizer({ isOpen, onClose, project, library, patch, update, live, flush }) {
+export function Visualizer({ isOpen, onClose, project, library, patch, update, live, flush, startArranging = false }) {
   const canvasRef = useRef(/** @type {HTMLCanvasElement | null} */ (null));
   const stageRef = useRef(/** @type {HTMLDivElement | null} */ (null));
   const closeRef = useRef(/** @type {HTMLButtonElement | null} */ (null));
   const rendererRef = useRef(/** @type {ReturnType<typeof createStageRenderer>} */ (null));
   const [settings, setSettings] = useState(loadSettings);
-  const [isArranging, setIsArranging] = useState(false);
+  const [isArranging, setIsArranging] = useState(startArranging);
+  useEffect(() => {
+    if (isOpen) {
+      setIsArranging(startArranging);
+    }
+  }, [isOpen, startArranging]);
   const [isDecksOpen, setIsDecksOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(/** @type {string | null} */ (null));
   /** Places being dragged, before they are saved. @type {[Map<string, {x:number,y:number}>, Function]} */
@@ -185,18 +191,22 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
     };
   }, [isOpen]);
 
-  /** Saves where lights are mounted, in the show (with the venue), and clears what was being dragged. */
+  /**
+   * Saves where lights are mounted, in the show (with the venue), and clears what was being dragged. The lights still at
+   * their first places keep the places they show now, so the whole layout is set once someone arranges it.
+   */
   const saveMounts = useCallback(
     (mountsById) => {
       update((current) => ({
         ...current,
-        fixtures: current.fixtures.map((fixture) =>
-          mountsById.has(fixture.id) ? { ...fixture, stage: mountsById.get(fixture.id) } : fixture,
-        ),
+        fixtures: current.fixtures.map((fixture) => {
+          const mount = mountsById.get(fixture.id) ?? fixture.stage ?? mounts.get(fixture.id);
+          return mount ? { ...fixture, stage: mount } : fixture;
+        }),
       }));
       setMoving(new Map());
     },
-    [update],
+    [update, mounts],
   );
 
   /** Changes the venue's rig: its shape, uprights or size. */
@@ -399,6 +409,8 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
             rails={rails}
             onMoveToRail={moveToRail}
             onReset={resetLayout}
+            unplacedCount={unplacedLights(project.fixtures).length}
+            onKeepPlaces={() => saveMounts(new Map())}
           />
         ) : null}
       </div>

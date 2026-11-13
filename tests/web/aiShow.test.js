@@ -2,7 +2,8 @@
 // answer becomes looks and sequences on this rig's channels, with every mistake checked and clamped.
 import { describe, expect, it } from 'vitest';
 
-import { buildGeneratedShow, describeRig, settingsFor, venueFeatures } from '../../shared/aiShow.js';
+import { buildGeneratedShow, describeRig, describeStage, settingsFor, venueFeatures } from '../../shared/aiShow.js';
+import { describePlace, unplacedLights } from '../../shared/stageRig.js';
 import { BUILTIN_TYPES } from './fixtures.js';
 
 const head = {
@@ -83,6 +84,98 @@ describe('describeRig', () => {
       ]),
     );
     expect(rig.groups).toEqual([{ name: 'Front', lightIds: ['p1', 'p2'] }]);
+  });
+});
+
+describe('describeStage', () => {
+  const square = {
+    ...withHead,
+    rig: { shape: 'square', uprights: true, width: 10, depth: 6, height: 4 },
+    fixtures: [
+      {
+        id: 'pr',
+        name: 'Par right',
+        typeId: 'generic-rgb-par',
+        mode: 0,
+        address: 1,
+        stage: { rail: 'front', at: 0.8 },
+      },
+      { id: 'pl', name: 'Par left', typeId: 'generic-rgb-par', mode: 0, address: 4, stage: { rail: 'front', at: 0.2 } },
+      { id: 'h1', name: 'Head', typeId: 'head-type', mode: 0, address: 10, stage: { rail: 'back', at: 0.5 } },
+      {
+        id: 'side',
+        name: 'Side par',
+        typeId: 'generic-rgb-par',
+        mode: 0,
+        address: 7,
+        stage: { rail: 'left', at: 0.9 },
+      },
+      {
+        id: 'up',
+        name: 'Upright par',
+        typeId: 'generic-rgb-par',
+        mode: 0,
+        address: 13,
+        stage: { rail: 'post-back-right', at: 0.3 },
+      },
+      {
+        id: 'low',
+        name: 'Floor par',
+        typeId: 'generic-rgb-par',
+        mode: 0,
+        address: 16,
+        stage: { rail: 'floor', x: 0.1, z: 0.9 },
+      },
+    ],
+  };
+  const categoryFn = (fixture) => (fixture.typeId === 'head-type' ? 'moving-head' : 'par');
+
+  it('says where each light is, in words and metres as the audience sees the stage', () => {
+    const { places } = describeStage(square, categoryFn);
+    expect(places.get('pl')).toEqual({
+      where: 'Front truss, left of centre',
+      x: -3,
+      y: 3.8,
+      z: 3,
+      aim: 'hangs from the truss, pointing down at the floor',
+    });
+    expect(places.get('pr').where).toBe('Front truss, right of centre');
+    expect(places.get('h1').where).toBe('Back truss, centre');
+    expect(places.get('side').where).toBe('Left truss, front end');
+    expect(places.get('up')).toMatchObject({
+      where: 'Upright, back right, low',
+      aim: 'on an upright, facing the middle',
+    });
+    expect(places.get('low')).toMatchObject({
+      where: 'On the floor, at the front, far left',
+      aim: 'stands on the floor, facing the middle',
+    });
+  });
+
+  it('lists the lights on each rail in order, what each rail faces, and the mirror pairs', () => {
+    const { layout } = describeStage(square, categoryFn);
+    expect(layout.truss).toBe('Square around the floor');
+    expect(layout.size).toBe('10 m wide, 6 m deep, 4 m high');
+    expect(layout.rows).toEqual([
+      { rail: 'Back truss', order: 'left to right', lightIds: ['h1'], facesAcrossTheFloor: 'Front truss' },
+      { rail: 'Front truss', order: 'left to right', lightIds: ['pl', 'pr'], facesAcrossTheFloor: 'Back truss' },
+      { rail: 'Left truss', order: 'back to front', lightIds: ['side'], facesAcrossTheFloor: 'Right truss' },
+      { rail: 'Upright, back right', order: 'bottom to top', lightIds: ['up'] },
+      { rail: 'The floor', order: 'left to right', lightIds: ['low'] },
+    ]);
+    expect(layout.mirrorPairs).toEqual([['pl', 'pr']]);
+  });
+
+  it('is part of the rig the AI reads, and uses first places for lights not arranged yet', () => {
+    const rig = describeRig(withHead, BUILTIN_TYPES);
+    expect(rig.stage.truss).toBe('One truss, at the back');
+    expect(rig.lights.every((light) => light.place.where.startsWith('Back truss'))).toBe(true);
+    expect(unplacedLights(withHead.fixtures)).toHaveLength(3);
+    expect(unplacedLights(square.fixtures)).toHaveLength(0);
+  });
+
+  it('puts a rail that no longer exists on the floor', () => {
+    expect(describePlace({ shape: 'line' }, { rail: 'front', at: 0.5 })).toBe('On the floor, in the middle, centre');
   });
 });
 

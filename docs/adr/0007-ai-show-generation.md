@@ -19,8 +19,13 @@ costs the owner money, a description of the rig, and some knowledge of the song.
   with permissions for the owner only (the data folder's JSON files are git-ignored). No route returns it; the page only
   learns whether a key is saved. `ANTHROPIC_API_KEY` in the environment takes precedence.
 - **Only numbers about the song.** The audio is analysed in the browser (tempo, first downbeat, energy per section); only
-  those numbers are sent. The rig description (light names, fixture types, controls and their options) and the person's
-  choices are sent with them. Nothing else from the show is.
+  those numbers are sent. The rig description (light names, fixture types, controls and their options, and each
+  light's place on the stage) and the person's choices are sent with them. Nothing else from the show is.
+- **Designs for where the lights are.** Each light's place goes in words and metres (left and right as the audience
+  sees the stage), with the lights on each rail in order, what each rail faces across the floor, and the mirror pairs,
+  worked out in `shared/aiShow.js` from the visualizer's rig. Generating waits until every light has a place set by
+  someone (the server refuses otherwise): a guessed layout would make chases run in the wrong order and mirror pairs
+  wrong. It adds about 60 input tokens per light.
 - **The answer is data, never trusted as a show.** Structured outputs fix the answer's shape; `shared/aiShow.js` then
   keeps only known lights, controls and options, clamps every number, and builds looks and sequences on this rig's
   channels, which must still pass the show schema when saved.

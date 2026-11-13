@@ -180,3 +180,44 @@ export function mountsOf(fixtures, categoryOf, rig) {
   }
   return mounts;
 }
+
+/**
+ * Lights whose place nobody has set yet: they stand at a first, guessed place until someone arranges them.
+ * @template {{ stage?: Mount }} T
+ * @param {T[]} fixtures
+ * @returns {T[]}
+ */
+export function unplacedLights(fixtures) {
+  return fixtures.filter((fixture) => !fixture.stage);
+}
+
+/**
+ * A place in words, as the audience sees the stage: which rail and where along it, or where on the floor.
+ * @param {Partial<Rig>} rig
+ * @param {Mount} mount
+ * @returns {string}
+ */
+export function describePlace(rig, mount) {
+  const rail = railsOf(rig).find((candidate) => candidate.id === mount.rail);
+  /** @param {number} value @param {string[]} words five words, from 0 to 1, the middle one around 0.5 */
+  const along = (value, words) => words[Math.round(Math.max(0, Math.min(1, value)) * 4)];
+  if (!rail) {
+    const across = along(mount.x ?? 0.5, ['far left', 'left', 'centre', 'right', 'far right']);
+    const depth = along(mount.z ?? 0.5, [
+      'at the back',
+      'toward the back',
+      'in the middle',
+      'toward the front',
+      'at the front',
+    ]);
+    return `On the floor, ${depth}, ${across}`;
+  }
+  const at = mount.at ?? 0.5;
+  if (rail.vertical) {
+    return `${rail.label}, ${along(at, ['near the floor', 'low', 'half way up', 'high', 'at the top'])}`;
+  }
+  if (rail.id === 'back' || rail.id === 'front') {
+    return `${rail.label}, ${along(at, ['far left', 'left of centre', 'centre', 'right of centre', 'far right'])}`;
+  }
+  return `${rail.label}, ${along(at, ['back end', 'toward the back', 'middle', 'toward the front', 'front end'])}`;
+}

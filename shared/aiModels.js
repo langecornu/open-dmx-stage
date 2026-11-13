@@ -1,8 +1,8 @@
 // The Claude models AI shows can use, their list prices, and a rough estimate of what a generation costs before it runs.
 // Most of the cost is the answer: every look sets every light, sequence blocks grow with the song and the rig, and the
 // model reasons before it writes. The estimate is calibrated on real generations (12 lights, 8 looks, 2 sequences, a
-// three-minute song: 3,600 input and 21,000 to 28,000 output tokens on Opus) and shown as a range. Pure, for browser
-// and server.
+// three-minute song: 3,600 input and 21,000 to 28,000 output tokens on Opus; each light's place on the stage now adds
+// about 60 input tokens) and shown as a range. Pure, for browser and server.
 
 /**
  * @typedef {{ id: string, name: string, summary: string, inputPerMillion: number, outputPerMillion: number,
@@ -68,8 +68,9 @@ export function estimateTokens({ lights, looks, sequences, bars, song = null }) 
   const lightCount = Math.max(1, lights);
   const songBars = song ? Math.round((song.durationSeconds * song.bpm) / 240) : 0;
   const sections = song ? (song.sections?.length ?? Math.max(1, Math.round(songBars / 8))) : 0;
-  // The request: instructions, the rig (each light with what it can do), the choices and the song's energy map.
-  const inputTokens = Math.round(2600 + lightCount * 80 + sections * 25);
+  // The request: instructions, the rig (each light with what it can do and where it is), the choices and the song's
+  // energy map.
+  const inputTokens = Math.round(2650 + lightCount * 140 + sections * 25);
   // The answer: each look sets every light; each sequence has steps and per-light blocks, more for a song (one per
   // section and light, roughly) than for a loop of a few bars.
   const lookTokens = looks * (60 + lightCount * 40);
