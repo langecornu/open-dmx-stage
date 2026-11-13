@@ -15,6 +15,8 @@ fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a
 - **Looks:** save what is on stage and recall it with a configurable fade.
 - **Sequences:** chain looks with fade and hold times, and draw coloured blocks per light over them on a timeline, as two views of the same sequence, with
   fades and strobes; both loop and can follow the tempo.
+- **Visualize:** see the show on a 3D stage, lit live like the real rig: beams in haze, moving heads, bars, spiders,
+  lasers, smoke and more, on a truss you shape around the dance floor.
 - **AI shows:** Claude designs looks and sequences for your rig, with or without a song, using everything your lights
   can do; leave it all to the AI or steer colours, energy and features. Uses your own Anthropic API key.
 - **File and venues:** save shows into folders and open them from a list (with each show's venue, fixtures, looks and sequences), and venues with their own lights and addresses that

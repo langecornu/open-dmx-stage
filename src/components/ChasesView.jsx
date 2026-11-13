@@ -5,6 +5,7 @@
 import { useState } from 'react';
 
 import { sequenceLength, stepUnits } from '../../shared/timeline.js';
+import { downloadFile } from '../utils/download.js';
 import { checkSequenceFile, importSequence, sequenceDownload } from '../utils/sequenceFile.js';
 import { SWATCHES, spanLabel, timelineGradient } from '../utils/timelineEdit.js';
 
@@ -53,16 +54,6 @@ function stepOverlays(chase, project, start, end) {
     });
 }
 
-/** Offers a file to save, without leaving the page. */
-function download(name, text) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = name;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
 function loadMode() {
   try {
     return localStorage.getItem(MODE_KEY) === 'timeline' ? 'timeline' : 'steps';
@@ -106,7 +97,7 @@ export function ChasesView({ project, patch, update, flush, live, library = [] }
 
   const handleExport = () => {
     const { name, text } = sequenceDownload(project, chase, patch);
-    download(name, text);
+    downloadFile(name, text);
   };
 
   const handleImport = async (event) => {

@@ -30,7 +30,7 @@ const block = (id, fixtureId) => ({
 
 // Home: three pars at 1, 4 and 7. A look sets all three, plus channel 500 by hand.
 const home = {
-  schemaVersion: 6,
+  schemaVersion: 7,
   id: 'show',
   name: 'Show',
   venue: { ...FIRST_VENUE },
@@ -248,5 +248,24 @@ describe('venue outputs', () => {
       window.confirm = original;
       api.saveOutputSettings = save;
     }
+  });
+});
+
+describe('venue rigs', () => {
+  it("carries each venue's rig: the one being left keeps its own, the one coming in brings its own", () => {
+    const square = { shape: 'square', uprights: true, width: 9, depth: 7, height: 4 };
+    const line = { shape: 'line', uprights: false, width: 6, depth: 4, height: 3 };
+    const hall = { id: 'hall', name: 'Hall', fixtures: home.fixtures, groups: [], rig: line };
+    const moved = switchVenue({ ...home, rig: square, venues: [hall] }, 'hall', BUILTIN_TYPES);
+    expect(moved.rig).toEqual(line);
+    expect(moved.venues[0].rig).toEqual(square);
+    const bare = switchVenue({ ...home, rig: square, venues: [{ ...hall, rig: undefined }] }, 'hall', BUILTIN_TYPES);
+    expect(bare.rig).toBeUndefined();
+  });
+
+  it('copies the rig when a venue starts as a copy of this one', () => {
+    const square = { shape: 'square', uprights: true, width: 9, depth: 7, height: 4 };
+    const { project } = addVenue({ ...home, rig: square }, 'Twin', { copyActive: true, makeId });
+    expect(project.venues.at(-1).rig).toEqual(square);
   });
 });

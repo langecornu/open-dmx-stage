@@ -23,6 +23,7 @@ import { useTapTempo } from '../hooks/useTapTempo.js';
 import { AutoShowPanel } from './AutoShowPanel.jsx';
 import { EffectsPanel } from './EffectsPanel.jsx';
 import { EmptyState } from './EmptyState.jsx';
+import { Icon } from './Icon.jsx';
 import { MidiPanel } from './MidiPanel.jsx';
 import { MuteSoloPanel } from './MuteSoloPanel.jsx';
 import { PerformLearnLinks } from './PerformLearnLinks.jsx';
@@ -30,6 +31,7 @@ import { PerformStatus } from './PerformStatus.jsx';
 import { PerformTile } from './PerformTile.jsx';
 import { SoundPanel } from './SoundPanel.jsx';
 import { TempoPanel } from './TempoPanel.jsx';
+import { Visualizer } from './Visualizer.jsx';
 
 const FADES = [0, 250, 500, 1000, 2000];
 const MASTER_STEP = 0.1;
@@ -61,7 +63,8 @@ function learnReducer(state, event) {
   }
 }
 
-export function PerformView({ project, patch, live, flush, library = [] }) {
+export function PerformView({ project, patch, live, flush, update, library = [] }) {
+  const [isVisualizing, setIsVisualizing] = useState(false);
   const [fadeMs, setFadeMs] = useState(500);
   const [{ isLearning, armed }, dispatchLearn] = useReducer(learnReducer, { isLearning: false, armed: null });
   const [error, setError] = useState(null);
@@ -143,7 +146,8 @@ export function PerformView({ project, patch, live, flush, library = [] }) {
   usePerformKeys({
     ...Object.fromEntries(items.map((item, index) => [keys[index], () => run(item.action)])),
     ' ': () => run({ type: 'blackout' }),
-    Escape: () => run({ type: 'stop' }),
+    // While the visualizer is open, Escape closes it instead of stopping the show.
+    Escape: () => (isVisualizing ? undefined : run({ type: 'stop' })),
     '[': () => stepMaster(-MASTER_STEP),
     ']': () => stepMaster(MASTER_STEP),
     '.': tap,
@@ -190,6 +194,10 @@ export function PerformView({ project, patch, live, flush, library = [] }) {
           </h1>
           <p className="view-sub">Tap a pad or press its key to start it. Tap a playing sequence again to stop it.</p>
         </div>
+        <button type="button" className="btn btn-primary perform-visualize" onClick={() => setIsVisualizing(true)}>
+          <Icon name="sparkle" size={16} />
+          Visualize
+        </button>
         <ul className="key-hints" aria-label="Keyboard shortcuts">
           <li>
             <kbd>Space</kbd> Blackout
@@ -292,6 +300,16 @@ export function PerformView({ project, patch, live, flush, library = [] }) {
           }}
         />
       </div>
+      <Visualizer
+        isOpen={isVisualizing}
+        onClose={() => setIsVisualizing(false)}
+        project={project}
+        library={library}
+        patch={patch}
+        update={update}
+        live={live}
+        flush={flush}
+      />
     </section>
   );
 }

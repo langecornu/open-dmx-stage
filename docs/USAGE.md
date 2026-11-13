@@ -294,6 +294,35 @@ If you have a MIDI controller (pads, keys, knobs or faders), you can play looks 
 **Clear links** removes all links. Links are saved in this browser, not in the show file, and links to looks you delete
 are forgotten. Safari and Firefox do not support MIDI everywhere, so use Chrome or Edge.
 
+### Visualize: see the show without the lights
+
+Press **Visualize** on Perform to see your rig on a stage, lit live by the same signal as the real lights: pars throw
+coloured beams through the haze, moving heads turn and tilt, LED bars light cell by cell, spiders sweep, derbies and
+flowers spin, lasers fan out, strobes flash, smoke machines puff smoke that thickens the haze, fans blow it, bubble
+machines blow bubbles and a mirror ball scatters dots. Pads along the bottom play looks and sequences without leaving
+it, and the top has **Blackout** and **Close** (or Escape).
+
+- **Front**, **Corner** and **Above** change where you look from; Corner suits a rig around the dance floor, Above is the
+  easiest for arranging.
+- **Haze** sets how much haze is in the room: more haze makes beams more solid, as in a real room. Smoke machines add to
+  it while they run.
+- **Flashing** off shows strobes steady instead of flashing, for anyone sensitive to flashing light (off by default
+  when your device asks for reduced motion).
+- **Names** labels every light.
+
+**Arrange lights** sets up the room for the venue you are at (each venue keeps its own, saved with the show):
+
+1. **Truss:** one truss at the back, a U (back and both sides), a square around the dance floor, front and back, or no
+   truss. **Uprights at the corners** adds vertical towers, which lights can be mounted on too. Set the **width**,
+   **depth** and **height** in metres.
+2. **Drag a light** onto any truss side, an upright or the floor, and along it; it snaps to the rail under your finger.
+   Or pick a light from the list, choose its rail in **… is on**, and move it with the arrow keys (Shift moves further).
+3. **Reset layout** puts every light back in its first place: spread along the truss, smoke machines, hazers, fans and
+   special effects on the floor.
+
+Hung lights aim at the dance floor; a moving head's pan is centred toward the floor, so its moves look right from any
+side. On a slow device the visualizer lowers its detail by itself to stay smooth.
+
 ## 6. Setup: your rig
 
 A **DMX map** at the top shows the 512 channels of the universe with a coloured block for each light, an outline where two
@@ -334,7 +363,12 @@ the show name in the top bar.
 When you switch, each light is matched to one of the same fixture and mode at the other venue: the same light first
 (in a copied venue), then one with the same name, then the next of its kind. Looks and sequence blocks move onto the
 matched lights' addresses. A light with no match there loses nothing: what your looks do with it is kept aside and
-comes back when you switch to a venue that has it. Rename a venue by editing its name; remove one with the bin (not
+comes back when you switch to a venue that has it.
+
+**Export** on a venue saves it as a file of its own: its lights (fixture, mode, address, name, type and place in the
+visualizer), groups, output, visualizer rig, and the fixture definitions it uses that are not built in. **Import venue**
+adds such a file to this show as another venue, for example a room you set up in another show: nothing is replaced, and
+a light whose id is already used here gets a new one. Rename a venue by editing its name; remove one with the bin (not
 the one you are at). Each venue also remembers its **output**: how DMX leaves the computer there (the simulator, a USB cable on its port,
 Art-Net or sACN to an address and universe). When you leave a venue, the output you were using is remembered with it;
 when you switch to a venue that has one, the app sets it again, and the question before switching says so. The Venues
@@ -391,8 +425,12 @@ Choosing the right **What it does** matters: colours and the dimmer respond to t
 while **Other (fixed)** channels are never scaled. Use **Other** for anything that must stay put, with a **Rests at** that is
 safe (for example 0 for a reset channel).
 
-The built-in fixtures come from maker manuals: the generic dimmer, RGB and RGBW pars, a 36 LED RGB par (7 channel), a
-mini spider light, mini gobo and beam moving heads, and the U'King head. Always check the channel count your light's
+The built-in fixtures come from maker manuals and the usual channel layouts of each kind: the generic dimmer, RGB and
+RGBW pars, a 36 LED RGB par (7 channel), LED bars of 4, 8, 12 and 16 cells (whole bar, each cell, or each cell with a
+dimmer and strobe), a 3 by 3 LED matrix, a mini spider light and an 8 x 10 W RGBW spider, mini gobo, beam and generic
+moving heads, the U'King head, an LED spot with gobos, a scanner, a barrel scanner, an LED derby, an LED flower, an RGB
+party laser, a strobe, a two-lamp blinder, a mirror ball motor, a smoke machine, a hazer, a DMX fan and a bubble
+machine. Makers vary the channel order: check it against your light's manual. Always check the channel count your light's
 display shows before choosing a mode. The built-in **U'King 40W RGBW Moving Head Light** is a worked example: open it to see a real 13 channel layout, then
 copy it to make changes. Built-in fixtures cannot be edited. Fixtures you make are saved in the show file (so Export
 show takes them along), cannot be deleted while a light in the rig uses them, and cannot lose a mode while in use.

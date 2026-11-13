@@ -18,6 +18,7 @@ export const CATEGORY_GLOW = {
   matrix: '#f59e0b',
   strobe: '#7dd3fc',
   blinder: '#fbbf24',
+  spider: '#e879f9',
   effect: '#f43f5e',
   flower: '#a3e635',
   'mirror-ball': '#38bdf8',
@@ -182,6 +183,33 @@ const DRAWINGS = {
           <circle key={`${row}-${column}`} cx={12 + column * 8} cy={14 + row * 14} r="2.5" fill={c} />
         )),
       ),
+  },
+  spider: {
+    body: () => (
+      <>
+        <rect x="9" y="36" width="30" height="8" rx="2" fill="white" />
+        <path d="M14 36v-5M34 36v-5" stroke="white" strokeWidth="2.6" />
+        <rect x="3" y="24" width="20" height="7" rx="2" fill="white" transform="rotate(-14 13 27.5)" />
+        <rect x="25" y="24" width="20" height="7" rx="2" fill="white" transform="rotate(14 35 27.5)" />
+        {range(4).map((i) => (
+          <circle key={`a${i}`} cx={6.5 + i * 4.6} cy="27.5" r="1.7" fill="black" transform="rotate(-14 13 27.5)" />
+        ))}
+        {range(4).map((i) => (
+          <circle key={`b${i}`} cx={28.5 + i * 4.6} cy="27.5" r="1.7" fill="black" transform="rotate(14 35 27.5)" />
+        ))}
+      </>
+    ),
+    light: (c, beam) => (
+      <>
+        <path d="M8 26 0 4h6zM18 24 14 2h6zM30 24 28 2h6zM40 26 42 4h6z" fill={`url(#${beam})`} />
+        {range(4).map((i) => (
+          <circle key={`a${i}`} cx={6.5 + i * 4.6} cy="27.5" r="1.2" fill={c} transform="rotate(-14 13 27.5)" />
+        ))}
+        {range(4).map((i) => (
+          <circle key={`b${i}`} cx={28.5 + i * 4.6} cy="27.5" r="1.2" fill={c} transform="rotate(14 35 27.5)" />
+        ))}
+      </>
+    ),
   },
   effect: {
     body: () => (

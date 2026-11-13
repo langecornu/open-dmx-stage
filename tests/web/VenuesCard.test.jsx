@@ -11,7 +11,7 @@ import { BUILTIN_TYPES } from './fixtures.js';
 
 const par = (id, name, address) => ({ id, name, typeId: 'generic-rgb-par', mode: 0, address });
 const start = {
-  schemaVersion: 6,
+  schemaVersion: 7,
   id: 'show',
   name: 'Show',
   venue: { id: 'main', name: 'My venue' },

@@ -7,6 +7,20 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Visualize**: a full-screen stage view from Perform, lit live by the same DMX signal as the real lights, with every
+  kind of light drawn as itself (pars, moving heads that pan and tilt, LED bars cell by cell, matrices, spiders,
+  derbies, flowers, lasers, strobes, blinders, scanners, a mirror ball's dots, smoke and haze, fans, bubbles). Beams add
+  up like light and are seen through drifting haze; Front, Corner and Above views; a Haze setting; strobes can be
+  shown steady. Each venue sets up its rig (one truss, U, square around the floor, front and back, or none; uprights at
+  the corners; width, depth and height), and lights are dragged onto any truss side, upright or the floor, or placed
+  from a list with the keyboard. Pads and Blackout work from inside it. Detail drops by itself on a slow device.
+- **More built-in fixtures, and a Spider device type**: LED bars of 4, 8, 12 and 16 cells, a 3 by 3 LED matrix, an 8 x 10
+  W RGBW spider, an LED spot with gobos, a scanner, a barrel scanner, an LED derby, an LED flower, an RGB party laser, a
+  strobe, a two-lamp blinder, a mirror ball motor, a DMX fan and a bubble machine, from the usual channel layouts of each
+  kind. Every device type now has a built-in fixture and its own look in the visualizer.
+- **Venue files**: **Export** saves a venue (lights, groups, output, visualizer rig and the custom fixture definitions it
+  uses) as a file; **Import venue** adds one to another show as a new venue.
+- The saved show format moves to version 7 (a venue's rig and each light's place on it); older shows open unchanged.
 - **Raspberry Pi guide** (`docs/RASPBERRY_PI.md`) and a systemd service (`deploy/open-dmx-stage@.service`): set up a Pi
   as a lighting box that starts on boot, with the USB-DMX cable, a cable check, updates, backups and troubleshooting.
 - **A secure address for phones and tablets**: the app also serves https (port 4443, `HTTPS_PORT`), with a certificate

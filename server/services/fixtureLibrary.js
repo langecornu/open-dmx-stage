@@ -59,6 +59,34 @@ const GOBO_WHEEL = [
   { from: 128, to: 255, type: 'gobo-shake', label: 'Gobo shake, slow to fast' },
 ];
 
+/**
+ * An LED bar with `cells` colour cells, in the modes such bars usually offer: the whole bar in one colour, each cell on
+ * its own, and each cell with a master dimmer and strobe in front.
+ * @param {number} cells
+ */
+const ledBar = (cells) => {
+  const perCell = Array.from({ length: cells }, (_, index) => [
+    ch(`Red ${index + 1}`, 'red'),
+    ch(`Green ${index + 1}`, 'green'),
+    ch(`Blue ${index + 1}`, 'blue'),
+  ]).flat();
+  return {
+    id: `generic-led-bar-${cells}`,
+    category: 'led-bar',
+    manufacturer: 'Generic',
+    name: `LED bar, ${cells} RGB cells`,
+    description: `An LED bar or batten with ${cells} colour cells. Typical modes: the whole bar in one colour (3 channels), each cell on its own (${cells * 3} channels), or each cell with a master dimmer and strobe in front (${cells * 3 + 2} channels). Check the order in your manual.`,
+    modes: [
+      { name: '3 channel (whole bar)', channels: [ch('Red', 'red'), ch('Green', 'green'), ch('Blue', 'blue')] },
+      { name: `${cells * 3} channel (each cell)`, channels: perCell },
+      {
+        name: `${cells * 3 + 2} channel (dimmer, strobe, each cell)`,
+        channels: [ch('Dimmer', 'intensity', 255), ch('Strobe', 'strobe', 0, SHUTTER), ...perCell],
+      },
+    ],
+  };
+};
+
 /** @type {import('../../shared/types.js').FixtureType[]} */
 export const BUILTIN_FIXTURE_TYPES = /** @type {any} */ ([
   {
@@ -160,7 +188,7 @@ export const BUILTIN_FIXTURE_TYPES = /** @type {any} */ ([
   },
   {
     id: 'generic-mini-spider-light',
-    category: 'effect',
+    category: 'spider',
     manufacturer: 'Generic',
     name: 'Mini Spider Light (8 x RGBW)',
     description:
@@ -274,6 +302,243 @@ export const BUILTIN_FIXTURE_TYPES = /** @type {any} */ ([
     name: 'Hazer (2 channel)',
     description: 'A DMX hazer: haze output and fan speed, which spreads the haze.',
     modes: [{ name: '2 channel', channels: [ch('Haze output', 'fog'), ch('Fan', 'fan')] }],
+  },
+  ledBar(4),
+  ledBar(8),
+  ledBar(12),
+  ledBar(16),
+  {
+    id: 'generic-spider-8x10w-rgbw',
+    category: 'spider',
+    manufacturer: 'Generic',
+    name: 'LED spider, 8 x 10 W RGBW (15 channel)',
+    description:
+      'A spider moving light: two bars of four RGBW LEDs that tilt on their own motors. This is the common 15 channel layout of 8 x 10 W spiders (two tilt motors, motor speed, dimmer, strobe, each bar in RGBW, programs, reset); makers vary, so check the order in your manual.',
+    modes: [
+      {
+        name: '15 channel',
+        channels: [
+          ch('Motor 1 (tilt, bar 1)', 'tilt', 128),
+          ch('Motor 2 (tilt, bar 2)', 'tilt', 128),
+          ch('Motor speed', 'pan-tilt-speed', 0, MOTOR_SPEED),
+          ch('Dimmer', 'intensity', 255),
+          ch('Strobe', 'strobe', 0, SHUTTER),
+          ch('Red (bar 1)', 'red'),
+          ch('Green (bar 1)', 'green'),
+          ch('Blue (bar 1)', 'blue'),
+          ch('White (bar 1)', 'white'),
+          ch('Red (bar 2)', 'red'),
+          ch('Green (bar 2)', 'green'),
+          ch('Blue (bar 2)', 'blue'),
+          ch('White (bar 2)', 'white'),
+          ch('Programs', 'effect', 0, PROGRAMS),
+          ch('Reset', 'maintenance', 0, RESET),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'generic-led-derby-rgbw',
+    category: 'effect',
+    manufacturer: 'Generic',
+    name: 'LED derby, RGBW (6 channel)',
+    description:
+      'A derby effect: many coloured beams from a rotating lens. Red, green, blue and white, strobe and rotation.',
+    modes: [
+      {
+        name: '6 channel',
+        channels: [
+          ch('Red', 'red'),
+          ch('Green', 'green'),
+          ch('Blue', 'blue'),
+          ch('White', 'white'),
+          ch('Strobe', 'strobe', 0, SHUTTER),
+          ch('Rotation', 'rotation', 0, [
+            { from: 0, to: 9, type: 'none', label: 'Stopped' },
+            { from: 10, to: 255, type: 'rotation', label: 'Rotate, slow to fast' },
+          ]),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'generic-rgb-laser',
+    category: 'laser',
+    manufacturer: 'Generic',
+    name: 'RGB party laser (5 channel)',
+    description:
+      'A small party laser: brightness, colour, pattern, rotation and speed. Lasers can harm eyes: keep beams above head height and follow local rules.',
+    modes: [
+      {
+        name: '5 channel',
+        channels: [
+          ch('Brightness', 'intensity'),
+          ch('Colour', 'color-wheel', 0, COLOUR_WHEEL),
+          ch('Pattern', 'effect', 0, PROGRAMS),
+          ch('Rotation', 'rotation'),
+          ch('Speed', 'effect-speed'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'generic-strobe',
+    category: 'strobe',
+    manufacturer: 'Generic',
+    name: 'Strobe (2 channel)',
+    description: 'A white strobe: brightness, and flash rate from slow to fast.',
+    modes: [
+      {
+        name: '2 channel',
+        channels: [ch('Brightness', 'intensity'), ch('Flash rate', 'strobe', 0, SHUTTER)],
+      },
+    ],
+  },
+  {
+    id: 'generic-blinder-2',
+    category: 'blinder',
+    manufacturer: 'Generic',
+    name: 'Audience blinder, 2 lamps (2 channel)',
+    description: 'A two-lamp warm white blinder, each lamp on its own dimmer channel.',
+    modes: [{ name: '2 channel', channels: [ch('Lamp 1', 'intensity'), ch('Lamp 2', 'intensity')] }],
+  },
+  {
+    id: 'generic-led-spot',
+    category: 'spot',
+    manufacturer: 'Generic',
+    name: 'LED spot with gobos (6 channel)',
+    description: 'A fixed LED spot (profile): dimmer, shutter, colour wheel, gobo wheel, zoom and focus.',
+    modes: [
+      {
+        name: '6 channel',
+        channels: [
+          ch('Dimmer', 'intensity'),
+          ch('Shutter', 'strobe', 0, SHUTTER),
+          ch('Colour wheel', 'color-wheel', 0, COLOUR_WHEEL),
+          ch('Gobo wheel', 'gobo', 0, GOBO_WHEEL),
+          ch('Zoom', 'zoom', 128),
+          ch('Focus', 'focus', 128),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'generic-led-scanner',
+    category: 'scanner',
+    manufacturer: 'Generic',
+    name: 'LED scanner (7 channel)',
+    description:
+      'A scanner: a moving mirror sweeps the beam. Pan, tilt, colour wheel, gobo wheel, shutter, dimmer and speed.',
+    modes: [
+      {
+        name: '7 channel',
+        channels: [
+          ch('Pan (mirror)', 'pan', 128),
+          ch('Tilt (mirror)', 'tilt', 128),
+          ch('Colour wheel', 'color-wheel', 0, COLOUR_WHEEL),
+          ch('Gobo wheel', 'gobo', 0, GOBO_WHEEL),
+          ch('Shutter', 'strobe', 0, SHUTTER),
+          ch('Dimmer', 'intensity'),
+          ch('Mirror speed', 'pan-tilt-speed', 0, MOTOR_SPEED),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'generic-barrel-scanner',
+    category: 'barrel-scanner',
+    manufacturer: 'Generic',
+    name: 'Barrel scanner (6 channel)',
+    description:
+      'A barrel scanner: a rotating mirror drum sweeps the beam side to side. Barrel position, colour, gobo, shutter and dimmer.',
+    modes: [
+      {
+        name: '6 channel',
+        channels: [
+          ch('Barrel position', 'pan', 128),
+          ch('Tilt', 'tilt', 128),
+          ch('Colour wheel', 'color-wheel', 0, COLOUR_WHEEL),
+          ch('Gobo wheel', 'gobo', 0, GOBO_WHEEL),
+          ch('Shutter', 'strobe', 0, SHUTTER),
+          ch('Dimmer', 'intensity'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'generic-led-matrix-3x3',
+    category: 'matrix',
+    manufacturer: 'Generic',
+    name: 'LED matrix, 3 x 3 RGB (27 channel)',
+    description: 'A 3 by 3 panel of RGB pixels, each with its own red, green and blue, in rows from the top left.',
+    modes: [
+      {
+        name: '27 channel',
+        channels: Array.from({ length: 9 }, (_, index) => [
+          ch(`Red ${index + 1}`, 'red'),
+          ch(`Green ${index + 1}`, 'green'),
+          ch(`Blue ${index + 1}`, 'blue'),
+        ]).flat(),
+      },
+    ],
+  },
+  {
+    id: 'generic-led-flower',
+    category: 'flower',
+    manufacturer: 'Generic',
+    name: 'LED flower, RGBW (6 channel)',
+    description:
+      'A flower effect: dozens of coloured beams from one lens, turning. Red, green, blue, white, strobe and rotation.',
+    modes: [
+      {
+        name: '6 channel',
+        channels: [
+          ch('Red', 'red'),
+          ch('Green', 'green'),
+          ch('Blue', 'blue'),
+          ch('White', 'white'),
+          ch('Strobe', 'strobe', 0, SHUTTER),
+          ch('Rotation', 'rotation', 0, [
+            { from: 0, to: 9, type: 'none', label: 'Stopped' },
+            { from: 10, to: 255, type: 'rotation', label: 'Rotate, slow to fast' },
+          ]),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'generic-dmx-fan',
+    category: 'fan',
+    manufacturer: 'Generic',
+    name: 'DMX fan (1 channel)',
+    description: 'A DMX fan that blows smoke or haze across the stage: one channel sets its speed.',
+    modes: [{ name: '1 channel', channels: [ch('Fan speed', 'fan')] }],
+  },
+  {
+    id: 'generic-bubble-machine',
+    category: 'special-effect',
+    manufacturer: 'Generic',
+    name: 'Bubble machine (1 channel)',
+    description: 'A DMX bubble machine: one channel turns the bubbles on, more for more bubbles.',
+    modes: [{ name: '1 channel', channels: [ch('Bubbles', 'intensity')] }],
+  },
+  {
+    id: 'generic-mirror-ball-motor',
+    category: 'mirror-ball',
+    manufacturer: 'Generic',
+    name: 'Mirror ball motor (1 channel)',
+    description: 'A DMX mirror ball motor: rotation speed. Light it with a spot or a par to scatter the dots.',
+    modes: [
+      {
+        name: '1 channel',
+        channels: [
+          ch('Rotation', 'rotation', 0, [
+            { from: 0, to: 9, type: 'none', label: 'Stopped' },
+            { from: 10, to: 255, type: 'rotation', label: 'Rotate, slow to fast' },
+          ]),
+        ],
+      },
+    ],
   },
 ]);
 

@@ -10,6 +10,7 @@ import { DEVICE_CATEGORIES } from '../../shared/categories.js';
 import { CHANNEL_TYPES, DMX_CHANNELS } from '../../shared/patch.js';
 import { AMOUNTS, COLOUR_AMOUNTS, MAX_AI_LOOKS, MAX_AI_SEQUENCES } from '../../shared/aiShow.js';
 import { FIRST_VENUE, MAX_VENUES } from '../../shared/venues.js';
+import { RIG_LIMITS, RIG_SHAPES } from '../../shared/stageRig.js';
 import { BLOCK_EFFECTS, MAX_SEQUENCE_UNITS, MIN_BLOCK_BEATS, TRANSITIONS } from '../../shared/timeline.js';
 import { HOST_HELP, isAllowedHost } from '../utils/networkHost.js';
 
@@ -63,6 +64,17 @@ export const fixtureSchema = z
     mode: z.number().int().min(0).max(31),
     address: z.number().int().min(1).max(DMX_CHANNELS),
     category: z.enum(DEVICE_CATEGORIES).optional(), // set on this light, over its fixture type's
+    // Where it is mounted in the visualizer: on a rail of the venue's rig (a truss side or an upright) at a position along
+    // it, or on the floor at a place (0 to 1 across and from back to front). See shared/stageRig.js.
+    stage: z
+      .object({
+        rail: z.string().min(1).max(40),
+        at: z.number().min(0).max(1).optional(),
+        x: z.number().min(0).max(1).optional(),
+        z: z.number().min(0).max(1).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -99,7 +111,7 @@ export const sceneSchema = z
   .strict();
 
 /** Bump with every change to the saved show format, and add a migration in server/services/projectMigrations.js. */
-export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (6);
+export const CURRENT_SCHEMA_VERSION = /** @type {const} */ (7);
 
 export const groupSchema = z.object({ id, name: label, fixtureIds: z.array(id).max(256) }).strict();
 
@@ -188,6 +200,17 @@ export const outputSettingsSchema = z
     }
   });
 
+/** The truss a venue's lights hang on, for the visualizer: its shape, uprights and size in metres. */
+export const rigSchema = z
+  .object({
+    shape: z.enum(RIG_SHAPES),
+    uprights: z.boolean(),
+    width: z.number().min(RIG_LIMITS.width[0]).max(RIG_LIMITS.width[1]),
+    depth: z.number().min(RIG_LIMITS.depth[0]).max(RIG_LIMITS.depth[1]),
+    height: z.number().min(RIG_LIMITS.height[0]).max(RIG_LIMITS.height[1]),
+  })
+  .strict();
+
 /** A rig that is not the active one: its lights and groups, waiting for the show to move there. */
 export const venueSchema = z
   .object({
@@ -197,6 +220,7 @@ export const venueSchema = z
     groups: z.array(groupSchema).max(100),
     // How DMX leaves the computer at this venue (a USB cable, Art-Net…), set again when the show moves there.
     output: outputSettingsSchema.optional(),
+    rig: rigSchema.optional(),
   })
   .strict();
 
@@ -213,6 +237,7 @@ export const projectSchema = z
       .array(venueSchema)
       .max(MAX_VENUES - 1)
       .default([]), // the other venues
+    rig: rigSchema.optional(), // the active venue's truss, for the visualizer
     fixtureTypes: z.array(fixtureTypeSchema).max(200),
     fixtures: z.array(fixtureSchema).max(256),
     scenes: z.array(sceneSchema).max(500),
