@@ -1,10 +1,10 @@
-// Tests for the MIDI hook, with a fake Web MIDI object: support detection, permission, messages and cleanup.
+// Tests for the MIDI hook, with a mock Web MIDI object: support detection, permission, messages and cleanup.
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { useMidi } from '../../src/hooks/useMidi.js';
 
-function createFakeAccess(names = ['Pad Controller']) {
+function createMockAccess(names = ['Pad Controller']) {
   const inputs = new Map(names.map((name, index) => [`in-${index}`, { name, onmidimessage: null }]));
   return { inputs, onstatechange: null };
 }
@@ -24,7 +24,7 @@ describe('useMidi', () => {
   });
 
   it('asks for permission only when enabled, then lists the controllers and forwards parsed messages', async () => {
-    const access = createFakeAccess(['Launchpad', 'Keys']);
+    const access = createMockAccess(['Launchpad', 'Keys']);
     const request = vi.fn().mockResolvedValue(access);
     setRequestMidiAccess(request);
     const onMessage = vi.fn();
@@ -44,7 +44,7 @@ describe('useMidi', () => {
   });
 
   it('follows controllers being plugged in or out', async () => {
-    const access = createFakeAccess(['One']);
+    const access = createMockAccess(['One']);
     setRequestMidiAccess(vi.fn().mockResolvedValue(access));
     const { result } = renderHook(() => useMidi({ onMessage: vi.fn() }));
     await act(() => result.current.enable());
@@ -59,7 +59,7 @@ describe('useMidi', () => {
     await act(() => denied.result.current.enable());
     expect(denied.result.current.status).toBe('denied');
 
-    const access = createFakeAccess();
+    const access = createMockAccess();
     setRequestMidiAccess(vi.fn().mockResolvedValue(access));
     const ready = renderHook(() => useMidi({ onMessage: vi.fn() }));
     await act(() => ready.result.current.enable());
@@ -69,7 +69,7 @@ describe('useMidi', () => {
   });
 
   it('does not listen on behalf of a screen that closed while the browser was still asking', async () => {
-    const access = createFakeAccess();
+    const access = createMockAccess();
     let allow;
     setRequestMidiAccess(vi.fn(() => new Promise((resolve) => (allow = () => resolve(access)))));
     const { result, unmount } = renderHook(() => useMidi({ onMessage: vi.fn() }));

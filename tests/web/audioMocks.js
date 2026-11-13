@@ -104,17 +104,17 @@ export function createStream({ audio = 1, video = 0 } = {}) {
 }
 
 /**
- * Installs fake `AudioContext`, `AudioWorkletNode` and `navigator.mediaDevices`.
+ * Installs mock `AudioContext`, `AudioWorkletNode` and `navigator.mediaDevices`.
  * @param {{ devices?: { kind: string, deviceId: string, label: string }[] }} [options]
  */
-export function installFakeAudio({
+export function installMockAudio({
   devices = [{ kind: 'audioinput', deviceId: 'mic-1', label: 'Built-in microphone' }],
 } = {}) {
   const contexts = [];
   const nodes = [];
   const gains = [];
 
-  class FakeAudioContext {
+  class MockAudioContext {
     constructor() {
       this.state = 'running';
       this.destination = { name: 'destination' };
@@ -140,7 +140,7 @@ export function installFakeAudio({
     }
   }
 
-  class FakeAudioWorkletNode {
+  class MockAudioWorkletNode {
     constructor(context, name) {
       this.context = context;
       this.name = name;
@@ -156,8 +156,8 @@ export function installFakeAudio({
     getDisplayMedia: vi.fn().mockImplementation(async () => createStream({ audio: 1, video: 1 })),
     enumerateDevices: vi.fn().mockResolvedValue(devices),
   };
-  vi.stubGlobal('AudioContext', FakeAudioContext);
-  vi.stubGlobal('AudioWorkletNode', FakeAudioWorkletNode);
+  vi.stubGlobal('AudioContext', MockAudioContext);
+  vi.stubGlobal('AudioWorkletNode', MockAudioWorkletNode);
   Object.defineProperty(navigator, 'mediaDevices', { value: mediaDevices, configurable: true });
 
   return {

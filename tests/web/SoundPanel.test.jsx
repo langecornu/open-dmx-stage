@@ -6,13 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SoundPanel } from '../../src/components/SoundPanel.jsx';
 import { useBeatFollower } from '../../src/hooks/useBeatFollower.js';
 import { accessibilityViolations } from './axe.js';
-import { createStream, installFakeAudio, musicWindows } from './audioFakes.js';
+import { createStream, installMockAudio, musicWindows } from './audioMocks.js';
 
 let audio;
 let send;
 
 beforeEach(() => {
-  audio = installFakeAudio({
+  audio = installMockAudio({
     devices: [
       { kind: 'audioinput', deviceId: 'mic-1', label: 'Built-in microphone' },
       { kind: 'audioinput', deviceId: 'loop-2', label: 'BlackHole 2ch' },
