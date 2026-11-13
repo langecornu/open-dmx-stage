@@ -17,6 +17,8 @@ fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a
   fades and strobes; both loop and can follow the tempo.
 - **Visualize:** see the show on a 3D stage, lit live like the real rig: beams in haze, moving heads, bars, spiders,
   lasers, smoke and more, on a truss you shape around the dance floor.
+- **Decks:** play your own music folder on two DJ decks with spinning platters, cue, tempo faders and a crossfader,
+  and the lights lock to the beat of the deck being heard.
 - **AI shows:** Claude designs looks and sequences for your rig, with or without a song, using everything your lights
   can do; leave it all to the AI or steer colours, energy and features. Uses your own Anthropic API key.
 - **File and venues:** save shows into folders and open them from a list (with each show's venue, fixtures, looks and sequences), and venues with their own lights and addresses that

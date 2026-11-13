@@ -249,11 +249,11 @@ export function analyseSong(samples, sampleRate) {
 }
 
 /**
- * Decodes an audio file in the browser and analyses it.
- * @param {File} file
- * @returns {Promise<SongAnalysis>}
+ * Decodes audio in the browser into one channel (the channels averaged).
+ * @param {ArrayBuffer} data the file's bytes
+ * @returns {Promise<{ samples: Float32Array, sampleRate: number }>}
  */
-export async function analyseSongFile(file) {
+export async function decodeMono(data) {
   const Context = window.AudioContext ?? /** @type {any} */ (window).webkitAudioContext;
   if (!Context) {
     throw new Error('This browser cannot read audio files.');
@@ -262,19 +262,29 @@ export async function analyseSongFile(file) {
   try {
     let audio;
     try {
-      audio = await context.decodeAudioData(await file.arrayBuffer());
+      audio = await context.decodeAudioData(data);
     } catch {
       throw new Error('That file could not be read as audio. Try an MP3, WAV, AAC or FLAC file.');
     }
-    const mono = new Float32Array(audio.length);
+    const samples = new Float32Array(audio.length);
     for (let channel = 0; channel < audio.numberOfChannels; channel += 1) {
-      const data = audio.getChannelData(channel);
-      for (let index = 0; index < data.length; index += 1) {
-        mono[index] += data[index] / audio.numberOfChannels;
+      const channelData = audio.getChannelData(channel);
+      for (let index = 0; index < channelData.length; index += 1) {
+        samples[index] += channelData[index] / audio.numberOfChannels;
       }
     }
-    return analyseSong(mono, audio.sampleRate);
+    return { samples, sampleRate: audio.sampleRate };
   } finally {
     context.close?.();
   }
+}
+
+/**
+ * Decodes an audio file in the browser and analyses it.
+ * @param {File} file
+ * @returns {Promise<SongAnalysis>}
+ */
+export async function analyseSongFile(file) {
+  const { samples, sampleRate } = await decodeMono(await file.arrayBuffer());
+  return analyseSong(samples, sampleRate);
 }

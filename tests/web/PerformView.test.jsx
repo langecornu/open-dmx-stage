@@ -4,7 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildPatch } from '../../shared/patch.js';
+import { api } from '../../src/api.js';
 import { PerformView } from '../../src/components/PerformView.jsx';
+import { DecksProvider } from '../../src/hooks/useDecks.js';
 import { accessibilityViolations } from './axe.js';
 import { BUILTIN_TYPES } from './fixtures.js';
 
@@ -48,10 +50,15 @@ function renderView(engine = {}) {
     },
   };
   flush = vi.fn().mockResolvedValue(undefined);
-  return render(<PerformView project={project} patch={patch} live={live} flush={flush} />);
+  return render(
+    <DecksProvider send={live.send}>
+      <PerformView project={project} patch={patch} live={live} flush={flush} />
+    </DecksProvider>,
+  );
 }
 
 beforeEach(() => {
+  vi.spyOn(api, 'getMusic').mockResolvedValue({ folder: '/music', exists: true, tracks: [] });
   localStorage.clear();
 });
 afterEach(() => {
@@ -59,6 +66,13 @@ afterEach(() => {
 });
 
 describe('PerformView', () => {
+  it('has the decks, with the music library', async () => {
+    renderView();
+    expect(screen.getByRole('heading', { name: 'Decks' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Deck A' })).toBeInTheDocument();
+    expect(await screen.findByText(/No music files in this folder/)).toBeInTheDocument();
+  });
+
   it('shows every look and sequence as a big button with its keyboard key', () => {
     renderView();
     expect(screen.getByRole('button', { name: 'Warm wash, Look, key 1' })).toBeInTheDocument();
@@ -163,7 +177,7 @@ describe('PerformView', () => {
 
   it('leaves master, blackout and stop to the top bar and the On stage bar', () => {
     renderView({ master: 0.8 });
-    expect(screen.queryByRole('slider')).not.toBeInTheDocument();
+    expect(screen.queryByRole('slider', { name: /master/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Blackout/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /sequence$/ })).not.toBeInTheDocument();
   });
@@ -180,7 +194,11 @@ describe('PerformView', () => {
         activeChaseId: null,
       },
     };
-    render(<PerformView project={{ ...project, scenes: [], chases: [] }} patch={patch} live={live} flush={vi.fn()} />);
+    render(
+      <DecksProvider send={live.send}>
+        <PerformView project={{ ...project, scenes: [], chases: [] }} patch={patch} live={live} flush={vi.fn()} />
+      </DecksProvider>,
+    );
     expect(screen.getByText('Nothing to perform yet')).toBeInTheDocument();
   });
 

@@ -22,6 +22,8 @@ import {
   oflImportSchema,
   oflSearchSchema,
   aiGenerateSchema,
+  musicFolderSchema,
+  trackAnalysisSchema,
   aiKeySchema,
   createEmptyProject,
   projectSchema,
@@ -34,6 +36,7 @@ import { summariseOflFixture } from '../services/oflDetails.js';
 import { convertQlcPlus } from '../services/qlcImporter.js';
 import { migrateProject } from '../services/projectMigrations.js';
 import { AiKeyStore } from '../services/aiKeyStore.js';
+import { MusicLibrary } from '../services/musicLibrary.js';
 import { ShowLibrary, checkFolder, isEmptyShow, summariseShow } from '../services/showLibrary.js';
 import { checkApiKey, generateShow } from '../services/showGenerator.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -48,7 +51,8 @@ import { httpError } from '../utils/httpError.js';
  *   aiKeys?: AiKeyStore,
  *   aiClient?: (apiKey: string) => import('@anthropic-ai/sdk').default,
  *   network?: { httpsPort: number, fingerprint: string | null, validTo: string | null, addresses: string[] } | null,
- * }} options `ofl` is null when online fixture search is turned off
+ *   music?: MusicLibrary,
+ * }} options `ofl` is null when online fixture search is turned off; `music` replaces the music library, for tests
  * @returns {import('express').Router}
  */
 export function createApiRouter({
@@ -59,6 +63,7 @@ export function createApiRouter({
   aiKeys = new AiKeyStore({ dataDir: projectService.dataDir }),
   aiClient = undefined,
   network = null,
+  music = new MusicLibrary({ dataDir: projectService.dataDir }),
 }) {
   const router = Router();
 
@@ -103,6 +108,49 @@ export function createApiRouter({
     syncEngineWithProject(saved);
     return saved;
   };
+
+  // The decks' music: a folder on this computer, listed and streamed to whichever device plays it.
+  router.get(
+    '/music',
+    asyncHandler(async (req, res) => {
+      res.json(await music.list({ rescan: req.query.rescan === '1' }));
+    }),
+  );
+
+  router.put(
+    '/settings/music',
+    validateBody(musicFolderSchema),
+    asyncHandler(async (req, res) => {
+      await music.setFolder(req.body.folder);
+      res.json(await music.list({ rescan: true }));
+    }),
+  );
+
+  // A track's audio, with ranges, so a deck can start playing at once and jump anywhere in it.
+  router.get(
+    '/music/tracks/:id/audio',
+    asyncHandler(async (req, res) => {
+      const { root, file, type } = await music.audio(String(req.params.id));
+      res.type(type);
+      res.sendFile(file, { root, dotfiles: 'deny', acceptRanges: true, maxAge: '1h' });
+    }),
+  );
+
+  router.get(
+    '/music/tracks/:id/analysis',
+    asyncHandler(async (req, res) => {
+      res.json({ analysis: await music.analysis(String(req.params.id)) });
+    }),
+  );
+
+  router.put(
+    '/music/tracks/:id/analysis',
+    validateBody(trackAnalysisSchema),
+    asyncHandler(async (req, res) => {
+      await music.saveAnalysis(String(req.params.id), req.body);
+      res.json({ ok: true });
+    }),
+  );
 
   // The secure (https) addresses for phones and tablets, and the certificate's fingerprint to check the warning by.
   router.get('/settings/network', (_req, res) => {

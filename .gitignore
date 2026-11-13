@@ -8,3 +8,4 @@ server/data/*.bak
 server/data/shows/
 server/data/*.tmp
 server/data/*.unreadable-*
+server/data/tls/

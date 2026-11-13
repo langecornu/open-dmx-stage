@@ -298,6 +298,22 @@ export const aiGenerateSchema = z
   })
   .strict();
 
+/** The music folder for the decks: a path on the computer running the app. */
+export const musicFolderSchema = z.object({ folder: z.string().trim().min(1).max(1000) }).strict();
+
+/** A track's beat analysis, worked out in the browser and kept with the library. */
+export const trackAnalysisSchema = z
+  .object({
+    bpm: z.number().min(MIN_BPM).max(MAX_BPM),
+    firstBeatSeconds: z.number().min(0).max(120),
+    durationSeconds: z
+      .number()
+      .min(0)
+      .max(4 * 3600),
+    peaks: z.array(z.number().min(0).max(1)).max(2000),
+  })
+  .strict();
+
 /** The name for a new show. */
 export const showNameSchema = z.object({ name: label }).strict();
 

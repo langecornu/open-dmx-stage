@@ -294,6 +294,29 @@ If you have a MIDI controller (pads, keys, knobs or faders), you can play looks 
 **Clear links** removes all links. Links are saved in this browser, not in the show file, and links to looks you delete
 are forgotten. Safari and Firefox do not support MIDI everywhere, so use Chrome or Edge.
 
+### Decks: play your music, and the lights follow
+
+The **Decks** on Perform play the music on the computer running the app, out of the device you are holding (plug it
+into the speakers). The music comes from one folder: your Music folder at first; type another in **Music folder on the
+computer running the app** (for example `/media/pi/USB` on a Raspberry Pi) and press **Use this folder**. **Rescan**
+picks up new files. Search by title, artist or album, then press **A** or **B** on a track to load it on that deck.
+
+- **Play/Pause** starts and stops the deck. **Cue** works as on a DJ player: while stopped it sets the cue point where
+  the deck is; while playing it jumps back to the cue point and stops. Tap the waveform (or use its slider) to move
+  through the track.
+- The **Tempo** fader speeds the deck up or down by up to 8 % (double-click it to go back to 0). **Sync** sets it so the
+  deck plays at the other deck's tempo.
+- The mixer has each deck's **volume** and the **crossfader** (double-click to centre it).
+- The ring round each platter runs round once a bar and the platter flashes on each beat.
+
+The first time a track is loaded the app finds its tempo and first downbeat ("Finding the beat…", a few seconds), and
+remembers them. While a deck is heard (playing and not faded out), **the lights follow it**: the tempo is set to the
+deck's, and every bar starts on its downbeat, so sequences and effects that follow the tempo stay on the music. When
+both decks play, the louder one leads. The **Decks** button in the visualizer shows a small set of the decks there.
+
+Apple devices may not play FLAC or OGG files; use MP3, AAC/M4A, WAV or AIFF there. Play the decks from one device at a
+time.
+
 ### Visualize: see the show without the lights
 
 Press **Visualize** on Perform to see your rig on a stage, lit live by the same signal as the real lights: pars throw

@@ -3,7 +3,9 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { api } from '../../src/api.js';
 import { PerformView } from '../../src/components/PerformView.jsx';
+import { DecksProvider } from '../../src/hooks/useDecks.js';
 import { accessibilityViolations } from './axe.js';
 
 const project = {
@@ -23,10 +25,15 @@ function renderView(engine = {}) {
     send: vi.fn(),
     engine: { master: 1, blackout: false, bpm: 120, effect: null, activeSceneId: null, activeChaseId: null, ...engine },
   };
-  return render(<PerformView project={project} patch={patch} live={live} flush={vi.fn()} />);
+  return render(
+    <DecksProvider send={live.send}>
+      <PerformView project={project} patch={patch} live={live} flush={vi.fn()} />
+    </DecksProvider>,
+  );
 }
 
 beforeEach(() => {
+  vi.spyOn(api, 'getMusic').mockResolvedValue({ folder: '/music', exists: true, tracks: [] });
   localStorage.clear();
 });
 afterEach(() => {

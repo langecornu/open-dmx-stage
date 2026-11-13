@@ -26,6 +26,7 @@ import { Welcome } from './components/Welcome.jsx';
 import { buildCommands } from './utils/commands.js';
 import { isTypingTarget } from './utils/performKeys.js';
 import { confirmVenueSwitch } from './utils/venueSwitch.js';
+import { DecksProvider } from './hooks/useDecks.js';
 import { useLive } from './hooks/useLive.js';
 import { useProject } from './hooks/useProject.js';
 import { useToasts } from './hooks/useToasts.js';
@@ -117,97 +118,99 @@ export function App() {
   const openShows = () => setView('file');
   const shared = { project, library, patch, update, flush, live, openShows, replaceProject: replace };
   return (
-    <div className="shell">
-      {!welcomed && startedEmpty.current ? (
-        <Welcome
-          project={project}
-          library={library}
-          patch={patch}
-          update={update}
+    <DecksProvider send={live.send}>
+      <div className="shell">
+        {!welcomed && startedEmpty.current ? (
+          <Welcome
+            project={project}
+            library={library}
+            patch={patch}
+            update={update}
+            output={live.output}
+            onDone={handleWelcomeDone}
+          />
+        ) : null}
+        <Sidebar
+          current={view}
+          onSelect={setView}
+          liveViews={liveViews(live.engine)}
           output={live.output}
-          onDone={handleWelcomeDone}
+          isServerUp={live.connected}
+          onOpenOutput={() => setView('monitor')}
         />
-      ) : null}
-      <Sidebar
-        current={view}
-        onSelect={setView}
-        liveViews={liveViews(live.engine)}
-        output={live.output}
-        isServerUp={live.connected}
-        onOpenOutput={() => setView('monitor')}
-      />
-      <TopBar
-        projectName={project.name}
-        onRename={(name) => update((current) => ({ ...current, name: name.trim() === '' ? 'Untitled show' : name }))}
-        onOpenShows={openShows}
-        venues={venuesOf(project)}
-        onSwitchVenue={async (venueId) => {
-          const { problem } = await confirmVenueSwitch({
-            project,
-            venueId,
-            library,
-            update,
-            currentOutput: live.output?.settings ?? null,
-          });
-          if (problem) {
-            notify(problem);
-          }
-        }}
-        onManageVenues={() => setView('patch')}
-        saveStatus={saveStatus}
-        connected={live.connected}
-        output={live.output}
-        engine={live.engine}
-        send={live.send}
-        onOpenOutput={() => setView('monitor')}
-        onOpenSearch={() => setIsSearchOpen(true)}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-      />
-      <main className="main">
-        {error ? (
-          <div className="error-banner" role="alert">
-            {error}
-          </div>
-        ) : null}
-        {live.isVersionMismatch ? (
-          <div className="error-banner" role="alert">
-            This page and the server are different versions. Reload the page to update.
-          </div>
-        ) : null}
-        <ErrorBoundary key={view} label="this screen">
-          {view === 'home' ? <HomeView {...shared} navigate={setView} /> : null}
-          {view === 'file' ? <FileView {...shared} /> : null}
-          {view === 'control' ? <ControlView {...shared} /> : null}
-          {view === 'scenes' ? <ScenesView {...shared} /> : null}
-          {view === 'chases' ? <ChasesView {...shared} /> : null}
-          {view === 'perform' ? <PerformView {...shared} /> : null}
-          {view === 'patch' ? <PatchView {...shared} /> : null}
-          {view === 'fixtures' ? <FixturesView {...shared} /> : null}
-          {view === 'monitor' ? <MonitorView {...shared} /> : null}
-          {view === 'ai' ? <AiShowView {...shared} navigate={setView} /> : null}
-          {view === 'settings' ? <SettingsView /> : null}
-        </ErrorBoundary>
-      </main>
-      <CommandPalette
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onRun={(command) => notify(command.label)}
-        commands={buildCommands({ project, engine: live.engine, theme })}
-        context={{
-          send: live.send,
-          flush,
-          navigate: setView,
-          toggleTheme,
-          showShortcuts: () => setIsShortcutsOpen(true),
-        }}
-      />
-      <div className="dock">
-        <StageBar engine={live.engine} project={project} send={live.send} onNavigate={setView} currentView={view} />
-        <StageView project={project} patch={patch} />
+        <TopBar
+          projectName={project.name}
+          onRename={(name) => update((current) => ({ ...current, name: name.trim() === '' ? 'Untitled show' : name }))}
+          onOpenShows={openShows}
+          venues={venuesOf(project)}
+          onSwitchVenue={async (venueId) => {
+            const { problem } = await confirmVenueSwitch({
+              project,
+              venueId,
+              library,
+              update,
+              currentOutput: live.output?.settings ?? null,
+            });
+            if (problem) {
+              notify(problem);
+            }
+          }}
+          onManageVenues={() => setView('patch')}
+          saveStatus={saveStatus}
+          connected={live.connected}
+          output={live.output}
+          engine={live.engine}
+          send={live.send}
+          onOpenOutput={() => setView('monitor')}
+          onOpenSearch={() => setIsSearchOpen(true)}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+        />
+        <main className="main">
+          {error ? (
+            <div className="error-banner" role="alert">
+              {error}
+            </div>
+          ) : null}
+          {live.isVersionMismatch ? (
+            <div className="error-banner" role="alert">
+              This page and the server are different versions. Reload the page to update.
+            </div>
+          ) : null}
+          <ErrorBoundary key={view} label="this screen">
+            {view === 'home' ? <HomeView {...shared} navigate={setView} /> : null}
+            {view === 'file' ? <FileView {...shared} /> : null}
+            {view === 'control' ? <ControlView {...shared} /> : null}
+            {view === 'scenes' ? <ScenesView {...shared} /> : null}
+            {view === 'chases' ? <ChasesView {...shared} /> : null}
+            {view === 'perform' ? <PerformView {...shared} /> : null}
+            {view === 'patch' ? <PatchView {...shared} /> : null}
+            {view === 'fixtures' ? <FixturesView {...shared} /> : null}
+            {view === 'monitor' ? <MonitorView {...shared} /> : null}
+            {view === 'ai' ? <AiShowView {...shared} navigate={setView} /> : null}
+            {view === 'settings' ? <SettingsView /> : null}
+          </ErrorBoundary>
+        </main>
+        <CommandPalette
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          onRun={(command) => notify(command.label)}
+          commands={buildCommands({ project, engine: live.engine, theme })}
+          context={{
+            send: live.send,
+            flush,
+            navigate: setView,
+            toggleTheme,
+            showShortcuts: () => setIsShortcutsOpen(true),
+          }}
+        />
+        <div className="dock">
+          <StageBar engine={live.engine} project={project} send={live.send} onNavigate={setView} currentView={view} />
+          <StageView project={project} patch={patch} />
+        </div>
+        <ShortcutsDialog isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+        <ToastRegion toasts={toasts} />
       </div>
-      <ShortcutsDialog isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
-      <ToastRegion toasts={toasts} />
-    </div>
+    </DecksProvider>
   );
 }

@@ -5,8 +5,18 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+
+- The https certificate's private key (`server/data/tls/`) is now ignored by git, so it cannot be committed by mistake.
+
 ### Added
 
+- **Decks on Perform**: two DJ decks that play the music folder on the computer running the app (`~/Music` until you
+  choose another) out of the device showing them. Each deck has a spinning platter in a ring of lights that runs round
+  once a bar and flashes on the beat, a waveform to scrub, Cue, Play/Pause, Sync and a ±8 % tempo fader; a mixer has
+  each deck's volume and a crossfader. Each track's tempo and first downbeat are found once and kept, and the lights
+  lock to the deck being heard, bar by bar, with no microphone. The visualizer has a compact set of the decks. See
+  ADR 0010.
 - **Visualize**: a full-screen stage view from Perform, lit live by the same DMX signal as the real lights, with every
   kind of light drawn as itself (pars, moving heads that pan and tilt, LED bars cell by cell, matrices, spiders,
   derbies, flowers, lasers, strobes, blinders, scanners, a mirror ball's dots, smoke and haze, fans, bubbles). Beams add
