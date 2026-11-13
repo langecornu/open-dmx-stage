@@ -166,6 +166,9 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The usage guide covers every screen (now eleven, with File, AI shows and Settings), opens with the whole flow in five
+  steps, and has new screenshots of the decks, the live stage view, arranging a rig, AI shows, File, Settings and a
+  phone. It says plainly that one DMX512 universe is supported for now, and where to send feedback.
 - The HTTP API is split into one router per area, with switching shows in a service of its own; the AI show screen
   and the visualizer's Arrange panel are split into smaller components; the decks' beat lock is a hook of its own.
 - Music tags are read eight files at a time, and devices asking for the library at once share one scan.
@@ -196,6 +199,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The show name in the top bar was cut short on a wide screen, and the bar spilled past the page between 1100 and 1350
+  pixels wide: the search, the venue picker and the master fader now give up room first, and on laptop widths the File
+  and Master labels are read out but not shown.
+- A deck's letter overlapped the spindle on the record.
 - A time such as 59.6 seconds showed as "0:60" on the AI show screen.
 - Screens that load settings or the show list no longer update after you leave them.
 - `ATTRIBUTIONS.md` listed every dependency as MIT; the Anthropic SDK (Apache-2.0) and `selfsigned` are now listed,
