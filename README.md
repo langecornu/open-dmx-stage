@@ -1,9 +1,18 @@
 # Open DMX Stage
 
 **Light your show from the browser.** Colour your fixtures, save looks, and chain them into sequences with smooth
-fades. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a built-in simulator when you have no hardware.
+fades, let AI design a show for your rig and your song, see it on a live 3D stage, and play it with two DJ decks that
+keep the lights on the beat. Works with USB-DMX cables, the ENTTEC DMX USB Pro, Art-Net and sACN, or a built-in
+simulator when you have no hardware. It drives one DMX512 universe (512 channels) for now; more may come later.
 
-![Open DMX Stage, Home screen](docs/images/16-home-dark.jpg)
+![Open DMX Stage, the live stage view with the decks](docs/images/21-visualize-decks-dark.jpg)
+
+**Watch the how-to video** (3½ minutes, from the rig to a full AI light show):
+
+[![Watch the how-to video on YouTube](docs/images/video-how-to.jpg)](https://www.youtube.com/watch?v=Ss5yQ1Y8TnE)
+
+Feedback is welcome: open an [issue](https://github.com/langecornu/open-dmx-stage/issues) or comment on the
+[video](https://www.youtube.com/watch?v=Ss5yQ1Y8TnE). The [usage guide](docs/USAGE.md) walks through every screen.
 
 ## Features
 

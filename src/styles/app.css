@@ -169,8 +169,10 @@ select {
 
 .show-name {
   min-width: 110px;
-  flex: 1 1 160px;
+  flex: 0 1 auto;
   max-width: 360px;
+  /* As wide as the name, so a long name is not cut short while there is room. */
+  field-sizing: content;
   padding: 8px 12px;
   border: 1px solid transparent;
   border-radius: var(--radius);
@@ -193,12 +195,13 @@ select {
 
 .topbar .pill,
 .topbar .btn,
-.master,
 .theme-switch {
   flex-shrink: 0;
 }
 
 .master {
+  /* The fader gets shorter before anything is cut off on a narrow screen. */
+  flex: 0 1 auto;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -213,6 +216,8 @@ select {
 
 .master input[type='range'] {
   width: 130px;
+  min-width: 60px;
+  flex: 0 1 130px;
 }
 
 .master-value {

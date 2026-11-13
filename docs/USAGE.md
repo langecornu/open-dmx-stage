@@ -2,19 +2,40 @@
 
 A quick tour of Open DMX Stage. If you have not installed it yet, start with the [install guide](INSTALL.md).
 
-The app has eight screens, reached from the left rail (or the bottom bar on phones and tablets), grouped under **Show**
-and **Rig**:
+Open DMX Stage drives **one DMX512 universe** (512 channels) over a USB cable, Art-Net or sACN. More universes may come
+in a future version. Feedback is welcome, on the
+[GitHub page](https://github.com/langecornu/open-dmx-stage/issues) or in the comments of the
+[how-to video](https://www.youtube.com/watch?v=Ss5yQ1Y8TnE).
 
-| Screen        | What it is for                                                         |
-| ------------- | ---------------------------------------------------------------------- |
-| **Home**      | See the output and rig status, quick-launch pads, and what to do next. |
-| **Lights**    | Pick colours and brightness and see your fixtures respond live.        |
-| **Looks**     | Save what is on stage and bring it back with one tap.                  |
-| **Sequences** | Chain looks into a show with timed fades.                              |
-| **Perform**   | Run a show with pads, keyboard shortcuts and MIDI.                     |
-| **Setup**     | Tell the studio which lights you have and their DMX addresses.         |
-| **Fixtures**  | Describe your own lights: brand, model and what each channel does.     |
-| **Output**    | See exactly what is being sent on the DMX line.                        |
+[![Watch the how-to video on YouTube](images/video-how-to.jpg)](https://www.youtube.com/watch?v=Ss5yQ1Y8TnE)
+
+The app has eleven screens, reached from the left rail (or the bottom bar on phones and tablets), grouped under
+**Show** and **Rig**:
+
+| Screen        | What it is for                                                                          |
+| ------------- | --------------------------------------------------------------------------------------- |
+| **Home**      | See the output and rig status, quick-launch pads, and what to do next.                  |
+| **File**      | Save the show into folders, open another, start a new one, export and import.           |
+| **Lights**    | Pick colours and brightness and see your fixtures respond live.                         |
+| **Looks**     | Save what is on stage and bring it back with one tap.                                   |
+| **Sequences** | Chain looks into a show with timed fades, and draw per-light blocks on a timeline.      |
+| **Perform**   | Run a show with pads, keyboard shortcuts, MIDI, two DJ decks and a live 3D stage view.  |
+| **AI shows**  | Let Claude design looks and sequences for your rig, with or without a song.             |
+| **Setup**     | Tell the studio which lights you have, their DMX addresses, and the venues you play at. |
+| **Fixtures**  | Find a light online, or describe your own: brand, model and what each channel does.     |
+| **Output**    | Connect the lights and see exactly what is being sent on the DMX line.                  |
+| **Settings**  | Your Anthropic API key for AI shows, and the secure address for phones and tablets.     |
+
+### The whole flow in five steps
+
+1. **Setup:** add your lights (or pick them in the welcome screen) at the DMX addresses they are set to.
+2. **Visualize** (on Perform), then **Arrange lights:** shape the truss the way it is in the room (a square around the
+   dance floor, for example) and put each light where it hangs.
+3. **Looks and sequences:** make them by hand on Lights, Looks and Sequences, or let **AI shows** design them, from a
+   song if you like.
+4. **Perform:** play them from pads, keys or a MIDI controller, with your music on the **Decks** so the lights lock to
+   the beat, and watch it all live in **Visualize**.
+5. **File:** save the show, and open it again next time.
 
 The top bar is always available: the show name (click to rename), the connection status (with a **Fix** button when the
 lights are not connected), **Search**, the **Master** brightness, the light/dark **theme switch**, and **Blackout**. The
@@ -296,6 +317,8 @@ are forgotten. Safari and Firefox do not support MIDI everywhere, so use Chrome 
 
 ### Decks: play your music, and the lights follow
 
+![The decks, with a track playing on deck A and another loaded on deck B](images/19-decks-dark.jpg)
+
 The **Decks** on Perform play the music on the computer running the app, out of the device you are holding (plug it
 into the speakers). The music comes from one folder: your Music folder at first; type another in **Music folder on the
 computer running the app** (for example `/media/pi/USB` on a Raspberry Pi) and press **Use this folder**. **Rescan**
@@ -323,7 +346,12 @@ Press **Visualize** on Perform to see your rig on a stage, lit live by the same 
 coloured beams through the haze, moving heads turn and tilt, LED bars light cell by cell, spiders sweep, derbies and
 flowers spin, lasers fan out, strobes flash, smoke machines puff smoke that thickens the haze, fans blow it, bubble
 machines blow bubbles and a mirror ball scatters dots. Pads along the bottom play looks and sequences without leaving
-it, and the top has **Blackout** and **Close** (or Escape).
+it, and the top has **Blackout** and **Close** (or Escape). **Decks** on the pad bar opens a small set of the decks, to
+play and cue the music while you watch.
+
+![The stage view, live](images/20-visualize-dark.jpg)
+
+![The stage view with the decks open](images/21-visualize-decks-dark.jpg)
 
 - **Front**, **Corner** and **Above** change where you look from; Corner suits a rig around the dance floor, Above is the
   easiest for arranging.
@@ -334,6 +362,8 @@ it, and the top has **Blackout** and **Close** (or Escape).
 - **Names** labels every light.
 
 **Arrange lights** sets up the room for the venue you are at (each venue keeps its own, saved with the show):
+
+![Arranging the lights on a square truss, seen from above](images/22-visualize-arrange-dark.jpg)
 
 1. **Truss:** one truss at the back, a U (back and both sides), a square around the dance floor, front and back, or no
    truss. **Uprights at the corners** adds vertical towers, which lights can be mounted on too. Set the **width**,
@@ -504,10 +534,15 @@ you are at, using everything its lights can do: colour, moving head sweeps, gobo
 need your own Anthropic API key; each generation is billed to your Anthropic account (the app shows the tokens used and
 an estimate in dollars).
 
+![AI shows: a song analysed, and the choices to steer the AI](images/23-ai-shows-dark.jpg)
+
 1. **Add your key once:** open **Settings**, paste the key (it starts with `sk-ant-`) and press **Save key**. The app
    checks it with Anthropic and keeps it on the computer running Open DMX Stage. After that it only says _Key saved_:
    the key cannot be shown again, only replaced or removed. (A key set on the server as `ANTHROPIC_API_KEY` is used
    instead.)
+
+   ![The Anthropic API key in Settings, saved and hidden](images/25-settings-dark.jpg)
+
 2. **Optional, a song:** press **Choose a song**. The app listens to it in your browser and finds its tempo, its first
    downbeat and how its energy rises and falls, shown as a bar strip. If the tempo is twice too fast or slow, press
    **Half** or **Double**. Only these numbers are sent to the AI, never the audio.
@@ -520,8 +555,9 @@ an estimate in dollars).
    show; **Remove these** takes them out again.
 
 With a song, the first sequence follows the whole song, section by section, plays once, and starts at the song's tempo.
-Play the song from your deck, start the sequence on its first downbeat (from Perform or a MIDI pad), and turn on
-**Follow the music** so the lights stay on the beat. Every AI look and sequence can be edited like any other.
+Play the song on one of the app's **Decks** and start the sequence: the lights lock to the deck's beat by themselves.
+Playing it from another player instead, start the sequence on its first downbeat (from Perform or a MIDI pad) and turn
+on **Follow the music** so the lights stay on the beat. Every AI look and sequence can be edited like any other.
 
 What is sent to Anthropic: your lights' names, fixtures and controls, your choices, and the song's numbers. Nothing else
 from your show, and never the audio.
@@ -531,6 +567,8 @@ from your show, and never the audio.
 Your show (venues, fixtures, looks, sequences) saves itself a moment after each change; the top bar shows _Unsaved_,
 _Saving…_ or _Saved_. **File** (in the sidebar under Home, or the **File** button beside the show name) keeps your list
 of shows:
+
+![File: save into a folder, and the list of saved shows](images/24-file-dark.jpg)
 
 - **Save:** the **Name** starts as the show's name from the top bar. Pick a folder in the **Save in** tree (the top is
   **Shows**), or make one with **New folder** (inside the selected folder), then press **Save**. The show gets that
@@ -557,13 +595,16 @@ not bought from a company the browser knows. Check that the fingerprint in the w
 one in Settings, then continue (in Chrome: **Advanced**, then **Proceed**; in Safari: **Show details**, then **visit this
 website**). Each device asks once. Safari on iPhone and iPad does not support MIDI controllers at all.
 
+<img src="images/26-phone-perform-dark.jpg" alt="Perform on a phone" width="300">
+
 The layout adapts to the screen: on an iPad in landscape the sidebar stays (icons only on smaller iPads); in portrait
 and on a phone the screens are in a bar at the bottom (on a phone, swipe it sideways to reach the last ones). Timeline
 blocks can be drawn and moved with a finger.
 
 ## Current limits
 
-- One DMX universe (512 channels).
+- One DMX universe (512 channels) for now. Support for more universes may come in a future version: tell us on the
+  [GitHub page](https://github.com/langecornu/open-dmx-stage/issues) if you need it.
 - Export to Engine DJ / SoundSwitch is not available yet.
 - USB output has been verified with one passive cable (DSD TECH SH-RS09B) on one Mac with two LED pars. ENTTEC Pro adapters and network output (Art-Net and sACN) have not yet been tried on real lights, and nothing has been tried on Windows or Linux.
 - SoundSwitch dongles are not supported.

@@ -238,15 +238,20 @@ body {
 }
 
 .show-name {
+  flex-shrink: 0.2;
   font-size: 17px;
   letter-spacing: -0.015em;
 }
 
 .search-button {
   display: inline-flex;
+  /* The search gives up its width before the show name does: its words go first, the icon and shortcut stay. */
+  flex: 0 1 230px;
   align-items: center;
   gap: var(--space-3);
-  min-width: 230px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
   min-height: var(--control-height);
   padding: 6px 8px 6px 12px;
   border: 1px solid var(--border);
@@ -264,6 +269,11 @@ body {
 
 .search-button .search-hint {
   margin-left: auto;
+}
+
+.search-button > span:not(.search-hint) {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .master {
@@ -1758,6 +1768,32 @@ a.btn {
   max-width: 180px;
 }
 
+@media (max-width: 1400px) {
+  .venue-picker .select {
+    max-width: 130px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .venue-picker .select {
+    max-width: 96px;
+  }
+
+  .topbar {
+    column-gap: var(--space-2);
+  }
+
+  .show-name {
+    min-width: 96px;
+  }
+
+  /* Saved shows as its tick alone (the word stays for screen readers); saving and problems keep their words. */
+  .pill-save-saved {
+    gap: 0;
+    font-size: 0;
+  }
+}
+
 .venues-list {
   display: flex;
   flex-direction: column;
@@ -3148,5 +3184,19 @@ a.btn {
 @media (prefers-reduced-motion: reduce) {
   .dj-plate {
     transition: none;
+  }
+}
+
+/* A laptop-width top bar: the File button and the master fader keep their icon and control, and their words are
+   read out but not shown, so the show name keeps its room. */
+@media (max-width: 1400px) and (min-width: 1101px) {
+  .topbar-shows .btn-label,
+  .master-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 }
