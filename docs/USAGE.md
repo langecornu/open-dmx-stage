@@ -625,6 +625,10 @@ not bought from a company the browser knows. Check that the fingerprint in the w
 one in Settings, then continue (in Chrome: **Advanced**, then **Proceed**; in Safari: **Show details**, then **visit this
 website**). Each device asks once. Safari on iPhone and iPad does not support MIDI controllers at all.
 
+On a phone the top bar is one row: the show name, the connection, **More** and **Blackout**. **More** opens File, the
+venue, search, Master and the theme underneath; press it again to fold them away. Lights shows three lights to a row,
+before the colour panel.
+
 <img src="images/26-phone-perform-dark.jpg" alt="Perform on a phone" width="300">
 
 The layout adapts to the screen: on an iPad in landscape the sidebar stays (icons only on smaller iPads); in portrait

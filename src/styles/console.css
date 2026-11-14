@@ -650,6 +650,64 @@ kbd {
   margin: 0;
 }
 
+/* On a phone, three lights to a row, so the rig fits on a screen or two instead of one light per screen. */
+@media (max-width: 640px) {
+  .lights-fixtures .fixture-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .lights-fixtures .tile-main {
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-2) var(--space-2);
+  }
+
+  .lights-fixtures .orb {
+    width: 48px;
+    height: 48px;
+  }
+
+  .lights-fixtures .tile-main > span:not(.orb, .tile-check) {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* A light opened to its channels takes the whole row, so its faders have room. */
+  .lights-fixtures .tile:has(.tile-toggle[aria-expanded='true']) {
+    grid-column: 1 / -1;
+  }
+
+  .lights-fixtures .tile-name {
+    display: block;
+    overflow: hidden;
+    max-width: 100%;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .lights-fixtures .tile-check {
+    top: var(--space-2);
+    right: var(--space-2);
+    width: 20px;
+    height: 20px;
+  }
+
+  .lights-fixtures .tile-toggle {
+    padding: 6px 4px;
+    font-size: 12px;
+  }
+
+  .lights-fixtures .section-bar .view-sub {
+    display: none;
+  }
+
+  /* Pick the lights first, then colour them just below. */
+  .lights-inspector {
+    order: 1;
+  }
+}
+
 /* ---------- Dock: the On stage bar and the live stage view ---------- */
 /* The dock stays one row on every screen: the On stage bar, and the lamps beside it scrolling sideways when the rig is
    wider than the room left, so it never takes two rows away from the page. */
@@ -2575,6 +2633,99 @@ a.btn {
   }
 }
 
+/* The phone top bar is one row: the show, its status, More and Blackout. More opens File, the venue, search, Master
+   and the theme on the rows underneath. Wider screens show everything and no More. */
+.topbar-more {
+  display: none;
+}
+
+.topbar-theme {
+  display: contents;
+}
+
+@media (max-width: 640px) {
+  .topbar-more {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  .topbar:not([data-more]) .topbar-extra {
+    display: none;
+  }
+
+  /* Opened: the first row stays as it was (show, status, More, Blackout); File and the venue, then search across the
+     width, then Master and the theme come underneath, in that order. */
+  .topbar[data-more] .topbar-extra {
+    order: 10;
+  }
+
+  .topbar[data-more] .topbar-shows .btn-label {
+    display: inline;
+  }
+
+  .topbar[data-more] .venue-picker {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .topbar[data-more] .venue-picker .select {
+    width: 100%;
+    max-width: none;
+  }
+
+  .topbar[data-more] .search-button {
+    order: 11;
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+
+  .topbar[data-more] .search-button > span:not(.search-hint) {
+    display: inline;
+  }
+
+  .topbar[data-more] .topbar-theme {
+    display: inline-flex;
+    order: 12;
+  }
+
+  .topbar[data-more] .master {
+    order: 12;
+    flex: 1 1 160px;
+  }
+
+  .topbar[data-more] .master input[type='range'] {
+    width: auto;
+    flex: 1;
+  }
+
+  .topbar .pill-save {
+    display: none;
+  }
+
+  /* The On stage bar: what is playing in one short block. */
+  .dock {
+    margin-bottom: var(--space-2);
+  }
+
+  .dock .stage-detail {
+    display: none;
+  }
+
+  .dock .stage-bar {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .dock .stage-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* The screens scroll sideways; the fading edge says there are more. */
+  .nav {
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+}
+
 /* Touch screens have no keyboard to press: the Perform key hints only show with a mouse. */
 @media (pointer: coarse) {
   .key-hints {
@@ -3535,6 +3686,56 @@ a.btn {
 @media (max-width: 1400px) and (min-width: 1101px) {
   .topbar-shows .btn-label,
   .master-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* The search keeps at least its icon when the top bar is short of room: it gives up its words, never the magnifier. */
+.topbar .search-button {
+  min-width: 42px;
+}
+
+@media (max-width: 1400px) {
+  .topbar .search-button {
+    flex: none;
+    justify-content: center;
+  }
+}
+
+.topbar .search-button > svg {
+  flex: none;
+}
+
+.topbar[data-more] .search-button {
+  justify-content: flex-start;
+}
+
+/* Laptops: a shorter Master fader leaves the show name its room. */
+@media (min-width: 1101px) and (max-width: 1600px) {
+  .topbar .master input[type='range'] {
+    width: 110px;
+  }
+
+  .topbar .search-button {
+    flex: none;
+    justify-content: center;
+  }
+
+  .topbar .search-button > span:not(.search-hint),
+  .topbar .search-button .search-hint {
+    display: none;
+  }
+
+  .topbar .venue-picker .select {
+    max-width: 150px;
+  }
+
+  .topbar .master-label {
     position: absolute;
     width: 1px;
     height: 1px;
