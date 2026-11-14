@@ -177,6 +177,10 @@ colours, as long as its fade plus hold, with the fade drawn lighter. Below it is
    - **Transition**: **Fade** goes from the colour and intensity to a **Fade to** colour and an **End intensity**
      across the block. **None (hold)** keeps the colour.
    - **Effect**: **Strobe** flashes the light, with a **Strobe speed** from slow to fast. A strobing block is striped.
+     **Pulse on the beat** swells and fades in time; **Flash on the beat** hits at full and dies away. Choose how often
+     (**Every** quarter beat, half beat, beat, 2 beats, bar or 2 bars) and **Late by** a number of beats: give lights
+     in a row 0, 0.25, 0.5 and 0.75 and the flashes chase along them. The hits line up with the bars of the sequence
+     wherever the block starts, so one block can drive a light for a whole section.
    - **Starts at beat** and **Length (beats)**, when one block is selected.
    - **What else the lights do**: everything else the selected lights can do, grouped as Colour, Shutter, Movement,
      Beam, Atmosphere and Program: pan and tilt, a colour wheel slot, a gobo, the shutter, zoom, fog output and so on.

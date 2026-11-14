@@ -1,7 +1,9 @@
 // Timelines: one lane per light, with blocks drawn on a grid of beats. A block has a colour and an intensity, can fade to
-// an end colour and intensity, and can strobe. Pure, and shared by the engine (which plays a timeline) and the editor
+// an end colour and intensity, and can strobe, or pulse or flash in time with the beat (every so many beats, and late by
+// an offset, so lights in a row chase). Pure, and shared by the engine (which plays a timeline) and the editor
 // (which previews it), so what you draw is exactly what plays.
 import { controlDmx, nearestColourOption } from './capabilities.js';
+import { pulseGain } from './effects.js';
 
 export const BEATS_PER_BAR = 4;
 
@@ -13,7 +15,13 @@ export const MIN_BLOCK_BEATS = 0.25;
 
 export const TRANSITIONS = /** @type {const} */ (['none', 'fade']);
 
-export const BLOCK_EFFECTS = /** @type {const} */ (['none', 'strobe']);
+export const BLOCK_EFFECTS = /** @type {const} */ (['none', 'strobe', 'pulse', 'flash']);
+
+/** How often a pulse or flash comes, in beats: a quarter beat up to two bars. */
+export const RHYTHM_BEATS = [0.25, 0.5, 1, 2, 4, 8];
+
+/** The latest a pulse or flash can come after the beat, in beats. */
+export const MAX_RHYTHM_OFFSET = 8;
 
 /** Strobe speed runs from 1 (slow) to 100 (fast): 2 to 20 flashes a second, each lit for a third of its cycle. */
 const STROBE_MIN_HZ = 2;
@@ -31,9 +39,28 @@ const STROBE_DUTY = 1 / 3;
  * @property {'none' | 'fade'} transition `fade` goes from colour and intensity to the end colour and intensity
  * @property {string} endColor `#rrggbb`
  * @property {number} endIntensity 0 to 100
- * @property {'none' | 'strobe'} effect
+ * @property {'none' | 'strobe' | 'pulse' | 'flash'} effect
  * @property {number} strobeSpeed 1 to 100
+ * @property {number} [rhythmBeats] pulse and flash: one every this many beats (one of RHYTHM_BEATS; 1 when missing)
+ * @property {number} [rhythmOffset] pulse and flash: how many beats after the beat they come (0 when missing), so a row
+ *   of lights with offsets 0, ¼, ½, ¾ chases along it
  */
+
+/**
+ * How bright a pulse or flash is at a beat of the timeline, as a share of the block's intensity. Measured from the
+ * timeline's beat 0, not the block's start, so every light's hits line up with the bar. A pulse swells and fades
+ * smoothly, brightest on the hit; a flash hits at full and dies away fast, dark before the next one.
+ * @param {'pulse' | 'flash'} effect
+ * @param {number} beat
+ * @param {number} [every] beats between hits
+ * @param {number} [offset] beats after the beat
+ * @returns {number} 0 to 1
+ */
+export function rhythmGain(effect, beat, every = 1, offset = 0) {
+  const period = every > 0 ? every : 1;
+  const phase = (beat - offset) / period - Math.floor((beat - offset) / period);
+  return effect === 'pulse' ? pulseGain(phase) : (1 - phase) ** 3;
+}
 
 /**
  * @param {string} hex `#rrggbb`
@@ -89,6 +116,8 @@ export function evaluateBlock(block, beat, ms) {
     if (cycle >= STROBE_DUTY) {
       level = 0;
     }
+  } else if (block.effect === 'pulse' || block.effect === 'flash') {
+    level *= rhythmGain(block.effect, beat, block.rhythmBeats, block.rhythmOffset);
   }
   return { red: mix(from[0], to[0]), green: mix(from[1], to[1]), blue: mix(from[2], to[2]), level };
 }
