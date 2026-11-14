@@ -1,7 +1,7 @@
 // Edits the selected timeline blocks: colour, intensity, a transition (fade to an end colour and intensity) and an effect
-// (strobe, with its speed). A change applies to every selected block; start and length are offered for one block.
-import { MIN_BLOCK_BEATS } from '../../shared/timeline.js';
-import { SWATCHES, beatLabel } from '../utils/timelineEdit.js';
+// (strobe, with its speed; or a pulse or flash on the beat, how often, and how late for a chase). A change applies to every selected block; start and length are offered for one block.
+import { MAX_RHYTHM_OFFSET, MIN_BLOCK_BEATS, RHYTHM_BEATS } from '../../shared/timeline.js';
+import { SWATCHES, beatLabel, rhythmLabel } from '../utils/timelineEdit.js';
 import { FixtureControls } from './FixtureControls.jsx';
 import { Icon } from './Icon.jsx';
 
@@ -162,8 +162,45 @@ export function BlockInspector({
         <select className="select" value={first.effect} onChange={(event) => set({ effect: event.target.value })}>
           <option value="none">None</option>
           <option value="strobe">Strobe</option>
+          <option value="pulse">Pulse on the beat</option>
+          <option value="flash">Flash on the beat</option>
         </select>
       </label>
+      {first.effect === 'pulse' || first.effect === 'flash' ? (
+        <>
+          <label className="field">
+            Every
+            <select
+              className="select"
+              value={String(first.rhythmBeats ?? 1)}
+              onChange={(event) => set({ rhythmBeats: Number(event.target.value) })}
+            >
+              {RHYTHM_BEATS.map((beats) => (
+                <option key={beats} value={String(beats)}>
+                  {rhythmLabel(beats)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            Late by (beats)
+            <input
+              className="input"
+              type="number"
+              min={0}
+              max={MAX_RHYTHM_OFFSET}
+              step={0.25}
+              value={first.rhythmOffset ?? 0}
+              onChange={(event) => {
+                const offset = Number(event.target.value);
+                if (event.target.value !== '' && offset >= 0 && offset <= MAX_RHYTHM_OFFSET) {
+                  set({ rhythmOffset: offset });
+                }
+              }}
+            />
+          </label>
+        </>
+      ) : null}
       {first.effect === 'strobe' ? (
         <label className="field">
           <span>

@@ -7,6 +7,10 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Blocks that follow the beat**: a timeline block can **pulse** or **flash** every quarter beat up to every two bars,
+  late by an offset so a row of lights chases, locked to the bars of the sequence. AI shows use them, and are now asked
+  to keep every light moving in time through medium and high energy sections, instead of holding long looks; the cost
+  estimate for a song rises to match.
 - **AI shows design for where the lights are.** Each light's place on the stage goes to the AI, in words and metres as
   the audience sees it, with the lights on each truss in order, what each truss faces across the floor and the pairs
   that mirror each other, so chases travel across the room, mirror pairs move together, beams cross and moving heads

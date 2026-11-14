@@ -209,6 +209,13 @@ describe('Timeline editor', () => {
       effect: 'strobe',
     });
     expect(screen.getByRole('button', { name: /Green at 60%, fading to Blue at 100%, strobe/ })).toBeInTheDocument();
+
+    await user.selectOptions(within(inspector).getByLabelText('Effect'), 'flash');
+    await user.selectOptions(within(inspector).getByLabelText('Every'), 'half beat');
+    fireEvent.change(within(inspector).getByLabelText('Late by (beats)'), { target: { value: '0.25' } });
+    fireEvent.change(within(inspector).getByLabelText('Late by (beats)'), { target: { value: '99' } });
+    expect(latest.chases[0].blocks[0]).toMatchObject({ effect: 'flash', rhythmBeats: 0.5, rhythmOffset: 0.25 });
+    expect(screen.getByRole('button', { name: /flashing every half beat, 0.25 late/ })).toBeInTheDocument();
   });
 
   it('moves a block by dragging it, and lengthens it by dragging its edge', () => {

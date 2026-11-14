@@ -7,7 +7,7 @@ import { controlsByFixture } from './capabilities.js';
 import { categoryOf } from './categories.js';
 import { buildPatch, channelsByFixture, indexFixtureTypes } from './patch.js';
 import { RIG_SHAPE_LABELS, describePlace, mountsOf, positionOf, railsOf, rigOrDefault } from './stageRig.js';
-import { MAX_SEQUENCE_UNITS, MIN_BLOCK_BEATS, blockWrites } from './timeline.js';
+import { MAX_RHYTHM_OFFSET, MAX_SEQUENCE_UNITS, MIN_BLOCK_BEATS, RHYTHM_BEATS, blockWrites } from './timeline.js';
 
 /** How strongly the person wants something: left to the AI, more of it, less of it, or none. */
 export const AMOUNTS = /** @type {const} */ (['auto', 'more', 'less', 'off']);
@@ -261,6 +261,18 @@ const label = (value, fallback) => {
 /** Quarter beats, the finest the editor shows. @param {number} value */
 const quarter = (value) => Math.round(value * 4) / 4;
 
+/** The offered rhythm nearest a number of beats, 1 for anything that is not a number. @param {unknown} value */
+const nearestRhythm = (value) =>
+  typeof value === 'number' && Number.isFinite(value)
+    ? RHYTHM_BEATS.reduce(
+        (best, beats) =>
+          Math.abs(Math.log2(beats / Math.max(value, 0.01))) < Math.abs(Math.log2(best / Math.max(value, 0.01)))
+            ? beats
+            : best,
+        1,
+      )
+    : 1;
+
 /**
  * The AI's settings for a light, as the control values a block or look takes: known controls only, an option chosen by
  * its label, levels from 0 to 100.
@@ -400,6 +412,13 @@ export function buildGeneratedShow(generated, project, builtinTypes, { makeId, t
         const intensity = Math.round(clamp(block.intensity, 0, 100, 100));
         const fade = block.fadeTo && typeof block.fadeTo === 'object' ? block.fadeTo : null;
         const strobe = typeof block.strobe === 'number' ? Math.round(clamp(block.strobe, 0, 100, 50)) : null;
+        const rhythm =
+          strobe === null &&
+          block.rhythm &&
+          typeof block.rhythm === 'object' &&
+          ['pulse', 'flash'].includes(block.rhythm.kind)
+            ? block.rhythm
+            : null;
         const settings = settingsFor(block.settings, lightControls);
         const endSettings = fade ? settingsFor(block.endSettings, lightControls) : {};
         blocks.push({
@@ -412,8 +431,16 @@ export function buildGeneratedShow(generated, project, builtinTypes, { makeId, t
           transition: /** @type {'fade' | 'none'} */ (fade ? 'fade' : 'none'),
           endColor: fade ? hex(fade.color, color) : color,
           endIntensity: fade ? Math.round(clamp(fade.intensity, 0, 100, intensity)) : intensity,
-          effect: /** @type {'none' | 'strobe'} */ (strobe === null ? 'none' : 'strobe'),
+          effect: /** @type {'none' | 'strobe' | 'pulse' | 'flash'} */ (
+            strobe !== null ? 'strobe' : rhythm ? rhythm.kind : 'none'
+          ),
           strobeSpeed: strobe ?? 50,
+          ...(rhythm
+            ? {
+                rhythmBeats: nearestRhythm(rhythm.everyBeats),
+                rhythmOffset: quarter(clamp(rhythm.offsetBeats, 0, MAX_RHYTHM_OFFSET, 0)),
+              }
+            : {}),
           ...(Object.keys(settings).length > 0 ? { settings } : {}),
           ...(Object.keys(endSettings).length > 0 ? { endSettings } : {}),
         });

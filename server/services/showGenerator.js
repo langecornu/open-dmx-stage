@@ -68,6 +68,14 @@ export const generatedShowSchema = z.object({
             .nullable()
             .describe('Fade across the block to this colour and intensity, or null to hold'),
           strobe: z.number().nullable().describe('Strobe speed 0 (slow) to 100 (fast), or null for no strobe'),
+          rhythm: z
+            .object({
+              kind: z.enum(['pulse', 'flash']),
+              everyBeats: z.number().describe('0.25, 0.5, 1, 2, 4 or 8'),
+              offsetBeats: z.number().describe('0 to 8: how late after the beat, to chase along a row of lights'),
+            })
+            .nullable()
+            .describe('Pulse or flash in time with the beat across the whole block, or null for a steady block'),
           settings: z.array(settingSchema),
           endSettings: z
             .array(settingSchema)
@@ -85,10 +93,12 @@ How the app works:
 - Every light takes a colour (#rrggbb) and an intensity (0 to 100). Lights that cannot mix colour use the nearest colour wheel slot, or only follow the brightness.
 - Beyond colour, a light has controls, listed per light with a key. Use a control only on a light that lists it. A "level" control takes a level 0 to 100 (pan and tilt: 50 is the centre). A "choice" control takes one of its options, by its label exactly as listed, plus a level for options that take one (a strobe or rotation speed).
 - A sequence runs in beats and follows the live tempo. Steps play looks one after another (fade, then hold, in beats). Blocks override single lights for a span of beats: a colour and intensity, optionally fading to another colour and intensity across the block, optionally strobing, and optionally settings (with end settings that level controls fade to, which is how moving heads sweep). Where a light has no block, the step's look shows on it.
+- A block can follow the beat by itself: a "pulse" swells and fades, a "flash" hits at full and dies away, once every everyBeats (a quarter beat to two bars), offsetBeats late. So one block can drive a light for a whole section: flashes every beat on a drop, every half beat on a peak, pulses every bar in a breakdown. Give the lights in a row offsets in their order (everyBeats 1 with offsets 0, 0.25, 0.5, 0.75) and the hits chase along it; offsets 0 and 0.5 make two sides answer each other. A strobe and a rhythm do not combine: a strobing block has rhythm null.
 - Avoid overlapping blocks on the same light. Keep each sequence's blocks within its length.
 
 Design well:
 - Build contrast and a story: calm and building parts, peaks and drops, and moments of rest. Match energy to the music when a song is given: its sections are listed with their energy, in bars of four beats from the first downbeat.
+- Move with the tempo. A look held for long only suits a quiet part. In medium and high energy parts every light should be doing something in time: give each light a block for each such section (with a pulse or flash rhythm, a fade or a sweep), change colours every bar or two, and build toward each peak. A sequence that follows a song has blocks on every light through every section that is not quiet; its steps (the looks under the blocks) change every 8 to 16 beats.
 - Use what the rig has: sweeps and positions for moving heads, gobos and prisms on peaks, smoke or haze in short bursts (a few beats, a few times, never continuously at full), colour wheel slots on lights without colour mixing.
 - Use where the lights are. Each light has a place (in words and in metres, left and right as the audience sees the stage), the rig lists the lights on each rail in order and what each rail faces across the floor, and the mirror pairs. Run chases that travel across the space in that order (left to right, back to front, around a square), move mirror pairs together or against each other, answer one side with the opposite one, and cross beams from lights facing each other. Lights at the front light the people; lights at the back throw beams and silhouettes toward the audience; floor lights uplight.
 - Aim moving heads from where each one hangs: pan and tilt so beams meet at a point on the floor, fan out from the middle, or sweep the audience together.

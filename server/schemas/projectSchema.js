@@ -12,7 +12,14 @@ import { AI_MODEL_IDS, DEFAULT_AI_MODEL } from '../../shared/aiModels.js';
 import { AMOUNTS, COLOUR_AMOUNTS, MAX_AI_LOOKS, MAX_AI_SEQUENCES } from '../../shared/aiShow.js';
 import { FIRST_VENUE, MAX_VENUES } from '../../shared/venues.js';
 import { RIG_LIMITS, RIG_SHAPES } from '../../shared/stageRig.js';
-import { BLOCK_EFFECTS, MAX_SEQUENCE_UNITS, MIN_BLOCK_BEATS, TRANSITIONS } from '../../shared/timeline.js';
+import {
+  BLOCK_EFFECTS,
+  MAX_RHYTHM_OFFSET,
+  MAX_SEQUENCE_UNITS,
+  MIN_BLOCK_BEATS,
+  RHYTHM_BEATS,
+  TRANSITIONS,
+} from '../../shared/timeline.js';
 import { HOST_HELP, isAllowedHost } from '../utils/networkHost.js';
 
 const id = z.string().min(1).max(64);
@@ -139,6 +146,12 @@ export const timelineBlockSchema = z
     endIntensity: percent,
     effect: z.enum(BLOCK_EFFECTS),
     strobeSpeed: z.number().min(1).max(100),
+    // Pulse and flash: one every so many beats, late by an offset (see shared/timeline.js). Optional, 1 and 0 if missing.
+    rhythmBeats: z
+      .number()
+      .refine((beats) => RHYTHM_BEATS.includes(beats), 'Unsupported rhythm')
+      .optional(),
+    rhythmOffset: z.number().min(0).max(MAX_RHYTHM_OFFSET).optional(),
     // What else the block sets on its light, by control key (see shared/capabilities.js): a level from 0 to 100, or a
     // choice and its level. `endSettings` are where a fade ends, for the controls that fade (pan, tilt, zoom…).
     settings: blockSettings.optional(),

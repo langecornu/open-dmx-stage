@@ -6,6 +6,7 @@ import {
   DEFAULT_STYLE,
   clampLength,
   describeBlock,
+  rhythmLabel,
   dragSpan,
   drawBlocks,
   moveBlocks,
@@ -68,6 +69,14 @@ describe('timeline editing', () => {
     expect(
       describeBlock(block({ transition: 'fade', endColor: '#0040ff', endIntensity: 20, effect: 'strobe' }), 'Par 2'),
     ).toBe('Par 2, beats 1 to 5, Red at 100%, fading to Blue at 20%, strobe');
+    expect(describeBlock(block({ effect: 'flash', rhythmBeats: 0.5, rhythmOffset: 0.25 }), 'Par 3')).toBe(
+      'Par 3, beats 1 to 5, Red at 100%, flashing every half beat, 0.25 late',
+    );
+    expect(describeBlock(block({ effect: 'pulse' }), 'Par 4')).toBe(
+      'Par 4, beats 1 to 5, Red at 100%, pulsing every beat',
+    );
+    expect(rhythmLabel(4)).toBe('bar');
+    expect(rhythmLabel(3)).toBe('3 beats');
   });
 });
 
