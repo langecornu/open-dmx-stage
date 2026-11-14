@@ -221,6 +221,42 @@ describe('PerformView', () => {
     renderView();
     await user.click(screen.getByRole('button', { name: /^Music: / }));
     expect(screen.getByRole('region', { name: 'Follow the music' })).toHaveFocus();
+    expect(
+      screen.getByRole('button', { name: 'Controls' }),
+      'on a phone the settings part comes into view',
+    ).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('offers Pads, Decks and Controls for a phone, which shows one part at a time', async () => {
+    const user = userEvent.setup();
+    const { container } = renderView();
+    const view = container.querySelector('.perform-view');
+    const parts = screen.getByRole('group', { name: 'Show' });
+    expect(
+      within(parts)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['Pads', 'Decks', 'Controls']);
+    expect(within(parts).getByRole('button', { name: 'Pads' })).toHaveAttribute('aria-pressed', 'true');
+    expect(view).toHaveAttribute('data-part', 'pads');
+
+    await user.click(within(parts).getByRole('button', { name: 'Decks' }));
+    expect(view).toHaveAttribute('data-part', 'decks');
+    expect(within(parts).getByRole('button', { name: 'Decks' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(parts).getByRole('button', { name: 'Pads' })).toHaveAttribute('aria-pressed', 'false');
+    // The decks, the pads and the controls each sit in the part they belong to.
+    expect(screen.getByRole('region', { name: 'Decks' }).closest('.perform-part')).toHaveAttribute(
+      'data-part',
+      'decks',
+    );
+    expect(screen.getByRole('region', { name: /^Looks/ }).closest('.perform-part')).toHaveAttribute(
+      'data-part',
+      'pads',
+    );
+    expect(screen.getByRole('region', { name: 'Tempo' }).closest('.perform-part')).toHaveAttribute(
+      'data-part',
+      'controls',
+    );
   });
 
   it('describes each pad, and shows the step on stage on a playing sequence', () => {
@@ -267,7 +303,12 @@ describe('PerformView MIDI', () => {
     expect(await within(midiPanel).findByText('Test Pad')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'MIDI: Test Pad. Show its settings' })).toBeInTheDocument();
 
+    await user.click(screen.getByRole('button', { name: 'Controls' }));
     await user.click(screen.getByRole('button', { name: 'Learn MIDI' }));
+    expect(screen.getByRole('button', { name: 'Pads' }), 'linking starts on the pads').toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await user.click(screen.getByRole('button', { name: /Cool wash/ }));
     expect(live.send, 'tapping a tile in learn mode only selects it').not.toHaveBeenCalled();
     expect(screen.getByText('Press a pad or turn a knob…')).toBeInTheDocument();

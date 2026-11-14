@@ -7,6 +7,9 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Perform on a phone, one part at a time**: **Pads**, **Decks** or **Controls**, picked under the title. The pads
+  fit on one screen, three to a row, with a one-row status strip; the whole page was about eight screens long. Tablets
+  and computers still show everything together.
 - **More room on a phone.** The top bar is one row (the show, the connection, **More** and **Blackout**); More opens
   File, the venue, search, Master and the theme. The On stage bar is shorter, and the screens in the bottom bar fade at
   the edge to show there are more. Together that gives each screen about a third more height. Lights shows three lights
