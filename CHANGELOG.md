@@ -7,6 +7,14 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Easier AI shows and Visualize.**
+  - AI shows: what to design for on the left, and the model, Generate and the result on the right, in view while you
+    scroll. A shorter rig summary with Arrange the lights beside it. A song can come **from your music**, searched in
+    place, and then loads on deck A, ready to play with the lights.
+  - Visualize: the bottom bar keeps **Decks** and a **Sequences / Looks** switch in place, and only the chosen pads
+    scroll. Names, Flashing and Haze move under **Display**. On a phone the top bar is one row of icons, and the decks
+    sit side by side without platters so the stage stays in view.
+  - The On stage bar and the lamps stay on one row on every screen, instead of taking two rows when the rig is wide.
 - **Blocks that follow the beat**: a timeline block can **pulse** or **flash** every quarter beat up to every two bars,
   late by an offset so a row of lights chases, locked to the bars of the sequence. AI shows use them, and are now asked
   to keep every light moving in time through medium and high energy sections, instead of holding long looks; the cost

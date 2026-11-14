@@ -350,9 +350,13 @@ time.
 Press **Visualize** on Perform to see your rig on a stage, lit live by the same signal as the real lights: pars throw
 coloured beams through the haze, moving heads turn and tilt, LED bars light cell by cell, spiders sweep, derbies and
 flowers spin, lasers fan out, strobes flash, smoke machines puff smoke that thickens the haze, fans blow it, bubble
-machines blow bubbles and a mirror ball scatters dots. Pads along the bottom play looks and sequences without leaving
-it, and the top has **Blackout** and **Close** (or Escape). **Decks** on the pad bar opens a small set of the decks, to
-play and cue the music while you watch.
+machines blow bubbles and a mirror ball scatters dots. The top has **Blackout** and **Close** (or Escape); on a phone
+the buttons show as icons.
+
+The bar along the bottom plays the show without leaving it. **Decks** opens a small set of the decks, to play and cue
+the music while you watch (on a phone, A and B side by side without their platters, so the stage stays in view).
+**Sequences** and **Looks** choose which pads it shows, with how many of each; sequences come first when the show has
+any, and the choice is remembered. Only the pads scroll, sideways: Decks and the switch stay put.
 
 ![The stage view, live](images/20-visualize-dark.jpg)
 
@@ -360,6 +364,7 @@ play and cue the music while you watch.
 
 - **Front**, **Corner** and **Above** change where you look from; Corner suits a rig around the dance floor, Above is the
   easiest for arranging.
+- **Display** opens the settings for what you see: **Names**, **Flashing** and **Haze**.
 - **Haze** sets how much haze is in the room: more haze makes beams more solid, as in a real room. Smoke machines add to
   it while they run.
 - **Flashing** off shows strobes steady instead of flashing, for anyone sensitive to flashing light (off by default
@@ -541,6 +546,9 @@ you are at, using everything its lights can do: colour, moving head sweeps, gobo
 need your own Anthropic API key; each generation is billed to your Anthropic account (the app shows the tokens used and
 an estimate in dollars).
 
+On a laptop or a tablet held sideways, what to design for is on the left and the model, **Generate the show** and the
+result are on the right, in view while you scroll your choices.
+
 ![AI shows: a song analysed, and the choices to steer the AI](images/23-ai-shows-dark.jpg)
 
 1. **Add your key once:** open **Settings**, paste the key (it starts with `sk-ant-`) and press **Save key**. The app
@@ -557,9 +565,11 @@ an estimate in dollars).
    on each truss in order from left to right (as the audience sees the stage), what each truss faces across the floor,
    and which lights mirror each other. So it can run chases across the room in order or around a square, move mirror
    pairs together, answer one side with the other, cross beams, and aim moving heads from where they hang.
-3. **Optional, a song:** press **Choose a song**. The app listens to it in your browser and finds its tempo, its first
-   downbeat and how its energy rises and falls, shown as a bar strip. If the tempo is twice too fast or slow, press
-   **Half** or **Double**. Only these numbers are sent to the AI, never the audio.
+3. **Optional, a song:** press **From your music** and pick a track from the music folder the decks play (search to
+   find it), or **From this device** for a file. The app listens to it in your browser and finds its tempo, its first
+   downbeat and how its energy rises and falls, shown as a bar strip. A track from your music also loads on **deck A**,
+   ready to play with the lights (untick **Load it on deck A** to leave the decks alone). If the tempo is twice too fast
+   or slow, press **Half** or **Double**. Only these numbers are sent to the AI, never the audio.
 4. **Your choices:** leave **Let the AI decide everything** ticked, or untick it to steer: a mood or style in your own
    words, the energy, colours to use more, use less or avoid, and **More**, **Less** or **Off** for each thing the
    lights at this venue can do (only what they have is offered: strobe always, movement only with moving heads, smoke

@@ -37,13 +37,26 @@ const EMPTY_DECK = {
  * @returns {Promise<Analysis>}
  */
 async function analyseTrack(id) {
+  return (await analyseLibraryTrack(id)).analysis;
+}
+
+/**
+ * Listens to a library track once for both uses: the deck's analysis (tempo, first downbeat, waveform), and the whole
+ * song with its energy map, for AI shows.
+ * @param {string} id
+ * @returns {Promise<{ analysis: Analysis, song: ReturnType<typeof analyseSong> }>}
+ */
+export async function analyseLibraryTrack(id) {
   const { samples, sampleRate } = await decodeMono(await api.getTrackAudio(id));
   const song = analyseSong(samples, sampleRate);
   return {
-    bpm: song.bpm,
-    firstBeatSeconds: song.firstBeatSeconds,
-    durationSeconds: song.durationSeconds,
-    peaks: peaksOf(samples),
+    song,
+    analysis: {
+      bpm: song.bpm,
+      firstBeatSeconds: song.firstBeatSeconds,
+      durationSeconds: song.durationSeconds,
+      peaks: peaksOf(samples),
+    },
   };
 }
 
@@ -124,9 +137,12 @@ function useDeckEngine({ send }) {
     return audio.current;
   }, [patchDeck]);
 
-  /** Loads a track on a deck, with its analysis (worked out here the first time, then kept by the library). */
+  /**
+   * Loads a track on a deck, with its analysis: `known` when it was just worked out, else the one the library kept, else
+   * worked out here (and kept by the library).
+   */
   const load = useCallback(
-    async (index, track) => {
+    async (index, track, known = null) => {
       const element = graph().elements[index];
       const rate = 1 + decksRef.current[index].pitch / 100;
       element.pause();
@@ -137,8 +153,13 @@ function useDeckEngine({ send }) {
       patchDeck(index, { track, analysis: null, isAnalysing: true, playing: false, cue: 0, error: null });
       const isStillLoaded = (deck) => deck.track?.id === track.id;
       try {
-        const saved = (await api.getTrackAnalysis(track.id)).analysis;
+        const saved = known ?? (await api.getTrackAnalysis(track.id)).analysis;
         const analysis = saved ?? (await analyseTrack(track.id));
+        if (known) {
+          api.saveTrackAnalysis(track.id, known).catch(() => {
+            // Only a cache: the track is analysed again next time.
+          });
+        }
         if (!saved) {
           api.saveTrackAnalysis(track.id, analysis).catch(() => {
             // Only a cache: the track is analysed again next time.
@@ -283,6 +304,11 @@ const DecksContext = createContext(/** @type {Decks | null} */ (null));
  */
 export function DecksProvider({ send, children }) {
   return createElement(DecksContext.Provider, { value: useDeckEngine({ send }) }, children);
+}
+
+/** @returns {Decks | null} the decks, or null where the app has none (a screen shown on its own) */
+export function useOptionalDecks() {
+  return useContext(DecksContext);
 }
 
 /** @returns {Decks} */

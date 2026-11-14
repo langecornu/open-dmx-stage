@@ -146,6 +146,55 @@ describe('Visualizer', () => {
     expect(latest.fixtures[0].stage).toBeUndefined();
   });
 
+  it('keeps Names, Flashing and Haze under Display', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    expect(screen.queryByRole('group', { name: 'Display' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Display' }));
+    const display = screen.getByRole('group', { name: 'Display' });
+    await user.click(within(display).getByRole('button', { name: 'Names' }));
+    await user.click(within(display).getByRole('button', { name: 'Flashing' }));
+    fireEvent.change(within(display).getByLabelText('Haze'), { target: { value: '80' } });
+    expect(JSON.parse(localStorage.getItem('odmx-visualizer'))).toMatchObject({ showNames: true, haze: 0.8 });
+    await user.click(screen.getByRole('button', { name: 'Display' }));
+    expect(screen.queryByRole('group', { name: 'Display' })).not.toBeInTheDocument();
+  });
+
+  it('shows sequences or looks on its pads, sequences first, and remembers the choice', async () => {
+    const user = userEvent.setup();
+    start.chases = [
+      {
+        id: 'c1',
+        name: 'Chase',
+        loop: true,
+        timing: 'beats',
+        steps: [{ sceneId: 's1', fadeBeats: 0, holdBeats: 4 }],
+        blocks: [],
+      },
+    ];
+    try {
+      render(<Harness />);
+      const kinds = screen.getByRole('group', { name: 'Show pads for' });
+      const pads = screen.getByRole('group', { name: 'Play' });
+      expect(within(kinds).getByRole('button', { name: /Sequences 1/ })).toHaveAttribute('aria-pressed', 'true');
+      expect(within(pads).getByRole('button', { name: /Chase/ })).toBeInTheDocument();
+      expect(within(pads).queryByRole('button', { name: /Red/ })).not.toBeInTheDocument();
+      await user.click(within(kinds).getByRole('button', { name: /Looks 1/ }));
+      expect(within(pads).getByRole('button', { name: /Red/ })).toBeInTheDocument();
+      expect(within(pads).queryByRole('button', { name: /Chase/ })).not.toBeInTheDocument();
+      expect(JSON.parse(localStorage.getItem('odmx-visualizer')).pads).toBe('looks');
+    } finally {
+      start.chases = [];
+    }
+  });
+
+  it('says when there is nothing to play of the chosen kind', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: /Sequences 0/ }));
+    expect(screen.getByText('No sequences yet.')).toBeInTheDocument();
+  });
+
   it('plays looks from its pads, and blacks out', async () => {
     const user = userEvent.setup();
     render(<Harness />);

@@ -105,7 +105,7 @@ describe('AiShowView', () => {
     const user = userEvent.setup();
     api.generateShow.mockResolvedValue(generated);
     render(<Harness />);
-    expect(screen.getByRole('region', { name: /The venue: Club/ })).toHaveTextContent('strobe, movement');
+    expect(screen.getByRole('region', { name: /The rig · 2 lights/ })).toHaveTextContent('strobe, movement');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Generate the show' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Generate the show' }));
     expect(flush).toHaveBeenCalled();
@@ -197,9 +197,10 @@ describe('AiShowView', () => {
     api.generateShow.mockResolvedValue(generated);
     render(<Harness />);
     await user.upload(screen.getByLabelText('Choose a song'), new File(['x'], 'track.mp3', { type: 'audio/mpeg' }));
-    expect(await screen.findByText(/track\.mp3 · 3:20 · first downbeat at 0\.42 s/)).toBeInTheDocument();
+    expect(await screen.findByText('track.mp3')).toBeInTheDocument();
+    expect(screen.getByText(/3:20 · first downbeat at 0\.42 s/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Half' }));
-    expect(screen.getByLabelText('Tempo (beats a minute)')).toHaveValue(124);
+    expect(screen.getByLabelText('Tempo (BPM)')).toHaveValue(124);
     expect(screen.queryByLabelText('Sequence length')).not.toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Generate the show' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Generate the show' }));

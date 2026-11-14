@@ -651,23 +651,28 @@ kbd {
 }
 
 /* ---------- Dock: the On stage bar and the live stage view ---------- */
+/* The dock stays one row on every screen: the On stage bar, and the lamps beside it scrolling sideways when the rig is
+   wider than the room left, so it never takes two rows away from the page. */
 .dock {
   grid-area: dock;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: var(--space-3);
   margin: 0 var(--space-5) var(--space-4) var(--space-2);
 }
 
 .stage-bar {
-  flex: 1 1 520px;
+  flex: 1 1 320px;
   grid-area: auto;
+  min-width: 260px;
   margin: 0;
 }
 
 .stage-view {
   display: flex;
   flex: 0 1 auto;
+  min-width: 0;
   align-items: flex-end;
   gap: var(--space-1);
   max-width: 100%;
@@ -1840,17 +1845,150 @@ a.btn {
   gap: var(--space-3);
 }
 
-.ai-place {
+/* Two columns on a wide screen: what to design for on the left, and on the right the model, Generate and the result,
+   which stay in view while the left scrolls. One column on a tablet in portrait or a phone. */
+.ai-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(290px, 380px);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.ai-inputs,
+.ai-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.ai-side {
+  position: sticky;
+  top: 0;
+}
+
+.ai-view .ai-card {
+  gap: var(--space-2);
+}
+
+.ai-card-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2) var(--space-3);
 }
 
-.ai-place p {
-  flex: 1 1 320px;
+.ai-card-head .section-title {
   margin: 0;
+}
+
+.ai-card-head .toolbar {
+  margin: 0;
+}
+
+.ai-optional {
+  margin-left: var(--space-1);
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ai-place {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+
+.ai-rig-details summary {
+  color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ai-rig-details p {
+  margin: var(--space-1) 0 0;
+}
+
+.ai-tracks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ai-tracks .input {
+  flex: 1 1 220px;
+}
+
+.ai-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+}
+
+.ai-track-list {
+  max-height: 240px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.ai-track {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ai-track:hover,
+.ai-track:focus-visible {
+  background: var(--surface-2);
+}
+
+.ai-track-title {
+  font-weight: 700;
+}
+
+.ai-song-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+.ai-tempo {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (max-width: 900px) {
+  .ai-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ai-side {
+    position: static;
+  }
 }
 
 .ai-auto,
@@ -1942,16 +2080,17 @@ a.btn {
   background: var(--accent);
 }
 
-.ai-go {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
+.ai-generate {
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  font-size: 16px;
 }
 
-/* The model choice: three cards side by side, each with its price for this show. */
+/* The model choice: one row per model with its price for this show; side by side when the page is one column. */
 .ai-models {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
   width: 100%;
   margin: 0 0 var(--space-2);
@@ -1971,8 +2110,9 @@ a.btn {
 .ai-model {
   position: relative;
   display: grid;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-3) var(--space-3) 44px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--space-2);
+  padding: var(--space-2) var(--space-3) var(--space-2) 40px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-2);
@@ -1981,8 +2121,8 @@ a.btn {
 
 .ai-model input {
   position: absolute;
-  top: 14px;
-  left: 14px;
+  top: 12px;
+  left: 12px;
   width: 18px;
   height: 18px;
   margin: 0;
@@ -2003,14 +2143,18 @@ a.btn {
 }
 
 .ai-model-summary {
+  grid-column: 1 / -1;
   color: var(--text-dim);
   font-size: 13px;
 }
 
 .ai-model-cost {
+  grid-column: 2;
+  grid-row: 1;
   color: var(--on-accent-soft);
   font-size: 13px;
   font-weight: 700;
+  text-align: right;
 }
 
 .ai-models-note {
@@ -2018,9 +2162,19 @@ a.btn {
   margin: 0;
 }
 
-@media (max-width: 700px) {
+@media (min-width: 701px) and (max-width: 900px) {
   .ai-models {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ai-model {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ai-model-cost {
+    grid-column: 1;
+    grid-row: auto;
+    text-align: left;
   }
 }
 
@@ -2602,18 +2756,110 @@ a.btn {
   gap: 6px;
 }
 
+/* The bottom bar: Decks and the Looks or Sequences switch stay put; only the pads scroll, sideways. */
 .visualizer-pads {
   display: flex;
+  align-items: center;
   gap: var(--space-2);
+  min-width: 0;
   padding: var(--space-2) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));
-  overflow-x: auto;
   background: linear-gradient(to top, rgba(10, 12, 20, 0.95), rgba(10, 12, 20, 0.65));
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  scrollbar-width: none;
 }
 
-.visualizer-pads::-webkit-scrollbar {
+.visualizer-pads-fixed {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  padding-right: var(--space-2);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.visualizer-pads-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+}
+
+.visualizer-pads-scroll::-webkit-scrollbar {
   display: none;
+}
+
+.visualizer-count {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.visualizer-empty {
+  align-self: center;
+  color: rgba(238, 240, 246, 0.6);
+  font-size: 13px;
+}
+
+/* Display settings, opened from the top bar, float over the top right of the stage. */
+.visualizer-display {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-4);
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: calc(100% - 2 * var(--space-4));
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(10, 12, 20, 0.92);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(14px);
+}
+
+@media (max-width: 700px) {
+  /* A phone: one row of tools, the less used ones as icons. */
+  .visualizer-title span,
+  .visualizer-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .visualizer-bar {
+    padding-inline: var(--space-3);
+  }
+
+  .visualizer-pads {
+    padding-inline: var(--space-3);
+  }
+
+  .visualizer-kinds .visualizer-chip,
+  .visualizer-views .visualizer-chip {
+    padding-inline: 10px;
+  }
+
+  .visualizer-tools {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .visualizer-tools > .visualizer-btn {
+    justify-content: center;
+    min-width: 40px;
+    padding-inline: 10px;
+  }
 }
 
 .visualizer-pad-swatch {
@@ -3259,8 +3505,14 @@ a.btn {
     grid-row: auto;
   }
 
-  .dj-console-compact .dj-platter-compact {
-    width: 84px;
+  /* Decks over the stage on a phone: A and B side by side without their platters, the crossfader under them, so
+     most of the stage stays in view. */
+  .dj-console-compact .dj-mixer {
+    order: 1;
+  }
+
+  .dj-console-compact .dj-deck-body {
+    display: none;
   }
 
   .dj-track {

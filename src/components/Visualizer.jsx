@@ -22,6 +22,11 @@ import { VisualizerArrange } from './VisualizerArrange.jsx';
 
 const SETTINGS_KEY = 'odmx-visualizer';
 
+const PAD_KINDS = [
+  { id: 'sequences', label: 'Sequences' },
+  { id: 'looks', label: 'Looks' },
+];
+
 function loadSettings() {
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const defaults = { haze: 0.35, showNames: false, flashing: !reduced, view: 'corner' };
@@ -50,6 +55,7 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
     }
   }, [isOpen, startArranging]);
   const [isDecksOpen, setIsDecksOpen] = useState(false);
+  const [isDisplayOpen, setIsDisplayOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(/** @type {string | null} */ (null));
   /** Places being dragged, before they are saved. @type {[Map<string, {x:number,y:number}>, Function]} */
   const [moving, setMoving] = useState(() => new Map());
@@ -68,6 +74,13 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
     [project.fixtures, categories, rig],
   );
   const items = useMemo(() => buildPerformItems(project, patch), [project, patch]);
+  const counts = {
+    looks: items.filter((item) => item.kind === 'Look').length,
+    sequences: items.filter((item) => item.kind === 'Sequence').length,
+  };
+  // The pads show looks or sequences, not both: sequences first when there are any, until someone picks.
+  const padKind = settings.pads ?? (counts.sequences > 0 ? 'sequences' : 'looks');
+  const shownItems = items.filter((item) => item.kind === (padKind === 'sequences' ? 'Sequence' : 'Look'));
 
   // What the animation reads each frame, without restarting it when any of it changes.
   const latest = useRef({
@@ -339,35 +352,18 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
             }}
           >
             <Icon name="sliders" size={16} />
-            Arrange lights
+            <span className="visualizer-label">Arrange lights</span>
           </button>
           <button
             type="button"
             className="visualizer-btn"
-            aria-pressed={settings.showNames}
-            onClick={() => changeSettings({ showNames: !settings.showNames })}
+            aria-expanded={isDisplayOpen}
+            aria-controls="visualizer-display"
+            onClick={() => setIsDisplayOpen((open) => !open)}
           >
-            Names
+            <Icon name="eye" size={16} />
+            <span className="visualizer-label">Display</span>
           </button>
-          <button
-            type="button"
-            className="visualizer-btn"
-            aria-pressed={settings.flashing}
-            title="Show strobes flashing. Off shows them steady, for people sensitive to flashing light."
-            onClick={() => changeSettings({ flashing: !settings.flashing })}
-          >
-            Flashing
-          </button>
-          <label className="visualizer-haze">
-            Haze
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={Math.round(settings.haze * 100)}
-              onChange={(event) => changeSettings({ haze: Number(event.target.value) / 100 })}
-            />
-          </label>
           <button
             type="button"
             className="visualizer-btn visualizer-blackout"
@@ -375,11 +371,11 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
             onClick={() => live.send({ type: 'blackout', enabled: !live.engine.blackout })}
           >
             <Icon name="power" size={16} />
-            Blackout
+            <span className="visualizer-label">Blackout</span>
           </button>
           <button ref={closeRef} type="button" className="visualizer-btn" onClick={onClose}>
             <Icon name="close" size={16} />
-            Close
+            <span className="visualizer-label">Close</span>
           </button>
         </div>
       </div>
@@ -396,6 +392,37 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         />
+        {isDisplayOpen ? (
+          <div id="visualizer-display" className="visualizer-display" role="group" aria-label="Display">
+            <button
+              type="button"
+              className="visualizer-btn"
+              aria-pressed={settings.showNames}
+              onClick={() => changeSettings({ showNames: !settings.showNames })}
+            >
+              Names
+            </button>
+            <button
+              type="button"
+              className="visualizer-btn"
+              aria-pressed={settings.flashing}
+              title="Show strobes flashing. Off shows them steady, for people sensitive to flashing light."
+              onClick={() => changeSettings({ flashing: !settings.flashing })}
+            >
+              Flashing
+            </button>
+            <label className="visualizer-haze">
+              Haze
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={Math.round(settings.haze * 100)}
+                onChange={(event) => changeSettings({ haze: Number(event.target.value) / 100 })}
+              />
+            </label>
+          </div>
+        ) : null}
         {isArranging ? (
           <VisualizerArrange
             venueName={project.venue?.name ?? 'this venue'}
@@ -417,40 +444,60 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
 
       {isDecksOpen ? <DjConsole isCompact /> : null}
 
-      <div className="visualizer-pads" role="group" aria-label="Play">
-        <button
-          type="button"
-          className="visualizer-chip"
-          aria-pressed={isDecksOpen}
-          onClick={() => setIsDecksOpen((open) => !open)}
-        >
-          <Icon name="music" size={14} />
-          Decks
-        </button>
-        {live.engine.activeChaseId ? (
+      <div className="visualizer-pads">
+        <div className="visualizer-pads-fixed">
           <button
             type="button"
-            className="visualizer-chip visualizer-stop"
-            onClick={() => live.send({ type: 'chaseStop' })}
+            className="visualizer-chip"
+            aria-pressed={isDecksOpen}
+            onClick={() => setIsDecksOpen((open) => !open)}
           >
-            <Icon name="stop" size={14} />
-            Stop
+            <Icon name="music" size={14} />
+            Decks
           </button>
-        ) : null}
-        {items.map((item) => (
-          <button
-            key={`${item.action.type}-${item.action.id}`}
-            type="button"
-            className="visualizer-chip visualizer-pad"
-            aria-pressed={isActionPlaying(item.action, live.engine)}
-            style={{ '--pad': item.gradient }}
-            onClick={() => play(item.action)}
-          >
-            <span className="visualizer-pad-swatch" aria-hidden="true" />
-            {item.name}
-            <span className="sr-only">{` (${item.kind})`}</span>
-          </button>
-        ))}
+          <div className="visualizer-views visualizer-kinds" role="group" aria-label="Show pads for">
+            {PAD_KINDS.map((kind) => (
+              <button
+                key={kind.id}
+                type="button"
+                className="visualizer-chip"
+                aria-pressed={padKind === kind.id}
+                onClick={() => changeSettings({ pads: kind.id })}
+              >
+                {kind.label} <span className="visualizer-count">{counts[kind.id]}</span>
+              </button>
+            ))}
+          </div>
+          {live.engine.activeChaseId ? (
+            <button
+              type="button"
+              className="visualizer-chip visualizer-stop"
+              onClick={() => live.send({ type: 'chaseStop' })}
+            >
+              <Icon name="stop" size={14} />
+              Stop
+            </button>
+          ) : null}
+        </div>
+        <div className="visualizer-pads-scroll" role="group" aria-label="Play">
+          {shownItems.length === 0 ? (
+            <span className="visualizer-empty">{padKind === 'sequences' ? 'No sequences yet.' : 'No looks yet.'}</span>
+          ) : null}
+          {shownItems.map((item) => (
+            <button
+              key={`${item.action.type}-${item.action.id}`}
+              type="button"
+              className="visualizer-chip visualizer-pad"
+              aria-pressed={isActionPlaying(item.action, live.engine)}
+              style={{ '--pad': item.gradient }}
+              onClick={() => play(item.action)}
+            >
+              <span className="visualizer-pad-swatch" aria-hidden="true" />
+              {item.name}
+              <span className="sr-only">{` (${item.kind})`}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>,
     document.body,

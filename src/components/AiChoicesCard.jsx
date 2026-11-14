@@ -20,13 +20,15 @@ export function AiChoicesCard({ choices, setChoices, features, hasSong }) {
   const set = (changes) => setChoices({ ...choices, ...changes });
   return (
     <section className="card card-pad ai-card" aria-labelledby="ai-choices-title">
-      <h2 className="section-title" id="ai-choices-title">
-        Your choices
-      </h2>
-      <label className="pill ai-auto">
-        <input type="checkbox" checked={choices.auto} onChange={(event) => set({ auto: event.target.checked })} />
-        Let the AI decide everything
-      </label>
+      <div className="ai-card-head">
+        <h2 className="section-title" id="ai-choices-title">
+          Your choices
+        </h2>
+        <label className="pill ai-auto">
+          <input type="checkbox" checked={choices.auto} onChange={(event) => set({ auto: event.target.checked })} />
+          Let the AI decide everything
+        </label>
+      </div>
       {choices.auto ? (
         <p className="view-sub">
           The AI picks the colours, the energy and how much of everything the lights can do. Untick to steer it.
