@@ -146,22 +146,25 @@ export function AiShowView({ project, library, patch, update, flush, navigate, l
     song,
   };
 
+  const lightNames = project.fixtures.map((fixture) => fixture.name).join(', ');
+  const canGenerate = hasKey === true && project.fixtures.length > 0 && unplaced.length === 0;
+
   return (
-    <section className="view" aria-labelledby="ai-title">
+    <section className="view ai-view" aria-labelledby="ai-title">
       <div className="view-header">
         <div>
           <h1 className="view-title" id="ai-title">
             AI shows
           </h1>
           <p className="view-sub">
-            Claude designs looks and sequences for <strong>{project.venue?.name ?? 'your venue'}</strong>, using
-            everything its lights can do, with or without a song.
+            Claude designs looks and sequences for <strong>{project.venue?.name ?? 'your venue'}</strong>, with or
+            without a song.
           </p>
         </div>
       </div>
 
       {hasKey === false ? (
-        <div className="card card-pad ai-card" role="note">
+        <div className="card card-pad ai-card ai-key" role="note">
           <p>To use AI shows, add your Anthropic API key in Settings first.</p>
           <button type="button" className="btn btn-primary" onClick={() => navigate('settings')}>
             <Icon name="gear" size={16} />
@@ -170,135 +173,143 @@ export function AiShowView({ project, library, patch, update, flush, navigate, l
         </div>
       ) : null}
 
-      <section className="card card-pad ai-card" aria-labelledby="ai-venue-title">
-        <h2 className="section-title" id="ai-venue-title">
-          The venue: {project.venue?.name ?? 'My venue'}
-        </h2>
-        {project.fixtures.length === 0 ? (
-          <p className="view-sub">
-            This venue has no lights yet. Add them in Setup: the AI designs for the lights you have.
-          </p>
-        ) : (
-          <p className="view-sub">
-            {plural(project.fixtures.length, 'light')}: {project.fixtures.map((fixture) => fixture.name).join(', ')}.
-            Beyond colour and brightness they can do:{' '}
-            {features.map((feature) => feature.label.toLowerCase()).join(', ')}. Switch venue at the top to design for
-            another rig.
-          </p>
-        )}
-        {project.fixtures.length === 0 ? null : unplaced.length > 0 ? (
-          <div className="ai-place" role="note">
-            <p>
-              <strong>Where are the lights?</strong>{' '}
-              {unplaced.length === project.fixtures.length
-                ? 'None of them has a place on the stage yet.'
-                : `${plural(unplaced.length, 'light')} (${unplaced.map((fixture) => fixture.name).join(', ')}) ${unplaced.length === 1 ? 'has' : 'have'} no place on the stage yet.`}{' '}
-              Put them where they really are, so the AI can chase them in order, mirror pairs and cross beams.
-            </p>
-            <button type="button" className="btn btn-primary" onClick={() => setIsArranging(true)}>
-              <Icon name="sliders" size={16} />
-              Arrange the lights
-            </button>
-          </div>
-        ) : (
-          <div className="ai-place">
-            <p className="view-sub">
-              Every light has its place: {RIG_SHAPE_LABELS[rig.shape].toLowerCase()}, {rig.width} × {rig.depth} m.
-            </p>
-            <button type="button" className="btn btn-ghost" onClick={() => setIsArranging(true)}>
-              <Icon name="sliders" size={16} />
-              Arrange the lights
-            </button>
-          </div>
-        )}
-      </section>
+      <div className="ai-layout">
+        <div className="ai-inputs">
+          <section className="card card-pad ai-card" aria-labelledby="ai-venue-title">
+            <div className="ai-card-head">
+              <h2 className="section-title" id="ai-venue-title">
+                The rig{project.fixtures.length > 0 ? ` · ${plural(project.fixtures.length, 'light')}` : ''}
+              </h2>
+              {project.fixtures.length > 0 ? (
+                <button
+                  type="button"
+                  className={`btn${unplaced.length > 0 ? ' btn-primary' : ' btn-ghost'}`}
+                  onClick={() => setIsArranging(true)}
+                >
+                  <Icon name="sliders" size={16} />
+                  Arrange the lights
+                </button>
+              ) : null}
+            </div>
+            {project.fixtures.length === 0 ? (
+              <p className="view-sub">
+                This venue has no lights yet. Add them in Setup: the AI designs for the lights you have.
+              </p>
+            ) : unplaced.length > 0 ? (
+              <p className="ai-place" role="note">
+                <strong>Where are the lights?</strong>{' '}
+                {unplaced.length === project.fixtures.length
+                  ? 'None of them has a place on the stage yet.'
+                  : `${plural(unplaced.length, 'light')} (${unplaced.map((fixture) => fixture.name).join(', ')}) ${unplaced.length === 1 ? 'has' : 'have'} no place on the stage yet.`}{' '}
+                Put them where they really are, so the AI can chase them in order, mirror pairs and cross beams.
+              </p>
+            ) : (
+              <p className="view-sub">
+                Every light has its place: {RIG_SHAPE_LABELS[rig.shape].toLowerCase()}, {rig.width} × {rig.depth} m.
+              </p>
+            )}
+            {project.fixtures.length > 0 ? (
+              <details className="ai-rig-details">
+                <summary>
+                  {features.length > 0
+                    ? `Beyond colour: ${features.map((feature) => feature.label.toLowerCase()).join(', ')}`
+                    : 'Colour and brightness'}
+                </summary>
+                <p className="fixture-meta">{lightNames}. Switch venue at the top to design for another rig.</p>
+              </details>
+            ) : null}
+          </section>
 
-      <AiSongCard song={song} setSong={setSong} />
-      <AiChoicesCard choices={choices} setChoices={setChoices} features={features} hasSong={Boolean(song)} />
+          <AiSongCard song={song} setSong={setSong} />
+          <AiChoicesCard choices={choices} setChoices={setChoices} features={features} hasSong={Boolean(song)} />
+        </div>
 
-      <div className="card card-pad ai-card ai-go">
-        <AiModelPicker value={modelId} onChange={chooseModel} request={estimateRequest} disabled={Boolean(run)} />
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={Boolean(run) || hasKey !== true || project.fixtures.length === 0 || unplaced.length > 0}
-          onClick={handleGenerate}
-        >
-          <Icon name="sparkle" size={16} />
-          {run ? 'Designing…' : 'Generate the show'}
-        </button>
-        {run ? (
-          <span className="fixture-meta" role="status">
-            Designing for {formatTime(elapsed)}. This usually takes one to three minutes.
-          </span>
-        ) : unplaced.length > 0 && project.fixtures.length > 0 ? (
-          <span className="fixture-meta">Place the lights on the stage first, above.</span>
-        ) : (
-          <span className="fixture-meta">
-            {aiModel(modelId).name}, {formatPriceRange(estimateCost(estimateRequest, modelId))} on your Anthropic
-            account.
-          </span>
-        )}
+        <aside className="ai-side" aria-label="Generate">
+          <div className="card card-pad ai-card ai-go">
+            <AiModelPicker value={modelId} onChange={chooseModel} request={estimateRequest} disabled={Boolean(run)} />
+            <button
+              type="button"
+              className="btn btn-primary ai-generate"
+              disabled={Boolean(run) || !canGenerate}
+              onClick={handleGenerate}
+            >
+              <Icon name="sparkle" size={16} />
+              {run ? 'Designing…' : 'Generate the show'}
+            </button>
+            {run ? (
+              <span className="fixture-meta" role="status">
+                Designing for {formatTime(elapsed)}. This usually takes one to three minutes.
+              </span>
+            ) : unplaced.length > 0 && project.fixtures.length > 0 ? (
+              <span className="fixture-meta">Place the lights on the stage first: Arrange the lights.</span>
+            ) : (
+              <span className="fixture-meta">
+                {aiModel(modelId).name}, {formatPriceRange(estimateCost(estimateRequest, modelId))} on your Anthropic
+                account{song ? ', following your song' : ''}.
+              </span>
+            )}
+          </div>
+
+          {error ? (
+            <p className="error-banner" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          {result ? (
+            <section className="card card-pad ai-card ai-result" aria-labelledby="ai-result-title">
+              <h2 className="section-title" id="ai-result-title">
+                Added to your show
+              </h2>
+              {result.summary ? <p>{result.summary}</p> : null}
+              <p className="eyebrow">{plural(result.looks.length, 'look')}</p>
+              <ul className="ai-looks">
+                {result.looks.map((look) => (
+                  <li key={look.id} className="ai-look">
+                    <span
+                      className="ai-look-swatch"
+                      aria-hidden="true"
+                      style={{ background: averageColor(fixtureColors(project, patch, look.values)).css }}
+                    />
+                    {look.name}
+                  </li>
+                ))}
+              </ul>
+              <p className="eyebrow">{plural(result.sequences.length, 'sequence')}</p>
+              <ul className="ai-looks">
+                {result.sequences.map((sequence) => (
+                  <li key={sequence.id} className="ai-look">
+                    <Icon name="chases" size={16} />
+                    {sequence.name}
+                    <span className="fixture-meta">
+                      {sequence.steps.length > 0 ? `${plural(sequence.steps.length, 'step')} · ` : ''}
+                      {plural(sequence.blocks.length, 'block')}
+                      {sequence.tempo ? ` · ${sequence.tempo} BPM, follows the song` : ' · loops'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="toolbar">
+                <button type="button" className="btn btn-primary" onClick={() => navigate('perform')}>
+                  <Icon name="bolt" size={16} />
+                  Play them on Perform
+                </button>
+                <button type="button" className="btn" onClick={() => navigate('chases')}>
+                  Open in Sequences
+                </button>
+                <button type="button" className="btn btn-ghost" onClick={handleRemove}>
+                  <Icon name="trash" size={16} />
+                  Remove these
+                </button>
+              </div>
+              <p className="fixture-meta">
+                Used {result.usage.inputTokens.toLocaleString()} input and {result.usage.outputTokens.toLocaleString()}{' '}
+                output tokens on {aiModel(result.model ?? modelId).name}, {formatPrice(cost)} at list prices.
+              </p>
+            </section>
+          ) : null}
+        </aside>
       </div>
-
-      {error ? (
-        <p className="error-banner" role="alert">
-          {error}
-        </p>
-      ) : null}
-
-      {result ? (
-        <section className="card card-pad ai-card ai-result" aria-labelledby="ai-result-title">
-          <h2 className="section-title" id="ai-result-title">
-            Added to your show
-          </h2>
-          {result.summary ? <p>{result.summary}</p> : null}
-          <p className="eyebrow">{plural(result.looks.length, 'look')}</p>
-          <ul className="ai-looks">
-            {result.looks.map((look) => (
-              <li key={look.id} className="ai-look">
-                <span
-                  className="ai-look-swatch"
-                  aria-hidden="true"
-                  style={{ background: averageColor(fixtureColors(project, patch, look.values)).css }}
-                />
-                {look.name}
-              </li>
-            ))}
-          </ul>
-          <p className="eyebrow">{plural(result.sequences.length, 'sequence')}</p>
-          <ul className="ai-looks">
-            {result.sequences.map((sequence) => (
-              <li key={sequence.id} className="ai-look">
-                <Icon name="chases" size={16} />
-                {sequence.name}
-                <span className="fixture-meta">
-                  {sequence.steps.length > 0 ? `${plural(sequence.steps.length, 'step')} · ` : ''}
-                  {plural(sequence.blocks.length, 'block')}
-                  {sequence.tempo ? ` · ${sequence.tempo} BPM, follows the song` : ' · loops'}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <div className="toolbar">
-            <button type="button" className="btn btn-primary" onClick={() => navigate('perform')}>
-              <Icon name="bolt" size={16} />
-              Play them on Perform
-            </button>
-            <button type="button" className="btn" onClick={() => navigate('chases')}>
-              Open in Sequences
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={handleRemove}>
-              <Icon name="trash" size={16} />
-              Remove these
-            </button>
-          </div>
-          <p className="fixture-meta">
-            Used {result.usage.inputTokens.toLocaleString()} input and {result.usage.outputTokens.toLocaleString()}{' '}
-            output tokens on {aiModel(result.model ?? modelId).name}, {formatPrice(cost)} at list prices.
-          </p>
-        </section>
-      ) : null}
 
       {live ? (
         <Visualizer
