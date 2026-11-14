@@ -7,6 +7,13 @@ the project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **More room on a phone.** The top bar is one row (the show, the connection, **More** and **Blackout**); More opens
+  File, the venue, search, Master and the theme. The On stage bar is shorter, and the screens in the bottom bar fade at
+  the edge to show there are more. Together that gives each screen about a third more height. Lights shows three lights
+  to a row, before the colour panel, which roughly halves its length.
+- **Laptop top bar**: the search keeps its magnifier at every width (it was squeezed to an empty box below 1600 px),
+  and Master is shorter there, so the show name is no longer cut off.
+- The Sequences list no longer runs off the right edge of a phone.
 - **Easier AI shows and Visualize.**
   - AI shows: what to design for on the left, and the model, Generate and the result on the right, in view while you
     scroll. A shorter rig summary with Arrange the lights beside it. A song can come **from your music**, searched in
