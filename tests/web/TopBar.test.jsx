@@ -142,6 +142,18 @@ describe('TopBar', () => {
     expect(onToggleTheme).toHaveBeenCalledTimes(1);
   });
 
+  it('opens and closes the rest of the controls with More, for a phone', async () => {
+    const user = userEvent.setup();
+    const { container } = renderBar();
+    const header = container.querySelector('header');
+    expect(header).not.toHaveAttribute('data-more');
+    await user.click(screen.getByRole('button', { name: 'More controls' }));
+    expect(header).toHaveAttribute('data-more');
+    expect(screen.getByRole('button', { name: 'Fewer controls' })).toHaveAttribute('aria-expanded', 'true');
+    await user.click(screen.getByRole('button', { name: 'Fewer controls' }));
+    expect(header).not.toHaveAttribute('data-more');
+  });
+
   it('has no automated accessibility violations', async () => {
     const { container } = renderBar();
     expect(await accessibilityViolations(container)).toEqual([]);

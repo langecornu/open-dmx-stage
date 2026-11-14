@@ -1,4 +1,7 @@
-// Top bar: show name with File (save and open), the venue, status, master brightness, theme switch and blackout.
+// Top bar: show name with File (save and open), the venue, status, master brightness, theme switch and blackout. On a
+// phone it is one row (the show, its status, More and Blackout); More opens the rest underneath.
+import { useState } from 'react';
+
 import { describeOutput } from '../utils/outputStatus.js';
 import { Icon } from './Icon.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
@@ -25,9 +28,10 @@ export function TopBar({
   onToggleTheme,
 }) {
   const { label: outputLabel, isReady: outputReady } = describeOutput(connected, output);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   return (
-    <header className="topbar">
+    <header className="topbar" data-more={isMoreOpen || undefined}>
       <input
         className="show-name"
         value={projectName}
@@ -38,7 +42,7 @@ export function TopBar({
       {onOpenShows ? (
         <button
           type="button"
-          className="btn btn-ghost btn-compact topbar-shows"
+          className="btn btn-ghost btn-compact topbar-shows topbar-extra"
           aria-label="File"
           title="File: save and open shows"
           onClick={onOpenShows}
@@ -48,7 +52,7 @@ export function TopBar({
         </button>
       ) : null}
       {venues.length > 0 ? (
-        <label className="venue-picker">
+        <label className="venue-picker topbar-extra">
           <Icon name="pin" size={16} />
           <span className="sr-only">Venue</span>
           <select
@@ -87,7 +91,7 @@ export function TopBar({
       </span>
       <div className="topbar-spacer" />
       {onOpenSearch ? (
-        <button type="button" className="search-button" onClick={onOpenSearch} aria-label="Search">
+        <button type="button" className="search-button topbar-extra" onClick={onOpenSearch} aria-label="Search">
           <Icon name="search" size={16} />
           <span>Search or jump to…</span>
           <span className="search-hint">
@@ -95,7 +99,7 @@ export function TopBar({
           </span>
         </button>
       ) : null}
-      <label className="master">
+      <label className="master topbar-extra">
         <span className="master-label">Master</span>
         <input
           type="range"
@@ -107,7 +111,18 @@ export function TopBar({
         />
         <span className="master-value">{Math.round(engine.master * 100)}%</span>
       </label>
-      <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+      <span className="topbar-extra topbar-theme">
+        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+      </span>
+      <button
+        type="button"
+        className="btn btn-ghost btn-compact topbar-more"
+        aria-expanded={isMoreOpen}
+        aria-label={isMoreOpen ? 'Fewer controls' : 'More controls'}
+        onClick={() => setIsMoreOpen((open) => !open)}
+      >
+        <Icon name={isMoreOpen ? 'up' : 'sliders'} size={16} />
+      </button>
       <button
         type="button"
         className="btn btn-blackout"
