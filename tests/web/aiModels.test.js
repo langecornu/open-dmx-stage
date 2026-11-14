@@ -37,12 +37,12 @@ describe('AI models', () => {
 });
 
 describe('estimateTokens', () => {
-  it('matches the demo generations: about 4,400 in (3,600 plus the places) and 21,000 to 28,000 out', () => {
+  it('starts from the demo generations (about 4,400 in, 21,000 to 28,000 out), plus blocks that follow the beat', () => {
     const { inputTokens, outputTokens } = estimateTokens(demo);
     expect(inputTokens).toBeGreaterThan(4000);
     expect(inputTokens).toBeLessThan(5000);
-    expect(outputTokens[0]).toBeGreaterThan(19000);
-    expect(outputTokens[1]).toBeLessThan(31000);
+    expect(outputTokens[0]).toBeGreaterThan(25000);
+    expect(outputTokens[1]).toBeLessThan(45000);
     expect(outputTokens[0]).toBeLessThan(outputTokens[1]);
   });
 
@@ -57,10 +57,10 @@ describe('estimateTokens', () => {
 });
 
 describe('estimateCost and prices', () => {
-  it('puts the demo near what it really cost on Opus, half on Sonnet, and cents on Haiku', () => {
+  it('puts the demo above what it cost before beat-following blocks on Opus, half on Sonnet, cents on Haiku', () => {
     const [low, high] = estimateCost(demo, 'claude-opus-5-5');
     expect(low).toBeGreaterThan(0.4);
-    expect(high).toBeLessThan(0.65);
+    expect(high).toBeLessThan(0.95);
     expect(estimateCost(demo, 'claude-sonnet-5-5')[1]).toBeCloseTo(high / 2, 1);
     expect(estimateCost(demo, 'claude-haiku-5-5')[1]).toBeLessThan(0.03);
   });

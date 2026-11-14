@@ -140,8 +140,30 @@ export function describeBlock(block, fixtureName, unit = 'beats') {
   }
   if (block.effect === 'strobe') {
     parts.push('strobe');
+  } else if (block.effect === 'pulse' || block.effect === 'flash') {
+    const late = block.rhythmOffset ? `, ${block.rhythmOffset} late` : '';
+    parts.push(
+      `${block.effect === 'pulse' ? 'pulsing' : 'flashing'} every ${rhythmLabel(block.rhythmBeats ?? 1)}${late}`,
+    );
   }
   return parts.join(', ');
+}
+
+/**
+ * How often a pulse or flash comes, in words.
+ * @param {number} beats
+ * @returns {string}
+ */
+export function rhythmLabel(beats) {
+  const words = /** @type {Record<string, string>} */ ({
+    0.25: 'quarter beat',
+    0.5: 'half beat',
+    1: 'beat',
+    2: '2 beats',
+    4: 'bar',
+    8: '2 bars',
+  });
+  return words[String(beats)] ?? `${beats} beats`;
 }
 
 /**
