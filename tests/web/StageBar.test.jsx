@@ -22,7 +22,7 @@ const idle = {
   programmerChannels: [],
 };
 
-function renderBar(engine, currentView = null) {
+function renderBar(engine, currentView = null, onVisualize = undefined) {
   const send = vi.fn();
   const onNavigate = vi.fn();
   const view = render(
@@ -32,12 +32,25 @@ function renderBar(engine, currentView = null) {
       send={send}
       onNavigate={onNavigate}
       currentView={currentView}
+      onVisualize={onVisualize}
     />,
   );
   return { ...view, send, onNavigate };
 }
 
 describe('StageBar', () => {
+  it('has a Visualize button on every screen, when the app can open it', async () => {
+    const onVisualize = vi.fn();
+    renderBar({}, null, onVisualize);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Visualize' }));
+    expect(onVisualize).toHaveBeenCalledOnce();
+  });
+
+  it('has no Visualize button when there is nothing to open', () => {
+    renderBar();
+    expect(screen.queryByRole('button', { name: 'Visualize' })).not.toBeInTheDocument();
+  });
+
   it('says nothing is playing and has no stop button when idle', () => {
     renderBar({});
     expect(screen.getByText('Nothing playing')).toBeInTheDocument();

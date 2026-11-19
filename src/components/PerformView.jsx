@@ -70,8 +70,56 @@ function learnReducer(state, event) {
   }
 }
 
-export function PerformView({ project, patch, live, flush, update, library = [] }) {
-  const [isVisualizing, setIsVisualizing] = useState(false);
+const COLLAPSED_KEY = 'odmx-perform-collapsed';
+
+/** Which sections of pads were folded away last time in this browser. */
+function loadCollapsed() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? '{}');
+    return { looks: saved.looks === true, sequences: saved.sequences === true };
+  } catch {
+    return { looks: false, sequences: false };
+  }
+}
+
+/**
+ * The title of a section of pads, which folds the section away or opens it again. A folded section still says how many
+ * pads it holds and what is playing from it, and its keys and MIDI notes keep working.
+ * @param {{ id: string, title: string, count: number, isCollapsed: boolean, onToggle: () => void, playing?: string | null }} props
+ */
+function SectionToggle({ id, title, count, isCollapsed, onToggle, playing = null }) {
+  return (
+    <h2 className="section-title" id={`pads-${id}`}>
+      <button
+        type="button"
+        className="section-fold"
+        aria-expanded={!isCollapsed}
+        aria-controls={`pads-${id}-grid`}
+        onClick={onToggle}
+      >
+        <Icon name={isCollapsed ? 'down' : 'up'} size={16} />
+        {title}
+        <span className="section-count">{count}</span>
+      </button>
+      {isCollapsed && playing ? <span className="section-playing">Playing: {playing}</span> : null}
+    </h2>
+  );
+}
+
+export function PerformView({
+  project,
+  patch,
+  live,
+  flush,
+  update,
+  library = [],
+  onVisualize = undefined,
+  isVisualizingOutside = false,
+}) {
+  // The app can open the visualizer itself (so the bottom bar can too); on its own, this screen keeps one of its own.
+  const [isVisualizingHere, setIsVisualizingHere] = useState(false);
+  const isVisualizing = isVisualizingHere || isVisualizingOutside;
+  const setIsVisualizing = onVisualize ?? setIsVisualizingHere;
   const [fadeMs, setFadeMs] = useState(500);
   const [{ isLearning, armed }, dispatchLearn] = useReducer(learnReducer, { isLearning: false, armed: null });
   const [error, setError] = useState(null);
@@ -87,6 +135,18 @@ export function PerformView({ project, patch, live, flush, update, library = [] 
       setPanelToShow(null);
     }
   }, [panelToShow]);
+
+  const [collapsed, setCollapsed] = useState(loadCollapsed);
+  const toggleSection = (id) =>
+    setCollapsed((current) => {
+      const next = { ...current, [id]: !current[id] };
+      try {
+        localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next));
+      } catch {
+        // A remembered choice is a convenience; private windows may refuse it.
+      }
+      return next;
+    });
 
   const items = useMemo(() => buildPerformItems(project, patch), [project, patch]);
 
@@ -280,10 +340,14 @@ export function PerformView({ project, patch, live, flush, update, library = [] 
             {looks.length > 0 ? (
               <section className="pad-section" aria-labelledby="pads-looks">
                 <div className="pad-section-head">
-                  <h2 className="section-title" id="pads-looks">
-                    Looks
-                    <span className="section-count">{looks.length}</span>
-                  </h2>
+                  <SectionToggle
+                    id="looks"
+                    title="Looks"
+                    count={looks.length}
+                    isCollapsed={collapsed.looks}
+                    onToggle={() => toggleSection('looks')}
+                    playing={looks.find(({ item }) => isPlaying(item))?.item.name}
+                  />
                   <label className="field field-inline">
                     Fade when playing a look
                     <select
@@ -299,18 +363,30 @@ export function PerformView({ project, patch, live, flush, update, library = [] 
                     </select>
                   </label>
                 </div>
-                <div className="perform-grid">{looks.map(({ item, index }) => renderTile(item, index))}</div>
+                {collapsed.looks ? null : (
+                  <div className="perform-grid" id="pads-looks-grid">
+                    {looks.map(({ item, index }) => renderTile(item, index))}
+                  </div>
+                )}
               </section>
             ) : null}
             {sequences.length > 0 ? (
               <section className="pad-section" aria-labelledby="pads-sequences">
                 <div className="pad-section-head">
-                  <h2 className="section-title" id="pads-sequences">
-                    Sequences
-                    <span className="section-count">{sequences.length}</span>
-                  </h2>
+                  <SectionToggle
+                    id="sequences"
+                    title="Sequences"
+                    count={sequences.length}
+                    isCollapsed={collapsed.sequences}
+                    onToggle={() => toggleSection('sequences')}
+                    playing={sequences.find(({ item }) => isPlaying(item))?.item.name}
+                  />
                 </div>
-                <div className="perform-grid">{sequences.map(({ item, index }) => renderTile(item, index))}</div>
+                {collapsed.sequences ? null : (
+                  <div className="perform-grid" id="pads-sequences-grid">
+                    {sequences.map(({ item, index }) => renderTile(item, index))}
+                  </div>
+                )}
               </section>
             ) : null}
           </>
@@ -350,8 +426,8 @@ export function PerformView({ project, patch, live, flush, update, library = [] 
         />
       </div>
       <Visualizer
-        isOpen={isVisualizing}
-        onClose={() => setIsVisualizing(false)}
+        isOpen={isVisualizingHere}
+        onClose={() => setIsVisualizingHere(false)}
         project={project}
         library={library}
         patch={patch}

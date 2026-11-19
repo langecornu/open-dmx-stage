@@ -11,6 +11,7 @@ import { BUILTIN_TYPES, makeShow } from './fixtures.js';
 vi.mock('../../src/api.js', () => ({
   api: {
     getProject: vi.fn(),
+    getAiSettings: vi.fn(),
     getFixtureLibrary: vi.fn(),
     saveProject: vi.fn(),
     listOutputPorts: vi.fn(),
@@ -40,6 +41,7 @@ beforeEach(() => {
   api.getFixtureLibrary.mockResolvedValue(BUILTIN_TYPES);
   api.saveProject.mockResolvedValue({});
   api.listOutputPorts.mockResolvedValue([]);
+  api.getAiSettings.mockResolvedValue({ hasKey: false, source: null });
 });
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -64,6 +66,16 @@ describe('App', () => {
       await Promise.resolve();
     });
     expect(await screen.findByRole('heading', { level: 1, name: 'Test show' })).toBeInTheDocument();
+  });
+
+  it('opens the stage view from the bottom bar on any screen', async () => {
+    const user = userEvent.setup();
+    await renderApp();
+    expect(screen.queryByRole('dialog', { name: 'Stage view' })).not.toBeInTheDocument();
+    await user.click(
+      within(screen.getByRole('region', { name: 'On stage' })).getByRole('button', { name: 'Visualize' }),
+    );
+    expect(screen.getByRole('dialog', { name: 'Stage view' })).toBeInTheDocument();
   });
 
   it('explains when the show cannot be loaded', async () => {

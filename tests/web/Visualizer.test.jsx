@@ -112,6 +112,28 @@ describe('Visualizer', () => {
     expect(latest.fixtures[1].stage).toEqual({ rail: 'floor', x: 0.5, z: 0.52 });
   });
 
+  it('puts a floor light on a stand of a chosen height, and keeps it there when the light is moved', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: /Arrange lights/ }));
+    const arrange = screen.getByRole('group', { name: 'Arrange lights' });
+    await user.click(within(arrange).getByRole('button', { name: 'Par 2' }));
+    expect(within(arrange).queryByLabelText('Stands on')).not.toBeInTheDocument(); // hung on a rail, not on the floor
+    await user.selectOptions(within(arrange).getByLabelText('Par 2 is on'), 'The floor');
+    await user.selectOptions(within(arrange).getByLabelText('Stands on'), 'A tripod stand');
+    expect(latest.fixtures[1].stage).toEqual({ rail: 'floor', x: 0.5, z: 0.5, height: 1.2, support: 'stand' });
+    expect(within(arrange).getByText('3.9 ft')).toBeInTheDocument();
+    const height = within(arrange).getByLabelText('Stand height (m)');
+    await user.clear(height);
+    await user.type(height, '1.5');
+    expect(latest.fixtures[1].stage).toMatchObject({ height: 1.5, support: 'stand' });
+    within(arrange).getByRole('button', { name: 'Par 2' }).focus();
+    await user.keyboard('{ArrowDown}');
+    expect(latest.fixtures[1].stage).toEqual({ rail: 'floor', x: 0.5, z: 0.52, height: 1.5, support: 'stand' });
+    await user.selectOptions(within(arrange).getByLabelText('Stands on'), 'The floor');
+    expect(latest.fixtures[1].stage).toEqual({ rail: 'floor', x: 0.5, z: 0.52 });
+  });
+
   it('sets the whole layout once a light is moved, and keeps the first places on request', async () => {
     const user = userEvent.setup();
     render(<Harness />);
@@ -212,7 +234,7 @@ describe('Visualizer', () => {
     expect(await accessibilityViolations(document.body)).toEqual([]);
   });
 
-  it('opens the compact decks from the pad bar, so music plays while watching', async () => {
+  it('opens the full decks from the pad bar, with the music library to load tracks, and a smaller strip on request', async () => {
     vi.spyOn(api, 'getMusic').mockResolvedValue({ folder: '/music', exists: true, tracks: [] });
     const user = userEvent.setup();
     render(
@@ -226,6 +248,11 @@ describe('Visualizer', () => {
     expect(toggle).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('region', { name: 'Deck A' })).toBeInTheDocument();
     expect(screen.getByRole('slider', { name: /Crossfader/ })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Music/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Smaller decks' }));
+    expect(screen.queryByRole('heading', { name: /Music/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Decks' })).toBeInTheDocument();
+    expect(localStorage.getItem('odmx-visualizer-decks')).toBe('small');
   });
 });
 

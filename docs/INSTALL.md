@@ -64,10 +64,10 @@ npm install
 npm run dev
 ```
 
-Then open **http://localhost:5173**.
+Then open **http://localhost:7000**.
 
 - The API listens on port **4000** on every network address, so a phone or tablet on the same network can open
-  `http://<this computer's name or address>:4000` (after `npm run build`). The dev web app on **5173** stays on this
+  `http://<this computer's name or address>:4000` (after `npm run build`). The dev web app on **7000** stays on this
   computer.
 - The top bar shows **Simulator**, which means nothing is sent to real lights yet.
 - On first run a short welcome screen helps you add your lights. See the [usage guide](USAGE.md).
@@ -150,7 +150,7 @@ variables, or set them in your process manager). Nothing is required.
 | `PORT`              | `4000`                      | API and WebSocket port.                                                                                                                                                                                       |
 | `HTTPS_PORT`        | `4443`                      | The secure (https) address beside it, with a certificate the app makes itself, so phones and tablets can use the microphone and MIDI. `0` turns it off.                                                       |
 | `HOST`              | `0.0.0.0`                   | Address to listen on. The default reaches every device on your network; set `127.0.0.1` to keep the app on this computer (see the security note).                                                             |
-| `ALLOWED_ORIGINS`   | `http://localhost:5173`     | Comma-separated browser origins allowed to talk to the API, besides this server's own address (`localhost`, `127.0.0.1` and `[::1]` on `PORT`), which is always allowed.                                      |
+| `ALLOWED_ORIGINS`   | `http://localhost:7000`     | Comma-separated browser origins allowed to talk to the API, besides this server's own address (`localhost`, `127.0.0.1` and `[::1]` on `PORT`), which is always allowed.                                      |
 | `DMX_DRIVER`        | `mock`                      | `mock` (simulator), `open-dmx`, `enttec-pro`, `artnet` or `sacn`. You can also choose this in the app, on the Output screen.                                                                                  |
 | `DMX_SERIAL_PATH`   | _(empty)_                   | Serial port for `open-dmx` and `enttec-pro`.                                                                                                                                                                  |
 | `DMX_NET_HOST`      | _(empty)_                   | Art-Net or sACN destination IP on your own network (private, loopback, link-local, multicast or broadcast). Hostnames and public addresses are rejected. Empty means broadcast (Art-Net) or multicast (sACN). |
@@ -186,7 +186,7 @@ The server also answers `GET /healthz` (is it up) and `GET /readyz` (and which o
 | Symptom                                             | Fix                                                                                                                                                                 |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `EBADENGINE` warning on `npm install`               | You are on Node older than 24.15. Install Node 24 (`nvm install 24`) to remove the warning; the tests need it.                                                      |
-| Port 5173 is already in use                         | Run the web app on another port and allow it: `ALLOWED_ORIGINS=http://localhost:5180 npm run dev:api` in one terminal, `npm run dev:web -- --port 5180` in another. |
+| Port 7000 is already in use                         | Run the web app on another port and allow it: `ALLOWED_ORIGINS=http://localhost:7001 npm run dev:api` in one terminal, `npm run dev:web -- --port 7001` in another. |
 | Top bar says **Server offline**                     | The API is not running or the browser origin is not in `ALLOWED_ORIGINS`. Check the terminal for errors.                                                            |
 | A phone or tablet cannot connect                    | Check both are on the same network and use the computer's address (not `localhost`). If `HOST` is set to `127.0.0.1`, remove it.                                    |
 | Top bar says **DMX not connected**                  | The device was unplugged, the wrong port was chosen, or another program is using it. Close other DMX software, re-plug, then reconnect on the **Output** screen.    |

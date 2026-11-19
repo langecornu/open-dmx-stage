@@ -42,6 +42,18 @@ function loadSettings() {
  *   update: (mutate: (project: any) => any) => void, live: any, flush: () => Promise<void>,
  *   startArranging?: boolean }} props startArranging: opens with Arrange lights on
  */
+/**
+ * A light dragged or nudged along the floor stays on its stand: the new place keeps the old one's height and support.
+ * @param {import('../../shared/stageRig.js').Mount | undefined} before
+ * @param {import('../../shared/stageRig.js').Mount | undefined} next
+ */
+function keepStand(before, next) {
+  if (!next || next.rail !== 'floor' || before?.rail !== 'floor' || !before.height || next.height) {
+    return next;
+  }
+  return { ...next, height: before.height, ...(before.support ? { support: before.support } : {}) };
+}
+
 export function Visualizer({ isOpen, onClose, project, library, patch, update, live, flush, startArranging = false }) {
   const canvasRef = useRef(/** @type {HTMLCanvasElement | null} */ (null));
   const stageRef = useRef(/** @type {HTMLDivElement | null} */ (null));
@@ -55,6 +67,22 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
     }
   }, [isOpen, startArranging]);
   const [isDecksOpen, setIsDecksOpen] = useState(false);
+  // The decks open full (with the music library, to load tracks) unless the small strip was chosen last time.
+  const [isDecksFull, setIsDecksFull] = useState(() => {
+    try {
+      return localStorage.getItem('odmx-visualizer-decks') !== 'small';
+    } catch {
+      return true;
+    }
+  });
+  const changeDecksFull = (full) => {
+    setIsDecksFull(full);
+    try {
+      localStorage.setItem('odmx-visualizer-decks', full ? 'full' : 'small');
+    } catch {
+      // A remembered size is a convenience.
+    }
+  };
   const [isDisplayOpen, setIsDisplayOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(/** @type {string | null} */ (null));
   /** Places being dragged, before they are saved. @type {[Map<string, {x:number,y:number}>, Function]} */
@@ -213,7 +241,7 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
       update((current) => ({
         ...current,
         fixtures: current.fixtures.map((fixture) => {
-          const mount = mountsById.get(fixture.id) ?? fixture.stage ?? mounts.get(fixture.id);
+          const mount = keepStand(fixture.stage, mountsById.get(fixture.id)) ?? fixture.stage ?? mounts.get(fixture.id);
           return mount ? { ...fixture, stage: mount } : fixture;
         }),
       }));
@@ -221,6 +249,22 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
     },
     [update, mounts],
   );
+
+  /** Sets what the chosen floor light stands on and how high (null for the floor itself). */
+  const changeStand = (stand) => {
+    const current = selectedId ? mounts.get(selectedId) : null;
+    if (!selectedId || !current || current.rail !== 'floor') {
+      return;
+    }
+    /** @type {import('../../shared/stageRig.js').Mount} */
+    const next = { rail: 'floor', x: current.x ?? 0.5, z: current.z ?? 0.5, ...(stand ? stand : {}) };
+    const id = selectedId;
+    // Written straight to the light, not through saveMounts: that would give the stand back to a light moved off it.
+    update((show) => ({
+      ...show,
+      fixtures: show.fixtures.map((fixture) => (fixture.id === id ? { ...fixture, stage: next } : fixture)),
+    }));
+  };
 
   /** Changes the venue's rig: its shape, uprights or size. */
   const changeRig = (changes) =>
@@ -250,7 +294,10 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
       return;
     }
     const { x, y } = pointAt(event);
-    const mount = screenToMount(rendererRef.current.camera(), rig, x, y);
+    const mount = keepStand(
+      project.fixtures.find((fixture) => fixture.id === drag.id)?.stage,
+      screenToMount(rendererRef.current.camera(), rig, x, y),
+    );
     setMoving((current) => new Map(current).set(drag.id, mount));
   };
 
@@ -436,13 +483,27 @@ export function Visualizer({ isOpen, onClose, project, library, patch, update, l
             rails={rails}
             onMoveToRail={moveToRail}
             onReset={resetLayout}
+            standOf={selectedId ? (mounts.get(selectedId) ?? null) : null}
+            onStandChange={changeStand}
             unplacedCount={unplacedLights(project.fixtures).length}
             onKeepPlaces={() => saveMounts(new Map())}
           />
         ) : null}
       </div>
 
-      {isDecksOpen ? <DjConsole isCompact /> : null}
+      {isDecksOpen ? (
+        <div className={isDecksFull ? 'visualizer-decks visualizer-decks-full' : 'visualizer-decks'}>
+          <button
+            type="button"
+            className="visualizer-chip visualizer-decks-size"
+            aria-pressed={isDecksFull}
+            onClick={() => changeDecksFull(!isDecksFull)}
+          >
+            {isDecksFull ? 'Smaller decks' : 'Full decks and music'}
+          </button>
+          <DjConsole isCompact={!isDecksFull} />
+        </div>
+      ) : null}
 
       <div className="visualizer-pads">
         <div className="visualizer-pads-fixed">

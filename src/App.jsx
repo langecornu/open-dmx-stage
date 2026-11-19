@@ -19,6 +19,7 @@ import { SettingsView } from './components/SettingsView.jsx';
 import { ShortcutsDialog } from './components/ShortcutsDialog.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
 import { StageBar } from './components/StageBar.jsx';
+import { Visualizer } from './components/Visualizer.jsx';
 import { StageView } from './components/StageView.jsx';
 import { ToastRegion } from './components/ToastRegion.jsx';
 import { TopBar } from './components/TopBar.jsx';
@@ -60,6 +61,7 @@ export function App() {
   const [view, setView] = useState('home');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isVisualizing, setIsVisualizing] = useState(false);
   const [welcomed, setWelcomed] = useState(hasSeenWelcome);
   const { project, library, update, flush, replace, saveStatus, error } = useProject();
   const live = useLive();
@@ -181,9 +183,15 @@ export function App() {
             {view === 'home' ? <HomeView {...shared} navigate={setView} /> : null}
             {view === 'file' ? <FileView {...shared} /> : null}
             {view === 'control' ? <ControlView {...shared} /> : null}
-            {view === 'scenes' ? <ScenesView {...shared} /> : null}
+            {view === 'scenes' ? <ScenesView {...shared} navigate={setView} /> : null}
             {view === 'chases' ? <ChasesView {...shared} /> : null}
-            {view === 'perform' ? <PerformView {...shared} /> : null}
+            {view === 'perform' ? (
+              <PerformView
+                {...shared}
+                onVisualize={() => setIsVisualizing(true)}
+                isVisualizingOutside={isVisualizing}
+              />
+            ) : null}
             {view === 'patch' ? <PatchView {...shared} /> : null}
             {view === 'fixtures' ? <FixturesView {...shared} /> : null}
             {view === 'monitor' ? <MonitorView {...shared} /> : null}
@@ -205,9 +213,26 @@ export function App() {
           }}
         />
         <div className="dock">
-          <StageBar engine={live.engine} project={project} send={live.send} onNavigate={setView} currentView={view} />
+          <StageBar
+            engine={live.engine}
+            project={project}
+            send={live.send}
+            onNavigate={setView}
+            currentView={view}
+            onVisualize={() => setIsVisualizing(true)}
+          />
           <StageView project={project} patch={patch} />
         </div>
+        <Visualizer
+          isOpen={isVisualizing}
+          onClose={() => setIsVisualizing(false)}
+          project={project}
+          library={library}
+          patch={patch}
+          update={update}
+          live={live}
+          flush={flush}
+        />
         <ShortcutsDialog isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
         <ToastRegion toasts={toasts} />
       </div>

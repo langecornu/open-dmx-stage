@@ -7,9 +7,9 @@ import { RIG_LIMITS, RIG_SHAPE_LABELS, RIG_SHAPES } from '../../shared/stageRig.
 /**
  * A size in metres: what is typed is kept while typing, and saved as soon as it is a valid size, so "12" can be typed
  * through "1" (too small on its own). Leaving the field puts back the saved size if what was typed is not valid.
- * @param {{ label: string, value: number, limits: [number, number], onChange: (value: number) => void }} props
+ * @param {{ label: string, value: number, limits: [number, number], onChange: (value: number) => void, step?: number }} props
  */
-function SizeInput({ label, value, limits, onChange }) {
+function SizeInput({ label, value, limits, onChange, step = 0.5 }) {
   const [draft, setDraft] = useState(String(value));
   useEffect(() => setDraft(String(value)), [value]);
   return (
@@ -19,7 +19,7 @@ function SizeInput({ label, value, limits, onChange }) {
         type="number"
         min={limits[0]}
         max={limits[1]}
-        step="0.5"
+        step={step}
         value={draft}
         onChange={(event) => {
           setDraft(event.target.value);
@@ -49,7 +49,9 @@ function SizeInput({ label, value, limits, onChange }) {
  *   onReset: () => void,
  *   unplacedCount?: number,
  *   onKeepPlaces?: () => void,
- * }} props unplacedCount: lights still at their first, guessed places; onKeepPlaces saves the places shown
+ *   standOf?: { support?: 'stand' | 'truss', height?: number } | null,
+ *   onStandChange?: (stand: { support: 'stand' | 'truss', height: number } | null) => void,
+ * }} props standOf: what the chosen light stands on, when it is on the floor unplacedCount: lights still at their first, guessed places; onKeepPlaces saves the places shown
  */
 export function VisualizerArrange({
   venueName,
@@ -65,6 +67,8 @@ export function VisualizerArrange({
   onReset,
   unplacedCount = 0,
   onKeepPlaces,
+  standOf = null,
+  onStandChange,
 }) {
   return (
     <div className="visualizer-arrange" role="group" aria-label="Arrange lights">
@@ -133,6 +137,42 @@ export function VisualizerArrange({
             <option value="floor">The floor</option>
           </select>
         </label>
+      ) : null}
+      {selectedId && selectedRail === 'floor' && onStandChange ? (
+        <div className="visualizer-stand">
+          <label>
+            Stands on
+            <select
+              value={standOf?.height ? (standOf.support ?? 'stand') : 'none'}
+              onChange={(event) =>
+                onStandChange(
+                  event.target.value === 'none'
+                    ? null
+                    : {
+                        support: /** @type {'stand' | 'truss'} */ (event.target.value),
+                        height: standOf?.height || 1.2,
+                      },
+                )
+              }
+            >
+              <option value="none">The floor</option>
+              <option value="stand">A tripod stand</option>
+              <option value="truss">A truss tower</option>
+            </select>
+          </label>
+          {standOf?.height ? (
+            <SizeInput
+              label="Stand height (m)"
+              value={standOf.height}
+              limits={[0.5, 6]}
+              step={0.1}
+              onChange={(height) => onStandChange({ support: standOf.support ?? 'stand', height })}
+            />
+          ) : null}
+          {standOf?.height ? (
+            <span className="fixture-meta">{Math.round((standOf.height / 0.3048) * 10) / 10} ft</span>
+          ) : null}
+        </div>
       ) : null}
       {unplacedCount > 0 && onKeepPlaces ? (
         <p>

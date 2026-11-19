@@ -2,14 +2,16 @@
 // same sequence, chosen with a toggle: Steps (the chain as a list, with the blocks that cover each step) and Timeline
 // (the looks and the blocks laid out in time). A sequence can be exported to a file of its own and imported into
 // another show, where its lights are matched to that rig.
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { sequenceLength, stepUnits } from '../../shared/timeline.js';
 import { downloadFile } from '../utils/download.js';
 import { checkSequenceFile, importSequence, sequenceDownload } from '../utils/sequenceFile.js';
 import { SWATCHES, spanLabel, timelineGradient } from '../utils/timelineEdit.js';
 
+import { NO_FILTER, chaseTags, matchesFilter } from '../utils/lookTags.js';
 import { averageColor, fixtureColors, sceneGradient } from '../utils/sceneColors.js';
+import { LookFilters } from './LookFilters.jsx';
 import { stepDurations } from '../utils/tempo.js';
 import { SequenceStepRow } from './SequenceStepRow.jsx';
 import { SequenceTimeline } from './SequenceTimeline.jsx';
@@ -66,6 +68,15 @@ export function ChasesView({ project, patch, update, flush, live, library = [] }
   const [mode, setMode] = useState(loadMode);
   const [selectedId, setSelectedId] = useState(project.chases[0]?.id ?? null);
   const [message, setMessage] = useState(/** @type {string | null} */ (null));
+  const [filter, setFilter] = useState(NO_FILTER);
+  const tagsById = useMemo(
+    () => new Map(project.chases.map((item) => [item.id, chaseTags(item, project, patch)])),
+    [project, patch],
+  );
+  // The selected sequence stays in the list, so editing it never makes it vanish.
+  const visibleChases = project.chases.filter(
+    (item) => item.id === selectedId || matchesFilter(tagsById.get(item.id), filter),
+  );
   const chase = project.chases.find((candidate) => candidate.id === selectedId) ?? null;
   const isPlaying = chase && live.engine.activeChaseId === chase.id;
 
@@ -255,203 +266,212 @@ export function ChasesView({ project, patch, update, flush, live, library = [] }
           hint="Press New sequence: chain your looks in Steps, or draw blocks for each light in Timeline."
         />
       ) : (
-        <div className="split">
-          <ul className="card list">
-            {project.chases.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  className="list-item"
-                  aria-current={item.id === selectedId}
-                  onClick={() => setSelectedId(item.id)}
-                >
-                  <span
-                    className="list-thumb"
-                    aria-hidden="true"
-                    style={{
-                      background:
-                        item.steps.length === 0
-                          ? timelineGradient({ blocks: item.blocks ?? [] })
-                          : sceneGradient(
-                              item.steps.map((step) =>
-                                averageColor(
-                                  fixtureColors(
-                                    project,
-                                    patch,
-                                    project.scenes.find((scene) => scene.id === step.sceneId)?.values ?? {},
+        <>
+          <LookFilters
+            tagsList={project.chases.map((item) => tagsById.get(item.id))}
+            filter={filter}
+            onChange={setFilter}
+            shown={visibleChases.length}
+            withSpeed
+          />
+          <div className="split">
+            <ul className="card list">
+              {visibleChases.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    className="list-item"
+                    aria-current={item.id === selectedId}
+                    onClick={() => setSelectedId(item.id)}
+                  >
+                    <span
+                      className="list-thumb"
+                      aria-hidden="true"
+                      style={{
+                        background:
+                          item.steps.length === 0
+                            ? timelineGradient({ blocks: item.blocks ?? [] })
+                            : sceneGradient(
+                                item.steps.map((step) =>
+                                  averageColor(
+                                    fixtureColors(
+                                      project,
+                                      patch,
+                                      project.scenes.find((scene) => scene.id === step.sceneId)?.values ?? {},
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                    }}
-                  />
-                  <span className="list-text">
-                    <span className="list-name">{item.name}</span>
-                    <span className="list-meta">
-                      {item.steps.length > 0 || (item.blocks ?? []).length === 0
-                        ? `${item.steps.length} ${item.steps.length === 1 ? 'step' : 'steps'} · `
-                        : ''}
-                      {(item.blocks ?? []).length > 0
-                        ? `${item.blocks.length} ${item.blocks.length === 1 ? 'block' : 'blocks'} · `
-                        : ''}
-                      {item.timing === 'beats'
-                        ? `${round(sequenceLength(item))} beats`
-                        : formatLength(
-                            item.steps.reduce((sum, step) => {
-                              const timed = stepDurations(step, item.timing, live.engine.bpm);
-                              return sum + timed.fadeMs + timed.holdMs;
-                            }, 0) || sequenceLength(item) * 1000,
-                          )}
-                    </span>
-                  </span>
-                  {live.engine.activeChaseId === item.id ? <span className="badge badge-live">Playing</span> : null}
-                </button>
-              </li>
-            ))}
-          </ul>
-
-          {chase ? (
-            <div className="card card-pad chase-editor">
-              <div className="toolbar">
-                <label className="field">
-                  Name
-                  <input
-                    className="input"
-                    value={chase.name}
-                    maxLength={80}
-                    onChange={(e) => patchChase(chase.id, { name: e.target.value || chase.name })}
-                  />
-                </label>
-                <label className="pill">
-                  <input
-                    type="checkbox"
-                    checked={chase.loop}
-                    onChange={(e) => patchChase(chase.id, { loop: e.target.checked })}
-                  />
-                  Loop
-                </label>
-                <label className="field">
-                  Timing
-                  <select
-                    className="select"
-                    value={chase.timing}
-                    onChange={(event) => patchChase(chase.id, { timing: event.target.value })}
-                  >
-                    <option value="seconds">Seconds</option>
-                    <option value="beats">Beats (follows the tempo)</option>
-                  </select>
-                </label>
-                {isPlaying ? (
-                  <button type="button" className="btn" onClick={() => live.send({ type: 'chaseStop' })}>
-                    <Icon name="stop" size={16} />
-                    Stop
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    disabled={chase.steps.length === 0 && (chase.blocks ?? []).length === 0}
-                    onClick={handlePlay}
-                  >
-                    <Icon name="chases" size={16} />
-                    Play
-                  </button>
-                )}
-                <button type="button" className="btn" onClick={handleDuplicate}>
-                  <Icon name="copy" size={16} />
-                  Duplicate
-                </button>
-                <button type="button" className="btn" onClick={handleExport}>
-                  <Icon name="upload" size={16} />
-                  Export
-                </button>
-                <button type="button" className="btn btn-danger" onClick={handleDelete}>
-                  <Icon name="trash" size={16} />
-                  Delete
-                </button>
-              </div>
-
-              {mode === 'timeline' ? (
-                <SequenceTimelineView
-                  project={project}
-                  library={library}
-                  patch={patch}
-                  chase={chase}
-                  patchChase={patchSelected}
-                  live={live}
-                  isPlaying={Boolean(isPlaying)}
-                />
-              ) : (
-                <>
-                  {chase.steps.length > 0 ? (
-                    <SequenceTimeline
-                      chase={chase}
-                      project={project}
-                      patch={patch}
-                      playingIndex={isPlaying ? live.engine.chaseStep : null}
-                      bpm={live.engine.bpm}
+                      }}
                     />
-                  ) : null}
-                  {chase.steps.length > 0 ? (
-                    <div className="step-row step-head" aria-hidden="true">
-                      <span />
-                      <span />
-                      <span>Look</span>
-                      <span>{chase.timing === 'beats' ? 'Fade (beats)' : 'Fade (s)'}</span>
-                      <span>{chase.timing === 'beats' ? 'Hold (beats)' : 'Hold (s)'}</span>
-                      <span />
-                    </div>
-                  ) : null}
-                  {chase.steps.map((step, index) => {
-                    const start = chase.steps.slice(0, index).reduce((sum, before) => {
-                      const units = stepUnits(before, chase.timing);
-                      return sum + units.fade + units.hold;
-                    }, 0);
-                    const units = stepUnits(step, chase.timing);
-                    const overlays = stepOverlays(chase, project, start, start + units.fade + units.hold);
-                    return (
-                      <div key={step.id} className="step-with-overlays">
-                        <SequenceStepRow
-                          step={step}
-                          index={index}
-                          isPlaying={Boolean(isPlaying) && live.engine.chaseStep === index}
-                          timing={chase.timing}
-                          scenes={project.scenes}
-                          thumbnail={sceneGradient(
-                            fixtureColors(
-                              project,
-                              patch,
-                              project.scenes.find((scene) => scene.id === step.sceneId)?.values ?? {},
-                            ),
-                          )}
-                          onChange={handleStep}
-                          onMove={handleMove}
-                          onRemove={handleRemoveStep}
-                          onDuplicate={handleDuplicateStep}
-                        />
-                        {overlays.length > 0 ? <p className="step-overlays">+ {overlays.join('; ')}</p> : null}
-                      </div>
-                    );
-                  })}
-                  <div>
+                    <span className="list-text">
+                      <span className="list-name">{item.name}</span>
+                      <span className="list-meta">
+                        {item.steps.length > 0 || (item.blocks ?? []).length === 0
+                          ? `${item.steps.length} ${item.steps.length === 1 ? 'step' : 'steps'} · `
+                          : ''}
+                        {(item.blocks ?? []).length > 0
+                          ? `${item.blocks.length} ${item.blocks.length === 1 ? 'block' : 'blocks'} · `
+                          : ''}
+                        {item.timing === 'beats'
+                          ? `${round(sequenceLength(item))} beats`
+                          : formatLength(
+                              item.steps.reduce((sum, step) => {
+                                const timed = stepDurations(step, item.timing, live.engine.bpm);
+                                return sum + timed.fadeMs + timed.holdMs;
+                              }, 0) || sequenceLength(item) * 1000,
+                            )}
+                      </span>
+                    </span>
+                    {live.engine.activeChaseId === item.id ? <span className="badge badge-live">Playing</span> : null}
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            {chase ? (
+              <div className="card card-pad chase-editor">
+                <div className="toolbar">
+                  <label className="field">
+                    Name
+                    <input
+                      className="input"
+                      value={chase.name}
+                      maxLength={80}
+                      onChange={(e) => patchChase(chase.id, { name: e.target.value || chase.name })}
+                    />
+                  </label>
+                  <label className="pill">
+                    <input
+                      type="checkbox"
+                      checked={chase.loop}
+                      onChange={(e) => patchChase(chase.id, { loop: e.target.checked })}
+                    />
+                    Loop
+                  </label>
+                  <label className="field">
+                    Timing
+                    <select
+                      className="select"
+                      value={chase.timing}
+                      onChange={(event) => patchChase(chase.id, { timing: event.target.value })}
+                    >
+                      <option value="seconds">Seconds</option>
+                      <option value="beats">Beats (follows the tempo)</option>
+                    </select>
+                  </label>
+                  {isPlaying ? (
+                    <button type="button" className="btn" onClick={() => live.send({ type: 'chaseStop' })}>
+                      <Icon name="stop" size={16} />
+                      Stop
+                    </button>
+                  ) : (
                     <button
                       type="button"
-                      className="btn"
-                      onClick={handleAddStep}
-                      disabled={project.scenes.length === 0}
+                      className="btn btn-primary"
+                      disabled={chase.steps.length === 0 && (chase.blocks ?? []).length === 0}
+                      onClick={handlePlay}
                     >
-                      <Icon name="plus" size={16} />
-                      Add step
+                      <Icon name="chases" size={16} />
+                      Play
                     </button>
-                    {project.scenes.length === 0 ? <span className="fixture-meta"> Save a look first.</span> : null}
-                  </div>
-                </>
-              )}
-            </div>
-          ) : (
-            <EmptyState icon="chases" title="Pick a sequence" hint="Choose one on the left or create a new one." />
-          )}
-        </div>
+                  )}
+                  <button type="button" className="btn" onClick={handleDuplicate}>
+                    <Icon name="copy" size={16} />
+                    Duplicate
+                  </button>
+                  <button type="button" className="btn" onClick={handleExport}>
+                    <Icon name="upload" size={16} />
+                    Export
+                  </button>
+                  <button type="button" className="btn btn-danger" onClick={handleDelete}>
+                    <Icon name="trash" size={16} />
+                    Delete
+                  </button>
+                </div>
+
+                {mode === 'timeline' ? (
+                  <SequenceTimelineView
+                    project={project}
+                    library={library}
+                    patch={patch}
+                    chase={chase}
+                    patchChase={patchSelected}
+                    live={live}
+                    isPlaying={Boolean(isPlaying)}
+                  />
+                ) : (
+                  <>
+                    {chase.steps.length > 0 ? (
+                      <SequenceTimeline
+                        chase={chase}
+                        project={project}
+                        patch={patch}
+                        playingIndex={isPlaying ? live.engine.chaseStep : null}
+                        bpm={live.engine.bpm}
+                      />
+                    ) : null}
+                    {chase.steps.length > 0 ? (
+                      <div className="step-row step-head" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span>Look</span>
+                        <span>{chase.timing === 'beats' ? 'Fade (beats)' : 'Fade (s)'}</span>
+                        <span>{chase.timing === 'beats' ? 'Hold (beats)' : 'Hold (s)'}</span>
+                        <span />
+                      </div>
+                    ) : null}
+                    {chase.steps.map((step, index) => {
+                      const start = chase.steps.slice(0, index).reduce((sum, before) => {
+                        const units = stepUnits(before, chase.timing);
+                        return sum + units.fade + units.hold;
+                      }, 0);
+                      const units = stepUnits(step, chase.timing);
+                      const overlays = stepOverlays(chase, project, start, start + units.fade + units.hold);
+                      return (
+                        <div key={step.id} className="step-with-overlays">
+                          <SequenceStepRow
+                            step={step}
+                            index={index}
+                            isPlaying={Boolean(isPlaying) && live.engine.chaseStep === index}
+                            timing={chase.timing}
+                            scenes={project.scenes}
+                            thumbnail={sceneGradient(
+                              fixtureColors(
+                                project,
+                                patch,
+                                project.scenes.find((scene) => scene.id === step.sceneId)?.values ?? {},
+                              ),
+                            )}
+                            onChange={handleStep}
+                            onMove={handleMove}
+                            onRemove={handleRemoveStep}
+                            onDuplicate={handleDuplicateStep}
+                          />
+                          {overlays.length > 0 ? <p className="step-overlays">+ {overlays.join('; ')}</p> : null}
+                        </div>
+                      );
+                    })}
+                    <div>
+                      <button
+                        type="button"
+                        className="btn"
+                        onClick={handleAddStep}
+                        disabled={project.scenes.length === 0}
+                      >
+                        <Icon name="plus" size={16} />
+                        Add step
+                      </button>
+                      {project.scenes.length === 0 ? <span className="fixture-meta"> Save a look first.</span> : null}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <EmptyState icon="chases" title="Pick a sequence" hint="Choose one on the left or create a new one." />
+            )}
+          </div>
+        </>
       )}
     </section>
   );

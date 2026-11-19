@@ -34,6 +34,23 @@ afterEach(() => {
 });
 
 describe('ScenesView', () => {
+  it('filters the looks by palette', async () => {
+    const user = userEvent.setup();
+    renderView({
+      project: makeShow({
+        scenes: [
+          { id: 'red', name: 'Red wash', values: { 1: 255 } },
+          { id: 'blue', name: 'Blue wash', values: { 3: 255 } },
+        ],
+      }),
+    });
+    expect(screen.getByText('2 of 2 shown')).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Palette'), 'Blues');
+    expect(screen.getByText('1 of 2 shown')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play Blue wash' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Play Red wash' })).not.toBeInTheDocument();
+  });
+
   it('shows an empty state when there are no looks', () => {
     renderView({ project: makeShow() });
     expect(screen.getByText('No looks saved yet')).toBeInTheDocument();

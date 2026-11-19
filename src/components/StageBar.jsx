@@ -13,7 +13,7 @@ const KIND_ICONS = {
 };
 const VIEW_NAMES = { chases: 'Sequences', scenes: 'Looks', control: 'Lights' };
 
-export function StageBar({ engine, project, send, onNavigate, currentView = null }) {
+export function StageBar({ engine, project, send, onNavigate, currentView = null, onVisualize = undefined }) {
   const stage = describeStage(engine, project);
   const isLive = stage.kind !== 'idle';
 
@@ -46,6 +46,12 @@ export function StageBar({ engine, project, send, onNavigate, currentView = null
       ) : null}
 
       <div className="stage-actions">
+        {onVisualize ? (
+          <button type="button" className="btn btn-ghost stage-visualize" onClick={onVisualize}>
+            <Icon name="sparkle" size={16} />
+            Visualize
+          </button>
+        ) : null}
         {stage.view && stage.view !== currentView ? (
           <button type="button" className="btn btn-ghost" onClick={() => onNavigate(stage.view)}>
             Open {VIEW_NAMES[stage.view]}

@@ -312,6 +312,23 @@ describe('AI show generation', () => {
 });
 
 describe('buildRequest', () => {
+  it('asks for looks only from a short description', () => {
+    const { text } = buildRequest({ ...show, venue: { id: 'main', name: 'Club' } }, BUILTIN_FIXTURE_TYPES, {
+      auto: false,
+      looksOnly: true,
+      mood: 'beams over the crowd',
+      looks: 3,
+      sequences: 0,
+      bars: 16,
+      energy: null,
+      colours: [],
+      features: {},
+      song: null,
+    });
+    assert.match(text, /3 looks and no sequences/);
+    assert.match(text, /beams over the crowd/);
+  });
+
   it('asks for one sequence that follows the whole song, from its energy map', () => {
     const { text, songBeats } = buildRequest({ ...show, venue: { id: 'main', name: 'Club' } }, BUILTIN_FIXTURE_TYPES, {
       auto: true,
