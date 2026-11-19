@@ -627,7 +627,9 @@ website**). Each device asks once. Safari on iPhone and iPad does not support MI
 
 On a phone the top bar is one row: the show name, the connection, **More** and **Blackout**. **More** opens File, the
 venue, search, Master and the theme underneath; press it again to fold them away. Lights shows three lights to a row,
-before the colour panel.
+before the colour panel. Perform shows one part at a time, picked under its title: **Pads** (the status strip and three
+pads to a row), **Decks** or **Controls** (tempo, auto show, effects, mute and solo, the music and MIDI). Tapping MIDI or
+Music in the status strip opens Controls at its settings, and **Learn MIDI** brings the pads back to tap.
 
 <img src="images/26-phone-perform-dark.jpg" alt="Perform on a phone" width="300">
 

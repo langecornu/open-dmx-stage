@@ -37,6 +37,12 @@ import { Visualizer } from './Visualizer.jsx';
 const FADES = [0, 250, 500, 1000, 2000];
 const MASTER_STEP = 0.1;
 const PANEL_IDS = { midi: 'perform-midi', sound: 'perform-sound' };
+// On a phone Perform shows one part at a time, so the pads are never eight screens away from the decks.
+const PARTS = [
+  { id: 'pads', label: 'Pads' },
+  { id: 'decks', label: 'Decks' },
+  { id: 'controls', label: 'Controls' },
+];
 
 // Brings a settings panel into view and moves the focus to it, so a keyboard or screen reader user lands there too.
 function showPanel(id) {
@@ -118,6 +124,17 @@ export function PerformView({
   const [{ isLearning, armed }, dispatchLearn] = useReducer(learnReducer, { isLearning: false, armed: null });
   const [error, setError] = useState(null);
   const [midiMap, setMidiMap] = useState(loadMidiMap);
+  const [part, setPart] = useState('pads');
+  const [panelToShow, setPanelToShow] = useState(null);
+
+  // A status chip opens its settings: on a phone that first shows the Controls part, then scrolls to the panel once it
+  // is on screen.
+  useEffect(() => {
+    if (panelToShow) {
+      showPanel(panelToShow);
+      setPanelToShow(null);
+    }
+  }, [panelToShow]);
 
   const [collapsed, setCollapsed] = useState(loadCollapsed);
   const toggleSection = (id) =>
@@ -247,7 +264,7 @@ export function PerformView({
   const sequences = entries.filter(({ item }) => item.kind === 'Sequence');
 
   return (
-    <section className="view" aria-labelledby="perform-title">
+    <section className="view perform-view" data-part={part} aria-labelledby="perform-title">
       <div className="view-header">
         <div>
           <h1 className="view-title" id="perform-title">
@@ -275,14 +292,33 @@ export function PerformView({
         </ul>
       </div>
 
-      <PerformStatus
-        connected={live.connected}
-        output={live.output}
-        midi={midi}
-        follower={follower}
-        bpm={live.engine.bpm}
-        onShow={(chipId) => showPanel(PANEL_IDS[chipId])}
-      />
+      <div className="segmented perform-parts" role="group" aria-label="Show">
+        {PARTS.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            className="segmented-option"
+            aria-pressed={part === option.id}
+            onClick={() => setPart(option.id)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="perform-part" data-part="pads">
+        <PerformStatus
+          connected={live.connected}
+          output={live.output}
+          midi={midi}
+          follower={follower}
+          bpm={live.engine.bpm}
+          onShow={(chipId) => {
+            setPart('controls');
+            setPanelToShow(PANEL_IDS[chipId]);
+          }}
+        />
+      </div>
 
       {error ? (
         <p className="error-banner" role="alert">
@@ -290,74 +326,78 @@ export function PerformView({
         </p>
       ) : null}
 
-      {isLearning ? <PerformLearnLinks labelFor={withMidiLabel} isArmed={isArmed} onPress={handlePress} /> : null}
+      <div className="perform-part" data-part="pads">
+        {isLearning ? <PerformLearnLinks labelFor={withMidiLabel} isArmed={isArmed} onPress={handlePress} /> : null}
 
-      {items.length === 0 ? (
-        <EmptyState
-          icon="bolt"
-          title="Nothing to perform yet"
-          hint="Save some looks first. They appear here as big buttons."
-        />
-      ) : (
-        <>
-          {looks.length > 0 ? (
-            <section className="pad-section" aria-labelledby="pads-looks">
-              <div className="pad-section-head">
-                <SectionToggle
-                  id="looks"
-                  title="Looks"
-                  count={looks.length}
-                  isCollapsed={collapsed.looks}
-                  onToggle={() => toggleSection('looks')}
-                  playing={looks.find(({ item }) => isPlaying(item))?.item.name}
-                />
-                <label className="field field-inline">
-                  Fade when playing a look
-                  <select
-                    className="select select-compact"
-                    value={fadeMs}
-                    onChange={(event) => setFadeMs(Number(event.target.value))}
-                  >
-                    {FADES.map((ms) => (
-                      <option key={ms} value={ms}>
-                        {ms === 0 ? 'Instant' : `${ms / 1000} s`}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              {collapsed.looks ? null : (
-                <div className="perform-grid" id="pads-looks-grid">
-                  {looks.map(({ item, index }) => renderTile(item, index))}
+        {items.length === 0 ? (
+          <EmptyState
+            icon="bolt"
+            title="Nothing to perform yet"
+            hint="Save some looks first. They appear here as big buttons."
+          />
+        ) : (
+          <>
+            {looks.length > 0 ? (
+              <section className="pad-section" aria-labelledby="pads-looks">
+                <div className="pad-section-head">
+                  <SectionToggle
+                    id="looks"
+                    title="Looks"
+                    count={looks.length}
+                    isCollapsed={collapsed.looks}
+                    onToggle={() => toggleSection('looks')}
+                    playing={looks.find(({ item }) => isPlaying(item))?.item.name}
+                  />
+                  <label className="field field-inline">
+                    Fade when playing a look
+                    <select
+                      className="select select-compact"
+                      value={fadeMs}
+                      onChange={(event) => setFadeMs(Number(event.target.value))}
+                    >
+                      {FADES.map((ms) => (
+                        <option key={ms} value={ms}>
+                          {ms === 0 ? 'Instant' : `${ms / 1000} s`}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
-              )}
-            </section>
-          ) : null}
-          {sequences.length > 0 ? (
-            <section className="pad-section" aria-labelledby="pads-sequences">
-              <div className="pad-section-head">
-                <SectionToggle
-                  id="sequences"
-                  title="Sequences"
-                  count={sequences.length}
-                  isCollapsed={collapsed.sequences}
-                  onToggle={() => toggleSection('sequences')}
-                  playing={sequences.find(({ item }) => isPlaying(item))?.item.name}
-                />
-              </div>
-              {collapsed.sequences ? null : (
-                <div className="perform-grid" id="pads-sequences-grid">
-                  {sequences.map(({ item, index }) => renderTile(item, index))}
+                {collapsed.looks ? null : (
+                  <div className="perform-grid" id="pads-looks-grid">
+                    {looks.map(({ item, index }) => renderTile(item, index))}
+                  </div>
+                )}
+              </section>
+            ) : null}
+            {sequences.length > 0 ? (
+              <section className="pad-section" aria-labelledby="pads-sequences">
+                <div className="pad-section-head">
+                  <SectionToggle
+                    id="sequences"
+                    title="Sequences"
+                    count={sequences.length}
+                    isCollapsed={collapsed.sequences}
+                    onToggle={() => toggleSection('sequences')}
+                    playing={sequences.find(({ item }) => isPlaying(item))?.item.name}
+                  />
                 </div>
-              )}
-            </section>
-          ) : null}
-        </>
-      )}
+                {collapsed.sequences ? null : (
+                  <div className="perform-grid" id="pads-sequences-grid">
+                    {sequences.map(({ item, index }) => renderTile(item, index))}
+                  </div>
+                )}
+              </section>
+            ) : null}
+          </>
+        )}
+      </div>
 
-      <DjConsole />
+      <div className="perform-part" data-part="decks">
+        <DjConsole />
+      </div>
 
-      <div className="console">
+      <div className="console perform-part" data-part="controls">
         <TempoPanel
           bpm={live.engine.bpm}
           onTempo={(bpm) => live.send({ type: 'tempo', bpm, sync: false })}
@@ -371,7 +411,13 @@ export function PerformView({
           id={PANEL_IDS.midi}
           midi={midi}
           isLearning={isLearning}
-          onToggleLearn={() => dispatchLearn({ type: 'toggle' })}
+          onToggleLearn={() => {
+            // Linking starts by tapping a pad, so on a phone switching it on brings the pads back.
+            if (!isLearning) {
+              setPart('pads');
+            }
+            dispatchLearn({ type: 'toggle' });
+          }}
           mappingCount={Object.keys(midiMap).length}
           onClear={() => {
             setMidiMap({});

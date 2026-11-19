@@ -3803,4 +3803,122 @@ a.btn {
 
 .visualizer-decks-full .section-bar {
   padding-right: 11rem; /* room for the "Smaller decks" button */
+/* ---------- Perform on a phone: one part at a time ---------- */
+/* Everywhere else the parts are simply the page, and the switch is hidden. */
+.perform-part:not(.console) {
+  display: contents;
+}
+
+.perform-parts {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .perform-view {
+    gap: var(--space-3);
+  }
+
+  .perform-view .dj-hint {
+    display: none;
+  }
+
+  /* Title and Visualize share one row. */
+  .perform-view .view-header {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    text-align: left;
+  }
+
+  .perform-view .view-title {
+    font-size: 24px;
+  }
+
+  /* Smaller platters on the Decks part, so a whole deck fits on the screen. */
+  .perform-view .dj-platter {
+    width: min(100%, 150px);
+  }
+
+  .perform-view .view-sub {
+    display: none;
+  }
+
+  .perform-view .perform-visualize {
+    flex: none;
+  }
+
+  .perform-parts {
+    display: flex;
+    align-self: stretch;
+  }
+
+  .perform-parts .segmented-option {
+    flex: 1;
+    min-height: 40px;
+  }
+
+  .perform-view[data-part='pads'] .perform-part:not([data-part='pads']),
+  .perform-view[data-part='decks'] .perform-part:not([data-part='decks']),
+  .perform-view[data-part='controls'] .perform-part:not([data-part='controls']) {
+    display: none;
+  }
+
+  /* The status strip on one tight row: the chips scroll sideways, the tempo stays at the end. */
+  .perform-view .perform-strip {
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+    padding: 6px var(--space-2);
+  }
+
+  .perform-view .perform-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .perform-view .perform-chip {
+    flex: none;
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .perform-view .perform-beat {
+    flex: none;
+  }
+
+  .perform-view .beat-lamps {
+    display: none;
+  }
+
+  /* Three pads to a row, with shorter colour swatches: a bank of pads you can reach with a thumb. */
+  .perform-view .perform-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .perform-view .perform-tile-colour {
+    height: 48px;
+  }
+
+  .perform-view .perform-tile-badges {
+    padding: 5px;
+  }
+
+  .perform-view .perform-tile-label {
+    padding: 6px 8px 8px;
+  }
+
+  .perform-view .perform-tile-label strong {
+    font-size: 13px;
+  }
+
+  .perform-view .perform-tile-label small {
+    font-size: 11px;
+  }
+
+  .perform-view .pad-section-head .field-inline {
+    gap: var(--space-2);
+    font-size: 13px;
+  }
 }
