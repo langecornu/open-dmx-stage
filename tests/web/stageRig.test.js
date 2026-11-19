@@ -2,7 +2,7 @@
 // the first places given to lights not placed yet.
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_RIG, mountsOf, positionOf, railsOf, rigOrDefault } from '../../shared/stageRig.js';
+import { DEFAULT_RIG, describePlace, mountsOf, positionOf, railsOf, rigOrDefault } from '../../shared/stageRig.js';
 
 const ids = (rig) => railsOf(rig).map((rail) => rail.id);
 
@@ -67,6 +67,16 @@ describe('positionOf', () => {
     expect(post).toMatchObject({ y: 2, hung: false, rail: 'post-back-left' });
     expect(post.x).toBeGreaterThan(-4);
     expect(post.z).toBeGreaterThan(-3);
+  });
+
+  it('raises a floor light on its stand, and says what it stands on', () => {
+    const raised = positionOf(rig, { rail: 'floor', x: 1, z: 0.5, height: 1.22, support: 'truss' });
+    expect(raised).toMatchObject({ x: 4, y: 1.22, hung: false, rail: 'floor', support: 'truss' });
+    expect(positionOf(rig, { rail: 'floor', x: 1, z: 0.5, height: 1 }).support).toBe('stand');
+    expect(positionOf(rig, { rail: 'floor', x: 1, z: 0.5 }).support).toBeUndefined();
+    expect(describePlace(rig, { rail: 'floor', x: 1, z: 0.5, height: 1.22, support: 'stand' })).toBe(
+      'On a stand 1.22 m high, in the middle, far right',
+    );
   });
 
   it('puts a light on the floor, or there when its rail is gone', () => {

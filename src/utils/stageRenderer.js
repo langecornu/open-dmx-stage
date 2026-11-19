@@ -65,7 +65,7 @@ function makeHazeTile() {
  * @property {string} id
  * @property {string} name
  * @property {string} category
- * @property {{ x: number, y: number, z: number, hung: boolean, facing: number, rail: string }} position
+ * @property {{ x: number, y: number, z: number, hung: boolean, facing: number, rail: string, support?: 'stand' | 'truss' }} position
  * @property {import('./visualState.js').VisualState} state
  */
 
@@ -185,7 +185,7 @@ export function createStageRenderer(canvas) {
     const face = (dir) => normalise(turnAboutY(dir, facing));
     // A fixed light aims at the floor between itself and the middle; an uplight on the floor shines up and a little in.
     const aim = (() => {
-      if (!hung && origin.y < 1) {
+      if (!hung && origin.y <= 0.5) {
         return face({ x: 0, y: 0.95, z: 0.3 });
       }
       return normalise({ x: origin.x * 0.45 - origin.x, y: -origin.y, z: origin.z * 0.45 - origin.z });
@@ -580,6 +580,70 @@ export function createStageRenderer(canvas) {
     }
   }
 
+  /** What a raised floor light stands on: a tripod stand, or a square truss tower, from the floor up to its body. */
+  function drawStand(origin) {
+    const top = { x: origin.x, y: origin.y - 0.1, z: origin.z };
+    const foot = camera.project({ x: origin.x, y: 0, z: origin.z });
+    const head = camera.project(top);
+    if (!foot.visible || !head.visible) {
+      return;
+    }
+    ctx.save();
+    ctx.strokeStyle = '#2b2f3a';
+    ctx.lineCap = 'round';
+    const line = (a, b, width) => {
+      ctx.lineWidth = Math.max(1, width);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    };
+    if (origin.support === 'truss') {
+      // Four posts about 30 cm apart, braced in a zigzag, on a base plate.
+      const half = 0.15;
+      const corners = [
+        [-half, -half],
+        [half, -half],
+        [half, half],
+        [-half, half],
+      ];
+      const grounded = corners.map(([dx, dz]) => camera.project({ x: origin.x + dx, y: 0, z: origin.z + dz }));
+      const raised = corners.map(([dx, dz]) => camera.project({ x: origin.x + dx, y: top.y, z: origin.z + dz }));
+      for (let i = 0; i < 4; i += 1) {
+        line(grounded[i], raised[i], 0.03 * head.scale);
+        line(grounded[i], grounded[(i + 1) % 4], 0.02 * head.scale);
+        line(raised[i], raised[(i + 1) % 4], 0.02 * head.scale);
+      }
+      const braces = Math.max(2, Math.round(origin.y / 0.3));
+      ctx.strokeStyle = '#3a3f4c';
+      for (let b = 0; b < braces; b += 1) {
+        const y0 = (top.y * b) / braces;
+        const y1 = (top.y * (b + 1)) / braces;
+        const up = b % 2 === 0;
+        for (const [i, j] of [
+          [0, 1],
+          [2, 3],
+        ]) {
+          const low = camera.project({ x: origin.x + corners[i][0], y: up ? y0 : y1, z: origin.z + corners[i][1] });
+          const high = camera.project({ x: origin.x + corners[j][0], y: up ? y1 : y0, z: origin.z + corners[j][1] });
+          line(low, high, 0.012 * head.scale);
+        }
+      }
+    } else {
+      // One pole on three legs that splay out over the floor.
+      line(foot, head, 0.035 * head.scale);
+      for (let leg = 0; leg < 3; leg += 1) {
+        const angle = (leg * 2 * Math.PI) / 3 + 0.5;
+        const end = camera.project({ x: origin.x + Math.cos(angle) * 0.4, y: 0, z: origin.z + Math.sin(angle) * 0.4 });
+        const joint = camera.project({ x: origin.x, y: Math.min(0.6, top.y * 0.45), z: origin.z });
+        if (end.visible && joint.visible) {
+          line(joint, end, 0.025 * head.scale);
+        }
+      }
+    }
+    ctx.restore();
+  }
+
   /** A light's body, drawn small and dark as the real thing, then its lenses glowing. */
   function drawBody(light, state, origin, emitters) {
     const at = camera.project(origin);
@@ -960,6 +1024,9 @@ export function createStageRenderer(canvas) {
     // Far lights first, so nearer ones are drawn over them.
     const byDepth = [...prepared].sort((a, b) => camera.project(b.origin).depth - camera.project(a.origin).depth);
     for (const { light, state, origin, emitters } of byDepth) {
+      if (origin.support) {
+        drawStand(origin);
+      }
       drawBody(light, state, origin, emitters);
       if (light.category === 'mirror-ball') {
         drawMirrorDots(origin, state, ambient);

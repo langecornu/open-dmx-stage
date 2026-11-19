@@ -66,6 +66,25 @@ afterEach(() => {
 });
 
 describe('PerformView', () => {
+  it('folds the looks and the sequences away, remembers it, and says what is playing from a folded section', async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderView({ activeSceneId: 'warm' });
+    const looks = screen.getByRole('button', { name: /^Looks/ });
+    expect(looks).toHaveAttribute('aria-expanded', 'true');
+    await user.click(looks);
+    expect(looks).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: /Warm wash, Look/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Playing: Warm wash')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Opening, Sequence, key 3' })).toBeInTheDocument();
+    unmount();
+    renderView();
+    expect(screen.getByRole('button', { name: /^Looks/ })).toHaveAttribute('aria-expanded', 'false');
+    await user.click(screen.getByRole('button', { name: /^Sequences/ }));
+    expect(screen.queryByRole('button', { name: 'Opening, Sequence, key 3' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^Looks/ }));
+    expect(screen.getByRole('button', { name: /Warm wash, Look/ })).toBeInTheDocument();
+  });
+
   it('has the decks, with the music library', async () => {
     renderView();
     expect(screen.getByRole('heading', { name: 'Decks' })).toBeInTheDocument();

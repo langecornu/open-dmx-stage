@@ -3744,3 +3744,63 @@ a.btn {
     white-space: nowrap;
   }
 }
+
+/* The decks in the visualizer, full size: both decks and the music library, in a panel that scrolls so the stage stays
+   in view above it. */
+.visualizer-decks {
+  position: relative;
+}
+
+.visualizer-decks-size {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-4);
+  z-index: 1;
+}
+
+.visualizer-decks-full {
+  max-height: 46vh;
+  overflow-y: auto;
+  background: rgba(10, 12, 20, 0.94);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.visualizer-decks-full .dj-console {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.stage-visualize {
+  white-space: nowrap;
+}
+
+/* A section title that folds its pads away: it reads as a heading and works as a button. */
+.section-fold {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.section-fold:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm, 6px);
+}
+
+.section-playing {
+  margin-left: var(--space-3);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.visualizer-decks-full .section-bar {
+  padding-right: 11rem; /* room for the "Smaller decks" button */
+}

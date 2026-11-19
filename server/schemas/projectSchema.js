@@ -80,6 +80,9 @@ export const fixtureSchema = z
         at: z.number().min(0).max(1).optional(),
         x: z.number().min(0).max(1).optional(),
         z: z.number().min(0).max(1).optional(),
+        // A light on the floor can stand on a stand or a truss tower: how high its body is, in metres, and which.
+        height: z.number().min(0).max(12).optional(),
+        support: z.enum(['stand', 'truss']).optional(),
       })
       .strict()
       .optional(),
@@ -289,7 +292,9 @@ export const aiGenerateSchema = z
       .refine((features) => Object.keys(features).length <= 20)
       .default({}),
     looks: z.number().int().min(2).max(MAX_AI_LOOKS).default(8),
-    sequences: z.number().int().min(1).max(MAX_AI_SEQUENCES).default(2),
+    sequences: z.number().int().min(0).max(MAX_AI_SEQUENCES).default(2),
+    // Looks only, from a short description: no sequences, and the lights need no place on the stage.
+    looksOnly: z.boolean().default(false),
     bars: z.number().int().min(1).max(64).default(16),
     song: z
       .object({

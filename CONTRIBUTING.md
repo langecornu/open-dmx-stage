@@ -7,7 +7,7 @@ Thanks for helping. This project controls physical lights, so small, well-tested
 ```bash
 nvm install && nvm use   # Node 24 LTS, from .nvmrc
 npm ci
-npm run dev              # API on :4000, web app on :5173
+npm run dev              # API on :4000, web app on :7000
 ```
 
 You can work without any hardware: the **Simulator** output is always available.

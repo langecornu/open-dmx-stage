@@ -1,9 +1,14 @@
 // Looks (scenes): save what is on stage, then recall it with a fade.
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+import { AI_MODELS, DEFAULT_AI_MODEL } from '../../shared/aiModels.js';
+import { api } from '../api.js';
 
 import { frameStore, useFrame } from '../hooks/frameStore.js';
 import { fillLooks, lightsInLook, listNames, planFill } from '../utils/lookCoverage.js';
+import { NO_FILTER, matchesFilter, sceneTags } from '../utils/lookTags.js';
 import { fixtureColors, sceneGradient } from '../utils/sceneColors.js';
+import { LookFilters } from './LookFilters.jsx';
 import { EmptyState } from './EmptyState.jsx';
 import { Icon } from './Icon.jsx';
 import { makeId } from '../utils/ids.js';
@@ -126,9 +131,137 @@ function LiveSwatch({ project, patch }) {
   );
 }
 
-export function ScenesView({ project, patch, update, flush, live }) {
+// Describe a look in a few words and the AI makes a handful of them, using what each light can do: pan and tilt and
+// beam controls on moving heads, colour wheels, gobos and so on.
+function AiLooks({ project, update, flush, navigate }) {
+  const [hasKey, setHasKey] = useState(/** @type {boolean | null} */ (null));
+  const [prompt, setPrompt] = useState('');
+  const [count, setCount] = useState(4);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(/** @type {string | null} */ (null));
+  const [made, setMade] = useState(/** @type {{ summary: string, names: string[] } | null} */ (null));
+
+  useEffect(() => {
+    let isCurrent = true;
+    api
+      .getAiSettings()
+      .then((status) => isCurrent && setHasKey(status.hasKey))
+      .catch(() => isCurrent && setHasKey(false));
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
+  const handleMake = async () => {
+    setError(null);
+    setMade(null);
+    setBusy(true);
+    try {
+      await flush();
+      let model = DEFAULT_AI_MODEL;
+      try {
+        const saved = localStorage.getItem('odmx-ai-model');
+        if (AI_MODELS.some((candidate) => candidate.id === saved)) {
+          model = /** @type {string} */ (saved);
+        }
+      } catch {
+        // Storage blocked: the default model.
+      }
+      const generated = await api.generateShow({
+        auto: false,
+        looksOnly: true,
+        mood: prompt.trim(),
+        looks: count,
+        sequences: 0,
+        model,
+      });
+      update((current) => ({ ...current, scenes: [...current.scenes, ...generated.looks] }));
+      setMade({ summary: generated.summary, names: generated.looks.map((look) => look.name) });
+    } catch (makeError) {
+      setError(makeError.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="card card-pad ai-looks-card" aria-labelledby="ai-looks-title">
+      <h2 className="section-title" id="ai-looks-title">
+        <Icon name="sparkle" size={16} /> Make looks with AI
+      </h2>
+      {hasKey === false ? (
+        <p className="view-sub">
+          Add your Anthropic API key in Settings to describe looks in words.{' '}
+          <button type="button" className="btn btn-ghost" onClick={() => navigate?.('settings')}>
+            Open Settings
+          </button>
+        </p>
+      ) : (
+        <>
+          <p className="view-sub">
+            Say what the look is about. The AI uses everything each light can do: colour, and for moving heads pan,
+            tilt, gobos, prisms, zoom and more.
+          </p>
+          <div className="capture-bar">
+            <label className="field capture-name">
+              What is the look about?
+              <input
+                className="input"
+                value={prompt}
+                maxLength={500}
+                placeholder="Beams fanning out over the crowd, deep blue and magenta"
+                onChange={(event) => setPrompt(event.target.value)}
+              />
+            </label>
+            <label className="field field-inline">
+              How many
+              <select
+                className="select select-compact"
+                value={count}
+                onChange={(event) => setCount(Number(event.target.value))}
+              >
+                {[2, 4, 6, 8].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleMake}
+              disabled={busy || hasKey !== true || project.fixtures.length === 0 || prompt.trim() === ''}
+            >
+              <Icon name="sparkle" size={16} />
+              {busy ? 'Designing…' : 'Make looks'}
+            </button>
+          </div>
+          {error ? (
+            <p className="error-banner" role="alert">
+              {error}
+            </p>
+          ) : null}
+          {made ? (
+            <p className="view-sub" role="status">
+              Added {made.names.join(', ')}. {made.summary}
+            </p>
+          ) : null}
+        </>
+      )}
+    </section>
+  );
+}
+
+export function ScenesView({ project, patch, update, flush, live, navigate }) {
   const [name, setName] = useState('');
   const [fadeMs, setFadeMs] = useState(1000);
+  const [filter, setFilter] = useState(NO_FILTER);
+  const tagsById = useMemo(
+    () => new Map(project.scenes.map((scene) => [scene.id, sceneTags(scene, project, patch)])),
+    [project, patch],
+  );
+  const visibleScenes = project.scenes.filter((scene) => matchesFilter(tagsById.get(scene.id), filter));
 
   const handleRecord = () => {
     const values = captureValues(patch);
@@ -220,6 +353,7 @@ export function ScenesView({ project, patch, update, flush, live }) {
           Save current look
         </button>
       </div>
+      <AiLooks project={project} update={update} flush={flush} navigate={navigate} />
       {project.scenes.length === 0 ? (
         <EmptyState
           icon="scenes"
@@ -266,8 +400,14 @@ export function ScenesView({ project, patch, update, flush, live }) {
               </select>
             </label>
           </div>
+          <LookFilters
+            tagsList={project.scenes.map((scene) => tagsById.get(scene.id))}
+            filter={filter}
+            onChange={setFilter}
+            shown={visibleScenes.length}
+          />
           <div className="scene-grid">
-            {project.scenes.map((scene) => (
+            {visibleScenes.map((scene) => (
               <SceneCard
                 key={scene.id}
                 scene={scene}

@@ -103,6 +103,7 @@ Design well:
 - Use where the lights are. Each light has a place (in words and in metres, left and right as the audience sees the stage), the rig lists the lights on each rail in order and what each rail faces across the floor, and the mirror pairs. Run chases that travel across the space in that order (left to right, back to front, around a square), move mirror pairs together or against each other, answer one side with the opposite one, and cross beams from lights facing each other. Lights at the front light the people; lights at the back throw beams and silhouettes toward the audience; floor lights uplight.
 - Aim moving heads from where each one hangs: pan and tilt so beams meet at a point on the floor, fan out from the middle, or sweep the audience together.
 - Strobe sparingly: only at peaks, at most 8 beats at a time, and never fast for long, to be kind to people sensitive to flashing light.
+- When asked for looks only, a look is a still picture: set it completely. For a light with controls, set what it needs to look finished: a moving head gets pan and tilt aimed at something (the floor, the audience, a crossing point, a fan), its shutter open (or a held strobe), and where it has them a colour wheel slot, gobo, prism, zoom, focus, frost or iris that suits the description. Settings you leave out fall back to the light's resting value, so a moving head with no pan or tilt just points at the centre. Spread the heads across different aims instead of giving them all the same ones.
 - Respect every choice the person made. "more" means use it often, "less" means rarely, "off" means never, "avoid" for a colour means never use it.
 - Give every look a different idea. Name things so a performer recognises them on a pad.`;
 
@@ -137,7 +138,12 @@ export function buildRequest(project, builtinTypes, preferences) {
       `Make the first sequence follow the whole song, section by section: loop false, lengthBeats ${songBeats}, starting at beat 0 on the first downbeat.`,
     );
   }
-  if (preferences.auto) {
+  if (preferences.looksOnly) {
+    parts.push(
+      `Make ${preferences.looks} looks and no sequences (the sequences list stays empty). The person describes what they want in a few words: ${preferences.mood || 'a surprise, using everything the rig can do'}`,
+      'Give every look its own take on that description, and use every kind of control the lights have, in particular pan, tilt and beam controls on moving heads.',
+    );
+  } else if (preferences.auto) {
     parts.push(
       `The person leaves everything to you. Make about ${preferences.looks} looks and ${preferences.sequences} ${preferences.sequences === 1 ? 'sequence' : 'sequences'}${song ? '' : ` of about ${preferences.bars} bars that loop`}, using everything the rig can do.`,
     );
@@ -225,7 +231,7 @@ export async function generateShow({
   if (project.fixtures.length === 0) {
     throw httpError(400, 'Add lights to this venue in Setup first: the AI designs for the lights you have.');
   }
-  if (unplacedLights(project.fixtures).length > 0) {
+  if (!preferences.looksOnly && unplacedLights(project.fixtures).length > 0) {
     throw httpError(
       400,
       'Place the lights on the stage first (AI shows, Arrange the lights): the AI designs for where they are.',

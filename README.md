@@ -63,7 +63,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173. Requires Node.js 24.15 or newer (24 LTS; `nvm install && nvm use` reads `.nvmrc`). The tests need it; the app itself also starts on older versions.
+Open http://localhost:7000. Requires Node.js 24.15 or newer (24 LTS; `nvm install && nvm use` reads `.nvmrc`). The tests need it; the app itself also starts on older versions.
 
 - **[Install guide](docs/INSTALL.md):** dependencies, connecting a DMX interface, configuration, troubleshooting.
 - **[Usage guide](docs/USAGE.md):** a tour of every screen, with screenshots.
@@ -82,7 +82,7 @@ full [connection guide](docs/CONNECTION.md). USB output with a passive cable has
 
 | Command                          | What it does                                                  |
 | -------------------------------- | ------------------------------------------------------------- |
-| `npm run dev`                    | API on :4000 and web app on :5173 with live reload            |
+| `npm run dev`                    | API on :4000 and web app on :7000 with live reload            |
 | `npm run build` then `npm start` | Production build, served from one port (:4000)                |
 | `npm run check`                  | Lint, type check, tests and build (run before a pull request) |
 | `npm test`                       | Server tests (`node:test`) and browser tests (Vitest)         |

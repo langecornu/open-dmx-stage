@@ -179,7 +179,9 @@ export function describeStage(project, categoryFn) {
       aim: position.hung
         ? 'hangs from the truss, pointing down at the floor'
         : position.rail === 'floor'
-          ? 'stands on the floor, facing the middle'
+          ? position.y > 0.5
+            ? `stands on a stand ${metres(position.y)} m up, facing the middle`
+            : 'stands on the floor, facing the middle'
           : 'on an upright, facing the middle',
     });
   }

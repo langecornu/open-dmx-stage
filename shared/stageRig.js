@@ -28,8 +28,9 @@ export const RIG_LIMITS = Object.freeze({ width: [2, 40], depth: [2, 40], height
 
 /**
  * Where a light is mounted: a rail and a position along it (0 to 1), or the floor at a place (0 to 1 across and from
- * the back to the front of the dance floor).
- * @typedef {{ rail: string, at?: number, x?: number, z?: number }} Mount
+ * the back to the front of the dance floor). On the floor it may stand on a stand or a truss tower: `height` is how
+ * high its body is above the floor, in metres.
+ * @typedef {{ rail: string, at?: number, x?: number, z?: number, height?: number, support?: 'stand' | 'truss' }} Mount
  */
 
 /**
@@ -105,8 +106,8 @@ export function railsOf(input) {
  * Where a mounted light is, which way it faces (toward the dance floor), and whether it hangs.
  * @param {Partial<Rig>} rig
  * @param {Mount | undefined} mount
- * @returns {{ x: number, y: number, z: number, hung: boolean, facing: number, rail: string }} facing: degrees about the
- *   vertical, 0 toward the front
+ * @returns {{ x: number, y: number, z: number, hung: boolean, facing: number, rail: string, support?: 'stand' | 'truss' }}
+ *   facing: degrees about the vertical, 0 toward the front; support: what a light on the floor stands on, when it is raised
  */
 export function positionOf(rig, mount) {
   const full = rigOrDefault(rig);
@@ -133,7 +134,16 @@ export function positionOf(rig, mount) {
   // On the floor (or a rail that no longer exists): a place on the dance floor, facing its middle.
   const x = ((mount?.x ?? 0.5) - 0.5) * full.width;
   const z = ((mount?.z ?? 0.5) - 0.5) * full.depth;
-  return { x, y: 0.2, z, hung: false, facing: (Math.atan2(-x, -z) * 180) / Math.PI, rail: 'floor' };
+  const height = typeof mount?.height === 'number' && mount.height > 0.2 ? mount.height : 0.2;
+  return {
+    x,
+    y: height,
+    z,
+    hung: false,
+    facing: (Math.atan2(-x, -z) * 180) / Math.PI,
+    rail: 'floor',
+    ...(height > 0.5 ? { support: mount?.support ?? 'stand' } : {}),
+  };
 }
 
 /**
@@ -210,7 +220,9 @@ export function describePlace(rig, mount) {
       'toward the front',
       'at the front',
     ]);
-    return `On the floor, ${depth}, ${across}`;
+    return mount.height && mount.height > 0.5
+      ? `On a ${mount.support === 'truss' ? 'truss tower' : 'stand'} ${Math.round(mount.height * 100) / 100} m high, ${depth}, ${across}`
+      : `On the floor, ${depth}, ${across}`;
   }
   const at = mount.at ?? 0.5;
   if (rail.vertical) {

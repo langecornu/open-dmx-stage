@@ -10,7 +10,9 @@ export default defineConfig({
     assetsInlineLimit: (file) => (file.includes('beatMeterWorklet') ? false : undefined),
   },
   server: {
-    port: 5173,
+    port: 7000,
+    // Fail loudly if 7000 is taken: the API only accepts the page at ALLOWED_ORIGINS, so a silent move breaks the live link.
+    strictPort: true,
     proxy: {
       '/api': 'http://127.0.0.1:4000',
       '/live': { target: 'ws://127.0.0.1:4000', ws: true },
